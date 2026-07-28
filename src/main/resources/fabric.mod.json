@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "id": "cobbletunes",
+  "version": "${version}",
+  "name": "CobbleTunes",
+  "description": "Swaps Minecraft/Cobblemon ambience and battle music for original Pokémon OST tracks during wild, trainer, and legendary encounters.",
+  "authors": [
+    "kaizzinho"
+  ],
+  "contact": {
+    "sources": "https://github.com/kaizzinho/cobbletunes"
+  },
+  "license": "MIT",
+  "icon": "assets/cobbletunes/icon.png",
+  "entrypoints": {
+    "main": [
+      {
+        "adapter": "kotlin",
+        "value": "com.kaizzinho.cobbletunes.CobbleTunes"
+      }
+    ],
+    "client": [
+      {
+        "adapter": "kotlin",
+        "value": "com.kaizzinho.cobbletunes.client.CobbleTunesClient"
+      }
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.17.2",
+    "fabric-api": "*",
+    "fabric-language-kotlin": ">=1.13.3",
+    "minecraft": "~1.21.1",
+    "cobblemon": "*"
+  },
+  "custom": {
+    "cobbletunes:cobbleverse_compatible": true
+  }
+}
