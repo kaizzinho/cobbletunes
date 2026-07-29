@@ -72,21 +72,21 @@ Generated on first run at `.minecraft/config/cobbletunes-client.json`. All value
 | `biomeTransitionSilenceMaxSeconds` | `8.0` | Maximum debounce window on biome change |
 
 ## Sound asset layout
-assets/cobbletunes/sounds/
-  ambience/
-    <biome_tracks_per_region>/  ← wild ambience, tagged by biome key sets
-    gym/                        ← one per region: kanto_gym, johto_gym, etc.
-    pokecenter/                 ← five regional center themes
-    pokemart/                   ← three mart themes
-    structure/                  ← 29 dedicated legendary/special structure themes
-  battle/
-    wild/                       ← per-region wild battle themes
-    trainer/                    ← per-region trainer themes
-    gym_leader/                 ← per-region gym leader themes
-    elite_four/                 ← per-region E4 themes
-    champion/                   ← per-region champion themes
-    pvp/                        ← rival + champion tracks for the PvP pool
-    legendary/                  ← species overrides + regional defaults
+assets/cobbletunes/sounds/  
+  ambience/  
+    <biome_tracks_per_region>/  ← wild ambience, tagged by biome key sets  
+    gym/                        ← one per region: kanto_gym, johto_gym, etc.  
+    pokecenter/                 ← five regional center themes  
+    pokemart/                   ← three mart themes  
+    structure/                  ← 29 dedicated legendary/special structure themes  
+  battle/  
+    wild/                       ← per-region wild battle themes  
+    trainer/                    ← per-region trainer themes  
+    gym_leader/                 ← per-region gym leader themes  
+    elite_four/                 ← per-region E4 themes  
+    champion/                   ← per-region champion themes  
+    pvp/                        ← rival + champion tracks for the PvP pool  
+    legendary/                  ← species overrides + regional defaults  
 
 ## Covered regions
 * **All battle contexts:** Kanto, Johto, Hoenn, Sinnoh, Unova, Kalos, Alola, Galar, Hisui, Paldea
@@ -173,21 +173,21 @@ Gerado na primeira execução em `.minecraft/config/cobbletunes-client.json`. To
 | `biomeTransitionSilenceMaxSeconds` | `8.0` | Janela máxima de debounce na mudança de bioma |
 
 ## Estrutura de arquivos de som (assets)
-assets/cobbletunes/sounds/
-ambience/
-<biome_tracks_per_region>/  ← ambientação selvagem, marcada por conjuntos de chaves de bioma
-gym/                        ← uma por região: kanto_gym, johto_gym, etc.
-pokecenter/                 ← cinco temas de centro regionais
-pokemart/                   ← três temas de mart
-structure/                  ← 29 temas dedicados a lendários/estruturas especiais
-battle/
-wild/                       ← temas de batalha selvagem por região
-trainer/                    ← temas de treinador por região
-gym_leader/                 ← temas de líder de ginásio por região
-elite_four/                 ← temas da E4 por região
-champion/                   ← temas de campeão por região
-pvp/                        ← faixas de rival + campeão para o pool PvP
-legendary/                  ← substituições de espécies + padrões regionais
+assets/cobbletunes/sounds/  
+ambience/  
+<biome_tracks_per_region>/  ← ambientação selvagem, marcada por conjuntos de chaves de bioma  
+gym/                        ← uma por região: kanto_gym, johto_gym, etc.  
+pokecenter/                 ← cinco temas de centro regionais  
+pokemart/                   ← três temas de mart  
+structure/                  ← 29 temas dedicados a lendários/estruturas especiais  
+battle/  
+wild/                       ← temas de batalha selvagem por região  
+trainer/                    ← temas de treinador por região  
+gym_leader/                 ← temas de líder de ginásio por região  
+elite_four/                 ← temas da E4 por região  
+champion/                   ← temas de campeão por região  
+pvp/                        ← faixas de rival + campeão para o pool PvP  
+legendary/                  ← substituições de espécies + padrões regionais  
 
 ## Regiões cobertas
 * **Todos os contextos de batalha:** Kanto, Johto, Hoenn, Sinnoh, Unova, Kalos, Alola, Galar, Hisui, Paldea
