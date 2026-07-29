@@ -59,7 +59,8 @@ data class CobbleTunesClientConfig(
     var trackEndSilenceMinSeconds: Float = 90f,
     var trackEndSilenceMaxSeconds: Float = 180f,
     var biomeTransitionSilenceMinSeconds: Float = 4f,
-    var biomeTransitionSilenceMaxSeconds: Float = 8f
+    var biomeTransitionSilenceMaxSeconds: Float = 8f,
+    var replaceMenuMusic: Boolean = true
 ) {
     companion object {
         private val gson = GsonBuilder().setPrettyPrinting().create()

@@ -1,6 +1,7 @@
 package com.kaizzinho.cobbletunes.world
 
 import com.kaizzinho.cobbletunes.MOD_ID
+import com.mojang.serialization.MapCodec
 import net.minecraft.block.Block
 import net.minecraft.block.BlockRenderType
 import net.minecraft.block.BlockState
@@ -10,9 +11,9 @@ import net.minecraft.block.entity.BlockEntityType
 import net.minecraft.nbt.NbtCompound
 import net.minecraft.registry.Registries
 import net.minecraft.registry.Registry
+import net.minecraft.registry.RegistryWrapper
 import net.minecraft.util.Identifier
 import net.minecraft.util.math.BlockPos
-import net.minecraft.world.World
 
 /**
  * Pillar 9: a visible but clearly "technical" block that marks the location of
@@ -20,21 +21,18 @@ import net.minecraft.world.World
  * Carries a zoneId string in its block entity, which StructureZoneDetector reads
  * when scanning nearby blocks.
  *
- * Placement: put one inside each WorldEdit schematic (e.g. hidden under the
- * floor or inside a wall). The block's appearance is a solid, distinctly colored
- * block — easy to find if you need to move it, but small enough to hide easily.
- *
- * zoneId values this block is expected to carry:
- *   "cobbletunes:pokecenter"  → routes client to POKECENTER context
- *   "cobbletunes:pokemart"    → routes client to POKEMART context
- *
- * !! VERIFY BlockWithEntity / BlockEntityType registration against your jar !!
- * This follows the standard Fabric 1.21.1 pattern for blocks with block entities
- * (BlockWithEntity → createBlockEntity(), getRenderType() = MODEL) but hasn't
- * been genSources-confirmed. If BlockEntityType.Builder.create() has a different
- * signature in your mappings, swap it here — nothing else in this file changes.
+ * Placement: put one inside each WorldEdit schematic (hidden under floor or
+ * inside a wall). Set the zone via:
+ *   /setblock ~ ~ ~ cobbletunes:music_trigger{ZoneId:"cobbletunes:pokecenter"}
+ *   /setblock ~ ~ ~ cobbletunes:music_trigger{ZoneId:"cobbletunes:pokemart"}
  */
 class MusicTriggerBlock(settings: Settings) : BlockWithEntity(settings) {
+
+    // Required by BlockWithEntity in 1.21.1 — codec is unused since we register
+    // this block manually rather than through a data-driven registry, but the
+    // abstract member must be implemented or the class won't compile.
+    override fun getCodec(): MapCodec<out BlockWithEntity> =
+        throw UnsupportedOperationException("MusicTriggerBlock is not data-driven")
 
     override fun createBlockEntity(pos: BlockPos, state: BlockState): BlockEntity =
         Entity(pos, state)
@@ -49,13 +47,16 @@ class MusicTriggerBlock(settings: Settings) : BlockWithEntity(settings) {
 
         var zoneId: String = ""
 
-        override fun writeNbt(nbt: NbtCompound) {
-            super.writeNbt(nbt)
+        // 1.21.1: writeNbt/readNbt both take a RegistryWrapper.WrapperLookup
+        // second parameter — the lookup is unused here since ZoneId is a plain
+        // string with no registry references, but the signature must match.
+        override fun writeNbt(nbt: NbtCompound, registryLookup: RegistryWrapper.WrapperLookup) {
+            super.writeNbt(nbt, registryLookup)
             nbt.putString("ZoneId", zoneId)
         }
 
-        override fun readNbt(nbt: NbtCompound) {
-            super.readNbt(nbt)
+        override fun readNbt(nbt: NbtCompound, registryLookup: RegistryWrapper.WrapperLookup) {
+            super.readNbt(nbt, registryLookup)
             zoneId = nbt.getString("ZoneId")
         }
 
@@ -64,7 +65,7 @@ class MusicTriggerBlock(settings: Settings) : BlockWithEntity(settings) {
         }
     }
 
-    // ── Registration helpers — called from CobbleTunes.onInitialize() ────────
+    // ── Registration — called from CobbleTunes.onInitialize() ───────────────
 
     companion object {
         lateinit var INSTANCE: MusicTriggerBlock

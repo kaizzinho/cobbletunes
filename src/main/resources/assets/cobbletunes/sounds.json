@@ -709,5 +709,8 @@
   "ambience.structure.crescent_isle":        { "sounds": [{ "name": "cobbletunes:ambience/structure/crescent_isle", "stream": true }] },
   "ambience.structure.eterna_building":      { "sounds": [{ "name": "cobbletunes:ambience/structure/eterna_building", "stream": true }] },
   "ambience.structure.wild_plant":           { "sounds": [{ "name": "cobbletunes:ambience/structure/wild_plant", "stream": true }] },
-  "ambience.structure.manaphy":              { "sounds": [{ "name": "cobbletunes:ambience/structure/manaphy", "stream": true }] }
+  "ambience.structure.manaphy":              { "sounds": [{ "name": "cobbletunes:ambience/structure/manaphy", "stream": true }] },
+  "menu.emerald": { "category": "music", "sounds": [{ "name": "cobbletunes:menu/emerald", "stream": true }] },
+  "menu.frlg":    { "category": "music", "sounds": [{ "name": "cobbletunes:menu/frlg", "stream": true }] },
+  "menu.hgss":    { "category": "music", "sounds": [{ "name": "cobbletunes:menu/hgss", "stream": true }] }
 }

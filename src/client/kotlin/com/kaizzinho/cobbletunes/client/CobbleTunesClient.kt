@@ -83,6 +83,10 @@ class CobbleTunesClient : ClientModInitializer {
 
     private var ambienceCheckCounter = 0
     private var lastWorld: net.minecraft.client.world.ClientWorld? = null
+    // add near the other instance fields:
+    // add near menuMusicPlaying:
+    private var pendingMenuTrack: com.kaizzinho.cobbletunes.client.sound.MusicTrack? = null
+    private var menuMusicPlaying = false
 
     override fun onInitializeClient() {
         LOGGER.info("[$MOD_ID] Initializing client music system...")
@@ -94,6 +98,8 @@ class CobbleTunesClient : ClientModInitializer {
         registerNetworkReceivers()
         registerVanillaMusicSuppression()
         registerBiomeAmbienceWatcher()
+        // call this from onInitializeClient() alongside the other register*() calls:
+        registerMenuMusicWatcher()
 
         LOGGER.info("[$MOD_ID] Client init complete.")
     }
@@ -172,6 +178,32 @@ class CobbleTunesClient : ClientModInitializer {
         ClientTickEvents.END_CLIENT_TICK.register { client ->
             if (config.replaceAmbience) {
                 client.musicTracker.stop()
+            }
+        }
+    }
+
+
+    private fun registerMenuMusicWatcher() {
+        ClientTickEvents.END_CLIENT_TICK.register { client ->
+            if (!config.replaceMenuMusic) return@register
+
+            val onMenu = client.world == null
+
+            if (onMenu) {
+                if (pendingMenuTrack == null) {
+                    pendingMenuTrack = TrackRegistry.tracksFor(MusicContext.MENU).randomOrNull()
+                }
+                val track = pendingMenuTrack
+                if (track != null && !musicPlayer.isMenuThemeAudible()) {
+                    // Retried every tick until genuinely audible -- covers the
+                    // fresh-launch case where the sound engine isn't ready yet
+                    // on the first few attempts.
+                    musicPlayer.playMenuTheme(track)
+                }
+                client.musicTracker.stop()
+            } else if (pendingMenuTrack != null) {
+                musicPlayer.stopMenuTheme()
+                pendingMenuTrack = null
             }
         }
     }

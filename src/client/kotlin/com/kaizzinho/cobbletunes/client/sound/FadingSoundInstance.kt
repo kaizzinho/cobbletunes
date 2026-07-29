@@ -35,8 +35,17 @@ class FadingSoundInstance(
         this.repeatDelay = 0
         this.relative = true
         this.attenuationType = SoundInstance.AttenuationType.NONE
-        this.volume = 0f
         this.pitch = 1f
+        // Deliberately NOT setting `volume` directly here. Setting it to
+        // targetVolume causes a one-frame full-volume spike before the first
+        // real tick() call corrects it; setting it to 0f causes total silence
+        // forever, since the sound engine appears to treat an initial volume
+        // of exactly 0 as "inaudible, don't start this channel" and never
+        // revisits that once tick() raises it later. Calling tick() once here
+        // instead primes `volume` to exactly what the first real tick() call
+        // would compute anyway (elapsedTicks 0->1) — a small, non-zero value
+        // that reflects the actual start of the fade-in curve.
+        tick()
     }
 
     /** Start ramping this track's volume down; ClientMusicPlayer stops it once finished(). */

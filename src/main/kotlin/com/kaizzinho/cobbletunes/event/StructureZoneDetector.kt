@@ -9,7 +9,6 @@ import net.minecraft.registry.RegistryKeys
 import net.minecraft.server.network.ServerPlayerEntity
 import net.minecraft.server.world.ServerWorld
 import net.minecraft.util.Identifier
-import net.minecraft.util.math.BlockPos
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
 
 /**
@@ -44,8 +43,8 @@ import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
 object StructureZoneDetector {
 
     private const val ZONE_CHECK_INTERVAL_TICKS = 100  // ~5 seconds
-    private const val GYM_DETECT_RADIUS = 5            // in chunks (~80 blocks)
-    private const val TRIGGER_BLOCK_RADIUS = 24        // blocks, for MusicTriggerBlock scan
+    private const val CHUNK_SCAN_RADIUS = 3             // chunks around player to scan for structure references
+    private const val TRIGGER_BLOCK_RADIUS = 12        // blocks, for MusicTriggerBlock scan
 
     // All known Cobbleverse worldgen gym/league structures → their zoneId string.
     // The zoneId is sent verbatim to the client, which maps it to a RegionOfOrigin.
@@ -204,29 +203,46 @@ object StructureZoneDetector {
 
     /**
      * Checks each known gym structure for proximity to the player.
-     * Uses locateStructure() with a small chunk radius — we're not exploring
-     * the world, just checking if the player is already inside or near a known
-     * structure, so a 5-chunk search is sufficient.
-     * Returns the zoneId of the nearest matching structure, or null if none
-     * are within GYM_DETECT_RADIUS chunks.
+     * Detects nearby Cobbleverse structures using chunk structure references
+     * rather than locateStructure() — the latter's overload signature varies
+     * across 1.21.x Yarn mappings, making it fragile. ChunkAccess.structureReferences
+     * returns every Structure whose start chunk overlaps a given chunk, which is
+     * exactly what we need: if the player's chunk (or an adjacent one within
+     * CHUNK_SCAN_RADIUS) has a reference to cobbleverse:brock, they are inside
+     * or very near that gym.
+     *
+     * !! VERIFY chunk.structureReferences property name against your jar !!
+     * Yarn 1.21.1 name — returns Map<Structure, LongSet>. If IntelliJ shows a
+     * different name, swap it here; nothing else in this function changes.
      */
     private fun locateNearbyGym(player: ServerPlayerEntity, world: ServerWorld): String? {
         val structureRegistry = world.registryManager.get(RegistryKeys.STRUCTURE)
-        val playerPos = player.blockPos
-        var nearestDistance = Int.MAX_VALUE
-        var nearestZoneId: String? = null
 
+        // Build reverse map: Structure object → zoneId, for O(1) lookup
+        // against whatever structureReferences returns per chunk.
+        val structureToZone = mutableMapOf<net.minecraft.world.gen.structure.Structure, String>()
         for ((structureId, zoneId) in GYM_STRUCTURES) {
-            val entry = structureRegistry.getEntry(structureId).orElse(null) ?: continue
-            val result = world.locateStructure(entry, playerPos, GYM_DETECT_RADIUS, false)
-                ?: continue
+            val structure = structureRegistry.get(structureId) ?: continue
+            structureToZone[structure] = zoneId
+        }
+        if (structureToZone.isEmpty()) return null
 
-            val dist = result.squaredDistanceTo(playerPos)
-            if (dist < nearestDistance) {
-                nearestDistance = dist
-                nearestZoneId = zoneId
+        val playerChunk = player.chunkPos
+        for (dx in -CHUNK_SCAN_RADIUS..CHUNK_SCAN_RADIUS) {
+            for (dz in -CHUNK_SCAN_RADIUS..CHUNK_SCAN_RADIUS) {
+                val chunk = world.getChunk(
+                    playerChunk.x + dx,
+                    playerChunk.z + dz,
+                    net.minecraft.world.chunk.ChunkStatus.STRUCTURE_REFERENCES,
+                    false
+                ) ?: continue
+
+                for ((structure, _) in chunk.structureReferences) {
+                    val zoneId = structureToZone[structure] ?: continue
+                    return zoneId
+                }
             }
         }
-        return nearestZoneId
+        return null
     }
 }

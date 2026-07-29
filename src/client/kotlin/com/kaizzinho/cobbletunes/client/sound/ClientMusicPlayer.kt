@@ -401,21 +401,14 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
      */
     private fun pickFreshAmbienceTrack(biomeId: String): MusicTrack? {
         val fresh = TrackRegistry.ambienceTrackFor(biomeId, region = null) ?: return null
-        val randomTargetMillis = randomRotationTargetMillis()
-        val knownDurationMillis = fresh.durationSeconds?.let { it * 1000L }
-        trackTargetMillis[fresh.id] = if (knownDurationMillis != null) {
-            minOf(knownDurationMillis, randomTargetMillis)
-        } else {
-            randomTargetMillis
-        }
+        trackTargetMillis[fresh.id] = randomRotationTargetMillis()
         return fresh
     }
 
     private fun randomRotationTargetMillis(): Long {
-        val minSeconds = config.ambienceRotationMinSeconds
-        val maxSeconds = config.ambienceRotationMaxSeconds.coerceAtLeast(minSeconds)
-        val seconds = if (maxSeconds > minSeconds) (minSeconds..maxSeconds).random() else minSeconds
-        return seconds * 1000L
+        val minMs = config.trackEndSilenceMinSeconds.toLong() * 1000L
+        val maxMs = config.trackEndSilenceMaxSeconds.toLong() * 1000L
+        return if (maxMs > minMs) minMs + ((Math.random() * (maxMs - minMs)).toLong()) else minMs
     }
 
     /**
@@ -449,8 +442,8 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
     private fun pickFrom(candidates: List<MusicTrack>): MusicTrack? =
         if (config.shuffleAmbienceTracks) candidates.randomOrNull() else candidates.firstOrNull()
 
-    private fun play(context: MusicContext, track: MusicTrack) {
-        if (context == currentContext && track.id == currentTrackId) return
+    private fun play(context: MusicContext, track: MusicTrack, force: Boolean = false) {
+        if (!force && context == currentContext && track.id == currentTrackId) return
 
         if (currentContext == MusicContext.AMBIENCE) {
             pauseAmbienceProgress()
@@ -466,7 +459,7 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
             // Minecraft's sound engine restart it mid-cycle before our own
             // timer ever gets a chance to cut it cleanly. track.loop only
             // applies when durationSeconds is unknown.
-            looping = track.durationSeconds == null && track.loop
+            looping = track.loop
         )
         MinecraftClient.getInstance().soundManager.play(instance)
         currentSound = instance
@@ -486,4 +479,33 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
         currentSound = null
         currentTrackId = null
     }
+    /**
+     * Genuine audibility check, not just "did we call play() at some point" —
+     * on a fresh game launch, the very first playMenuTheme() attempt can land
+     * before Minecraft's sound engine has finished initializing, and that
+     * play() call gets silently swallowed. currentContext/currentTrackId still
+     * get set as if it worked, so without this check there'd be no way to
+     * detect the failure and retry.
+     */
+    fun isMenuThemeAudible(): Boolean {
+        val sound = currentSound ?: return false
+        return currentContext == MusicContext.MENU &&
+                MinecraftClient.getInstance().soundManager.isPlaying(sound)
+    }
+
+    fun playMenuTheme(track: MusicTrack) {
+        if (!config.replaceMenuMusic) return
+        if (isMenuThemeAudible() && currentTrackId == track.id) return
+        // force = true bypasses the "already this track" guard — needed
+        // specifically for the retry case above, where our own state thinks
+        // it's already playing but the sound engine never actually started it.
+        play(MusicContext.MENU, track, force = true)
+    }
+
+    fun stopMenuTheme() {
+        if (currentContext == MusicContext.MENU) {
+            stopCurrent()
+        }
+    }
+
 }

@@ -43,5 +43,9 @@ enum class MusicContext {
     // TrackRegistry.specialStructureTrackFor(structureId). Covers legendary
     // shrines, villain team bases, and notable named buildings across all four
     // regions currently in the Cobbleverse datapacks.
-    SPECIAL_STRUCTURE
+    SPECIAL_STRUCTURE,
+    // Pillar 10: title screen music. Independent of everything else — no
+    // biome, no zone, no battle state. Just flat-pool random pick, loops
+    // while the title screen is open, stops the instant a world loads.
+    MENU
 }
