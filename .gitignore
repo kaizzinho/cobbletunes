@@ -31,3 +31,7 @@ run/
 
 # generated
 *.class
+
+
+# .gitignore
+src/main/resources/assets/cobbletunes/sounds/**/*.ogg

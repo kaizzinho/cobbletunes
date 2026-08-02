@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "id": "cobbletunes",
   "version": "${version}",
-  "name": "CobbleTunes",
-  "description": "Swaps Minecraft/Cobblemon ambience and battle music for original Pokémon OST tracks during wild, trainer, and legendary encounters.",
+  "name": "CobbleTunes - Music Framework",
+  "description": "A framework for replacing Minecraft music with Poké soundtracks — battle themes, ambience, structure/proximity music, and menu themes. Ships without audio; requires a resource pack to actually play music.",
   "authors": [
     "kaizzinho"
   ],

@@ -1,11 +1,14 @@
 package com.kaizzinho.cobbletunes.event
 
-import com.cobblemon.mod.common.api.events.CobblemonEvents
 import com.cobblemon.mod.common.api.battles.model.PokemonBattle
+import com.cobblemon.mod.common.api.events.CobblemonEvents
 import com.kaizzinho.cobbletunes.LOGGER
 import com.kaizzinho.cobbletunes.MOD_ID
+import com.kaizzinho.cobbletunes.config.CobbleTunesServerConfig
 import com.kaizzinho.cobbletunes.network.BattleMusicEndPayload
 import com.kaizzinho.cobbletunes.network.BattleMusicStartPayload
+import com.kaizzinho.cobbletunes.network.PlayerDeathPayload
+import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
 import net.fabricmc.loader.api.FabricLoader
 
@@ -20,8 +23,7 @@ import net.fabricmc.loader.api.FabricLoader
  *
  * Pillar 4: RCT integration via RctBridge (below). All RCT class references are
  * isolated inside that object so the JVM never attempts to load them when RCT is
- * absent — FabricLoader.isModLoaded("rctmod") gates every call site, and the
- * object itself is only initialized lazily on first access.
+ * absent — FabricLoader.isModLoaded("rctmod") gates every call site.
  */
 object CobblemonBattleListener {
 
@@ -77,6 +79,28 @@ object CobblemonBattleListener {
             }
         }
 
+        // Death during a battle: Cobblemon has no BATTLE_DEFEAT event, so we
+        // use Fabric's AFTER_RESPAWN instead. This fires after the player has
+        // already respawned and the battle has ended server-side. We send
+        // PlayerDeathPayload rather than BattleMusicEndPayload because death
+        // needs a silence window before resuming ambience — the player may
+        // have respawned in a completely different biome, so we should not
+        // resume the pre-battle ambience track but instead let the biome
+        // watcher re-detect and debounce normally after the silence.
+        //
+        // !! VERIFY ServerPlayerEvents.AFTER_RESPAWN's exact signature !!
+        // Standard Fabric API shape: (oldPlayer, newPlayer, alive) where
+        // alive=false means the player actually died (vs dimension change).
+        // alive=true means this was a dimension-change "respawn", not death.
+        ServerPlayerEvents.AFTER_RESPAWN.register { _, newPlayer, alive ->
+            if (!alive) {
+                ServerPlayNetworking.send(newPlayer, PlayerDeathPayload)
+                if (CobbleTunesServerConfig.current.debugLogging) {
+                    LOGGER.info("[$MOD_ID] [Debug] Player ${newPlayer.name.string} died — sending PlayerDeathPayload")
+                }
+            }
+        }
+
         LOGGER.info("[$MOD_ID] CobblemonBattleListener registered (server-side battle classification).")
     }
 
@@ -88,22 +112,13 @@ object CobblemonBattleListener {
      * without ever triggering a class-load of anything from rctmod or rctapi.
      *
      * Chain used (all confirmed via decompilation of the real jars):
-     *   BattleState.findFirst(battle) — static helper on rctapi's BattleState;
-     *     returns null if RCT isn't managing this battle (shouldn't happen for
-     *     isPvN battles, but handled gracefully).
-     *   BattleState.getParticipants2() — the NPC/trainer side of the battle
-     *     (participants1 is the player side by convention).
+     *   BattleState.findFirst(battle) — static helper on rctapi's BattleState.
+     *   BattleState.getParticipants2() — the NPC/trainer side of the battle.
      *   Trainer.getEntity() — the raw LivingEntity for each participant.
      *   TrainerMob.getTrainerId() — stable string ID ("kanto_brock", etc.)
-     *     used to look up TrainerMobData.
      *   RCTMod.getInstance().getTrainerManager().getData(mob) — TrainerMobData.
-     *   TrainerMobData.getType().id() — the tier string: "leader", "e4",
-     *     "champ", "rival", "normal", or a team-affiliation type.
-     *
-     * Takes the FIRST non-normal-tier NPC found on the opposing side, not all of
-     * them — a solo gym leader battle will always have exactly one on that side,
-     * and multi-NPC battles are currently rare in the Cobbleverse RCT setup.
-     * Falls back to "" (normal trainer) if no elevated tier is found.
+     *   TrainerMobData.getType().id() — tier string: "leader", "e4", "champ",
+     *     "rival", "normal", or a team-affiliation type.
      */
     private object RctBridge {
         private val rctAvailable by lazy {
@@ -124,8 +139,6 @@ object CobblemonBattleListener {
             val state = com.gitlab.srcmc.rctapi.api.battle.BattleState.findFirst(battle)
                 ?: return ""
 
-            // participants2 is the trainer/NPC side; toList() forces Kotlin to
-            // resolve the Java List<Trainer> iteration unambiguously.
             val opponents = state.participants2.toList()
 
             for (trainer in opponents) {
@@ -136,14 +149,10 @@ object CobblemonBattleListener {
                     .getTrainerManager()
                     .getData(entity)
 
-                // TrainerType.id() is a field accessor — check IntelliJ's
-                // completion on tmd.getType() if .id() doesn't resolve;
-                // the decompiled bytecode showed it as id() but Kotlin may
-                // see it as getId() depending on how CFR rendered the accessor.
                 val tierId: String = tmd.getType().id() ?: return ""
 
                 if (tierId == "leader" || tierId == "e4" ||
-                    tierId == "champ"  || tierId == "rival") {
+                    tierId == "champ" || tierId == "rival") {
                     return tierId
                 }
             }

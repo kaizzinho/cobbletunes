@@ -47,5 +47,10 @@ enum class MusicContext {
     // Pillar 10: title screen music. Independent of everything else — no
     // biome, no zone, no battle state. Just flat-pool random pick, loops
     // while the title screen is open, stops the instant a world loads.
-    MENU
+    MENU,
+    // Pillar 9 extension: vanilla + BCA structures. Unlike SPECIAL_STRUCTURE
+    // (1:1 track per structure), this is POOL-based — each structure category
+    // (ancient_city, village_plains, etc.) has multiple candidate tracks and
+    // picks randomly, same idea as GYM_AMBIENCE.
+    VANILLA_STRUCTURE
 }

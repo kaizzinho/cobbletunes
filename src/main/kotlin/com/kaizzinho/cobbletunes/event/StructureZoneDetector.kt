@@ -2,6 +2,7 @@ package com.kaizzinho.cobbletunes.event
 
 import com.kaizzinho.cobbletunes.LOGGER
 import com.kaizzinho.cobbletunes.MOD_ID
+import com.kaizzinho.cobbletunes.config.CobbleTunesServerConfig
 import com.kaizzinho.cobbletunes.network.StructureZonePayload
 import com.kaizzinho.cobbletunes.world.MusicTriggerBlock
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents
@@ -11,39 +12,17 @@ import net.minecraft.server.world.ServerWorld
 import net.minecraft.util.Identifier
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
 
-/**
- * Pillar 9: server-side zone detector. Runs once every ZONE_CHECK_INTERVAL_TICKS
- * (~5 seconds) per online player. Checks two signal sources in priority order:
- *
- * 1. MusicTriggerBlock scan (higher priority) — scans a tight radius around the
- *    player for any placed MusicTriggerBlock and uses its zoneId directly. This
- *    covers hand-placed Poké Centers and Poké Marts (WorldEdit schematics).
- *
- * 2. Worldgen structure check — calls ServerWorld.locateStructure() for each
- *    known Cobbleverse gym structure within GYM_DETECT_RADIUS blocks. Uses the
- *    nearest result. This covers all Cobbleverse gym structures automatically
- *    without requiring any manual block placement inside them.
- *
- * Sends StructureZonePayload to the player only when their zone CHANGES — no
- * packet spam while they stand still inside a gym.
- *
- * Known gym structure IDs — all under the "cobbleverse" namespace, matching
- * exactly the filenames in cobbleverse/worldgen/structure/ from the datapack.
- * Kanto is the only region currently in the datapack; others are listed here
- * ready for when Johto/Hoenn/Sinnoh datapacks are added — no code change needed.
- *
- * !! VERIFY ServerWorld.locateStructure() signature against your jar !!
- * The standard 1.21.1 call shape is:
- *   world.locateStructure(structureEntry, centerPos, searchRadius, skipExisting)
- * where structureEntry comes from:
- *   world.registryManager.get(RegistryKeys.STRUCTURE).getEntry(Identifier.of(...))
- * This hasn't been genSources-confirmed here — ctrl-click locateStructure in
- * IntelliJ after adding this file to verify the exact overload.
- */
 object StructureZoneDetector {
 
     private const val ZONE_CHECK_INTERVAL_TICKS = 100  // ~5 seconds
     private const val CHUNK_SCAN_RADIUS = 3             // chunks around player to scan for structure references
+    // How close the player must actually be to a structure's REAL bounding box
+    // (not just "a reference chunk was found nearby") to count as inside it.
+    // Sprawling jigsaw structures — villages especially — leave a structure
+    // reference in every chunk their bounding box touches, including outlying
+    // paths/houses far from the visible center, so the reference scan alone
+    // is not a reliable proximity signal on its own.
+    private const val STRUCTURE_PROXIMITY_MARGIN = 24.0
     private const val TRIGGER_BLOCK_RADIUS = 12        // blocks, for MusicTriggerBlock scan
 
     // All known Cobbleverse worldgen gym/league structures → their zoneId string.
@@ -138,6 +117,53 @@ object StructureZoneDetector {
         Identifier.of("cobbleverse", "manaphy")              to "cobbleverse:manaphy",
     )
 
+    // Pillar 9 extension: vanilla + BCA structures. zoneId format is
+    // "cobbletunes:vanilla_structure:<category>" — CobbleTunesClient strips
+    // the prefix and looks up the category in TrackRegistry.vanillaStructureTrackFor().
+    // Unlike GYM_STRUCTURES (1:1 structure→zoneId), several vanilla structure
+    // variants map to the SAME category (ocean_ruin_cold/warm both → "ocean_ruin",
+    // all 7 ruined_portal variants → "ruined_portal") since they share one pool.
+    private val VANILLA_AND_BCA_STRUCTURES: Map<Identifier, String> = mapOf(
+        Identifier.of("minecraft", "village_plains")   to "cobbletunes:vanilla_structure:village_plains",
+        Identifier.of("minecraft", "village_desert")   to "cobbletunes:vanilla_structure:village_desert",
+        Identifier.of("minecraft", "village_savanna")  to "cobbletunes:vanilla_structure:village_savanna",
+        Identifier.of("minecraft", "village_snowy")    to "cobbletunes:vanilla_structure:village_snowy",
+        Identifier.of("minecraft", "village_taiga")    to "cobbletunes:vanilla_structure:village_taiga",
+        Identifier.of("minecraft", "ancient_city")     to "cobbletunes:vanilla_structure:ancient_city",
+        Identifier.of("minecraft", "trial_chambers")   to "cobbletunes:vanilla_structure:trial_chambers",
+        Identifier.of("minecraft", "stronghold")       to "cobbletunes:vanilla_structure:stronghold",
+        Identifier.of("minecraft", "mineshaft")        to "cobbletunes:vanilla_structure:mineshaft",
+        Identifier.of("minecraft", "mineshaft_mesa")   to "cobbletunes:vanilla_structure:mineshaft_mesa",
+        Identifier.of("minecraft", "trail_ruins")      to "cobbletunes:vanilla_structure:trail_ruins",
+        Identifier.of("minecraft", "desert_pyramid")   to "cobbletunes:vanilla_structure:desert_pyramid",
+        Identifier.of("minecraft", "jungle_pyramid")   to "cobbletunes:vanilla_structure:jungle_pyramid",
+        Identifier.of("minecraft", "igloo")            to "cobbletunes:vanilla_structure:igloo",
+        Identifier.of("minecraft", "swamp_hut")        to "cobbletunes:vanilla_structure:swamp_hut",
+        Identifier.of("minecraft", "pillager_outpost") to "cobbletunes:vanilla_structure:pillager_outpost",
+        Identifier.of("minecraft", "monument")         to "cobbletunes:vanilla_structure:monument",
+        Identifier.of("minecraft", "ocean_ruin_cold")  to "cobbletunes:vanilla_structure:ocean_ruin",
+        Identifier.of("minecraft", "ocean_ruin_warm")  to "cobbletunes:vanilla_structure:ocean_ruin",
+        Identifier.of("minecraft", "shipwreck")         to "cobbletunes:vanilla_structure:shipwreck",
+        Identifier.of("minecraft", "shipwreck_beached") to "cobbletunes:vanilla_structure:shipwreck",
+        Identifier.of("minecraft", "buried_treasure")  to "cobbletunes:vanilla_structure:buried_treasure",
+        Identifier.of("minecraft", "fortress")         to "cobbletunes:vanilla_structure:fortress",
+        Identifier.of("minecraft", "bastion_remnant")  to "cobbletunes:vanilla_structure:bastion_remnant",
+        Identifier.of("minecraft", "nether_fossil")    to "cobbletunes:vanilla_structure:nether_fossil",
+        Identifier.of("minecraft", "mansion")          to "cobbletunes:vanilla_structure:mansion",
+        Identifier.of("minecraft", "ruined_portal")          to "cobbletunes:vanilla_structure:ruined_portal",
+        Identifier.of("minecraft", "ruined_portal_desert")   to "cobbletunes:vanilla_structure:ruined_portal",
+        Identifier.of("minecraft", "ruined_portal_jungle")   to "cobbletunes:vanilla_structure:ruined_portal",
+        Identifier.of("minecraft", "ruined_portal_swamp")    to "cobbletunes:vanilla_structure:ruined_portal",
+        Identifier.of("minecraft", "ruined_portal_mountain") to "cobbletunes:vanilla_structure:ruined_portal",
+        Identifier.of("minecraft", "ruined_portal_ocean")    to "cobbletunes:vanilla_structure:ruined_portal",
+        Identifier.of("minecraft", "ruined_portal_nether")   to "cobbletunes:vanilla_structure:ruined_portal",
+        Identifier.of("minecraft", "end_city")         to "cobbletunes:vanilla_structure:end_city",
+        // BCA (CobblemonAdditions) — namespace confirmed via its datapack.
+        Identifier.of("bca", "village/small") to "cobbletunes:vanilla_structure:bca_village_small",
+        Identifier.of("bca", "village/mid")   to "cobbletunes:vanilla_structure:bca_village_mid",
+        Identifier.of("bca", "village/large") to "cobbletunes:vanilla_structure:bca_village_large",
+    )
+
     // Per-player zone tracking — avoids sending packets when nothing changed.
     private val playerZoneCache: MutableMap<java.util.UUID, String> = mutableMapOf()
     private var tickCounter = 0
@@ -155,17 +181,15 @@ object StructureZoneDetector {
                 if (zone != previous) {
                     playerZoneCache[player.uuid] = zone
                     ServerPlayNetworking.send(player, StructureZonePayload(zone))
-                    LOGGER.debug("[$MOD_ID] Zone change for ${player.name.string}: '$previous' → '$zone'")
+                    if (CobbleTunesServerConfig.current.debugLogging) {
+                        LOGGER.info("[$MOD_ID] [Debug] Zone change for ${player.name.string}: '$previous' → '$zone'")
+                    }
                 }
             }
         }
     }
 
-    /**
-     * Detects the highest-priority zone the player is currently in.
-     * Trigger blocks (POKECENTER/POKEMART) beat worldgen structures so that
-     * a hand-placed Poké Center near a gym plays center music, not gym music.
-     */
+
     private fun detectZone(player: ServerPlayerEntity, world: ServerWorld): String {
         // 1. Check for nearby MusicTriggerBlock (hand-placed structures)
         val triggerZone = scanForTriggerBlock(player, world)
@@ -175,12 +199,7 @@ object StructureZoneDetector {
         return locateNearbyGym(player, world) ?: ""
     }
 
-    /**
-     * Scans a cubic radius around the player for any MusicTriggerBlock.
-     * Returns the block's zoneId, or null if none found.
-     * Iterates a moderate radius — 24 blocks keeps this cheap enough for a
-     * 5-second tick but covers typical building interiors comfortably.
-     */
+
     private fun scanForTriggerBlock(player: ServerPlayerEntity, world: ServerWorld): String? {
         val center = player.blockPos
         val r = TRIGGER_BLOCK_RADIUS
@@ -201,33 +220,31 @@ object StructureZoneDetector {
         return null
     }
 
-    /**
-     * Checks each known gym structure for proximity to the player.
-     * Detects nearby Cobbleverse structures using chunk structure references
-     * rather than locateStructure() — the latter's overload signature varies
-     * across 1.21.x Yarn mappings, making it fragile. ChunkAccess.structureReferences
-     * returns every Structure whose start chunk overlaps a given chunk, which is
-     * exactly what we need: if the player's chunk (or an adjacent one within
-     * CHUNK_SCAN_RADIUS) has a reference to cobbleverse:brock, they are inside
-     * or very near that gym.
-     *
-     * !! VERIFY chunk.structureReferences property name against your jar !!
-     * Yarn 1.21.1 name — returns Map<Structure, LongSet>. If IntelliJ shows a
-     * different name, swap it here; nothing else in this function changes.
-     */
     private fun locateNearbyGym(player: ServerPlayerEntity, world: ServerWorld): String? {
         val structureRegistry = world.registryManager.get(RegistryKeys.STRUCTURE)
 
         // Build reverse map: Structure object → zoneId, for O(1) lookup
-        // against whatever structureReferences returns per chunk.
+        // against whatever structureReferences returns per chunk. Combines
+        // Cobbleverse structures with vanilla/BCA structures into one lookup
+        // since the chunk scan itself is identical for both.
         val structureToZone = mutableMapOf<net.minecraft.world.gen.structure.Structure, String>()
         for ((structureId, zoneId) in GYM_STRUCTURES) {
+            val structure = structureRegistry.get(structureId) ?: continue
+            structureToZone[structure] = zoneId
+        }
+        for ((structureId, zoneId) in VANILLA_AND_BCA_STRUCTURES) {
             val structure = structureRegistry.get(structureId) ?: continue
             structureToZone[structure] = zoneId
         }
         if (structureToZone.isEmpty()) return null
 
         val playerChunk = player.chunkPos
+        val playerPos = player.blockPos
+        val accessor = world.structureAccessor
+
+        var nearestZoneId: String? = null
+        var nearestDistSq = Double.MAX_VALUE
+
         for (dx in -CHUNK_SCAN_RADIUS..CHUNK_SCAN_RADIUS) {
             for (dz in -CHUNK_SCAN_RADIUS..CHUNK_SCAN_RADIUS) {
                 val chunk = world.getChunk(
@@ -239,10 +256,29 @@ object StructureZoneDetector {
 
                 for ((structure, _) in chunk.structureReferences) {
                     val zoneId = structureToZone[structure] ?: continue
-                    return zoneId
+
+                    // Reference found — now verify REAL proximity against the
+                    // structure's actual bounding box before accepting it.
+                    val start = accessor.getStructureAt(playerPos, structure)
+                    if (!start.hasChildren()) continue
+
+                    val box = start.boundingBox
+                    val closestX = playerPos.x.coerceIn(box.minX, box.maxX)
+                    val closestY = playerPos.y.coerceIn(box.minY, box.maxY)
+                    val closestZ = playerPos.z.coerceIn(box.minZ, box.maxZ)
+                    val ddx = (playerPos.x - closestX).toDouble()
+                    val ddy = (playerPos.y - closestY).toDouble()
+                    val ddz = (playerPos.z - closestZ).toDouble()
+                    val distSq = ddx * ddx + ddy * ddy + ddz * ddz
+
+                    if (distSq <= STRUCTURE_PROXIMITY_MARGIN * STRUCTURE_PROXIMITY_MARGIN &&
+                        distSq < nearestDistSq) {
+                        nearestDistSq = distSq
+                        nearestZoneId = zoneId
+                    }
                 }
             }
         }
-        return null
+        return nearestZoneId
     }
 }

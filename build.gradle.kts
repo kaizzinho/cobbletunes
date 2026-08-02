@@ -76,3 +76,13 @@ tasks.jar {
         rename { "${it}_${project.property("archives_base_name")}" }
     }
 }
+
+tasks.processResources {
+    inputs.property("version", project.version)
+    filesMatching("fabric.mod.json") {
+        expand(mutableMapOf("version" to project.version))
+    }
+    if (project.hasProperty("excludeAudio")) {
+        exclude("assets/cobbletunes/sounds/**/*.ogg")
+    }
+}

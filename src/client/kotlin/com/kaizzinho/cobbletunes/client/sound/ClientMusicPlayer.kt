@@ -6,60 +6,43 @@ import com.kaizzinho.cobbletunes.client.config.CobbleTunesClientConfig
 import net.minecraft.client.MinecraftClient
 
 /**
- * Owns "what's currently playing." Pillar 8 classifier model: CobblemonMusicListener
- * runs one classification pass per battle start and calls playBattleContext() once —
- * no stack, since only one battle context is ever live at a time. playAmbience() is
- * called on battle end/flee and always resumes ambience IMMEDIATELY — the silence
- * gating below is deliberately scoped to world-join/dimension-change and biome-driven
- * transitions only, not battle-end resumes.
+ * Owns "what's currently playing."
  *
- * Pillar 7 (landed): ambience is BIOME-DRIVEN, resolved by CobbleTunesClient's
- * client-tick watcher calling updateAmbienceBiome() whenever the player's biome
- * is checked. Region was dropped from this resolution entirely — Cobbleverse has
- * no in-world "region" concept (pure datapack tweaks, no zone/dimension API), and
- * per-player RCT region-progress was deliberately ruled out as an ambience signal
- * (too sticky/repetitive over long play sessions). So this always calls
- * TrackRegistry.ambienceTrackFor() with region = null — the flat, region-blind
- * biome pool.
+ * AMBIENCE ROTATION MODEL (Pillar 7):
+ * - All ambience tracks are registered with loop=false and played non-looping.
+ * - Each fresh pick rolls a random "budget" between trackEndSilenceMin/MaxSeconds.
+ *   The track rotates when EITHER the budget expires OR the sound engine reports
+ *   the track has naturally finished (isPlaying() returns false), whichever first.
+ * - Per-biome memory: biomeTrackMemory remembers which track was picked per biome,
+ *   so re-entering a biome resumes the same pick (if not yet expired) rather than
+ *   re-rolling. Budget time banks while not actively playing (battle, zone music).
  *
- * Pillar 7 refinement — per-biome memory + random-window rotation:
- * biomeTrackMemory remembers WHICH track was selected for each exact biome id,
- * so briefly leaving a biome and coming back resumes that same selection instead
- * of re-rolling. trackProgressMillis banks real elapsed listening time per track
- * id, paused while that track isn't the audible one and resumed when it is again.
- * Each fresh selection rolls a random rotation target between
- * config.ambienceRotationMinSeconds/MaxSeconds — once that budget is used up, a
- * new track gets picked.
+ * SILENCE GATING (Pillar 7 polish):
+ * Two distinct mechanisms with opposite reset behavior:
+ * 1. PENDING SILENCE (world-join/track-end): once started, does NOT reset on
+ *    biome changes — just updates which track is queued. "Still count the timer."
+ * 2. BIOME-TRANSITION DEBOUNCE: cuts audio immediately on any biome change,
+ *    resets countdown every time the biome changes again. Only commits once
+ *    the biome has been stable for the full random window.
  *
- * Pillar 7 polish — TWO DISTINCT silence mechanisms, deliberately separate
- * because they need opposite reset behavior:
+ * ZONE MUSIC (Pillar 9): gym/pokecenter/pokemart/special structure music plays
+ * looping, bypasses all ambience state, resumes normal ambience on zone exit.
  *
- * 1. PENDING SILENCE (world-join/dimension-change, and a track finishing its
- *    rotation budget while the player stands still) — pendingSilenceEndsAtMillis
- *    / pendingBiomeId / pendingTrack. Once started, this does NOT reset if the
- *    biome changes during the wait — it just keeps updating what's queued up,
- *    so whichever biome the player is in WHEN IT ELAPSES is what plays. This is
- *    the "still count the timer" behavior.
- *
- * 2. BIOME-TRANSITION DEBOUNCE (walking into a new biome while the old track
- *    still had budget left) — debounceBiomeId / debounceEndsAtMillis. Audio is
- *    cut to silence THE MOMENT a biome change is detected. If the observed
- *    biome changes AGAIN before the debounce window elapses, the countdown
- *    RESETS against the newest biome — this is what stops a thin biome like a
- *    river from ever getting its own track started if the player's already
- *    walked past it by the time the window would've closed. Only commits (and
- *    fades in) once a biome has read the same for the FULL window.
- *
- * Whenever a pending-silence countdown (mechanism 1) is active, biome-transition
- * debounce (mechanism 2) is skipped entirely — the pending countdown already
- * guarantees silence and will resolve to whatever's current when it elapses.
- *
- * KNOWN LIMITATION: Minecraft's sound API has no seek/resume-from-position —
- * so "resuming" a remembered track restarts it from the beginning of the file,
- * not the exact moment it was interrupted. What IS preserved is the *selection*
- * (same song keeps coming back) and the *total listen-time budget*.
+ * MENU MUSIC (Pillar 10): plays while no world is loaded, bypasses everything.
  */
 class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
+
+    /**
+     * Routine state-transition logging (silence countdowns, rotation, zone
+     * enter/exit, battle resume) — only prints when config.debugLogging is
+     * enabled. LOGGER.warn calls elsewhere in this file are NOT gated by
+     * this, since those indicate real problems worth seeing regardless.
+     */
+    private fun debugLog(message: String) {
+        if (config.debugLogging) {
+            LOGGER.info("[$MOD_ID] [Debug] $message")
+        }
+    }
 
     private var currentContext: MusicContext = MusicContext.AMBIENCE
     private var currentTrackId: String? = null
@@ -67,33 +50,23 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
     private var currentAmbienceTrack: MusicTrack? = null
     private var currentBiomeId: String? = null
 
-    // Pillar 7 refinement state — per-biome memory + rotation budget.
+    // Per-biome track memory and time-budget tracking.
     private val biomeTrackMemory: MutableMap<String, MusicTrack> = mutableMapOf()
-    private val trackProgressMillis: MutableMap<String, Long> = mutableMapOf()
-    private val trackTargetMillis: MutableMap<String, Long> = mutableMapOf()
-    private var ambienceSegmentTrackId: String? = null
+    private val trackBudgetStartMillis: MutableMap<String, Long> = mutableMapOf()
+    private val trackBudgetDurationMillis: MutableMap<String, Long> = mutableMapOf()
     private var ambienceSegmentStartedAtMillis: Long? = null
 
-    // Mechanism 1 — pending silence (world-join/dimension-change, track-end).
-    // Does NOT reset on biome changes; first countdown started wins.
+    // Mechanism 1 — pending silence.
     private var pendingBiomeId: String? = null
     private var pendingTrack: MusicTrack? = null
     private var pendingSilenceEndsAtMillis: Long? = null
 
-    // Mechanism 2 — biome-transition debounce. RESETS every time the observed
-    // biome changes; only commits once stable for the full random window.
+    // Mechanism 2 — biome-transition debounce.
     private var debounceBiomeId: String? = null
     private var debounceEndsAtMillis: Long? = null
 
-    /**
-     * Called once from CobblemonMusicListener right after it classifies a battle start.
-     * @param dexNumber the opposing side's primary species dex number — used for
-     *   LEGENDARY_BATTLE (species/regional resolution) and WILD_BATTLE (regional
-     *   resolution, Pillar 1).
-     * @param opposingDexNumbers Pillar 3: the opposing trainer's full roster, used
-     *   only by TRAINER_BATTLE for the majority-vote regional resolver. Ignored by
-     *   every other context — empty list is the correct default for wild/PvP.
-     */
+    // ── Battle ────────────────────────────────────────────────────────────────
+
     fun playBattleContext(
         context: MusicContext,
         dexNumber: Int? = null,
@@ -104,338 +77,372 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
         val track = when (context) {
             MusicContext.LEGENDARY_BATTLE -> {
                 if (dexNumber == null) {
-                    LOGGER.warn("[$MOD_ID] LEGENDARY_BATTLE requested without a dex number, falling back to WILD_BATTLE pool")
+                    LOGGER.warn("[$MOD_ID] LEGENDARY_BATTLE without dex number, falling back to WILD_BATTLE pool")
                     pickFrom(TrackRegistry.tracksFor(MusicContext.WILD_BATTLE))
-                } else {
-                    TrackRegistry.legendaryTrackFor(dexNumber)
-                }
+                } else TrackRegistry.legendaryTrackFor(dexNumber)
             }
-            MusicContext.WILD_BATTLE -> {
-                dexNumber?.let { TrackRegistry.wildTrackFor(it) }
-                    ?: pickFrom(TrackRegistry.tracksFor(context))
-            }
-            MusicContext.TRAINER_BATTLE -> {
-                TrackRegistry.trainerTrackFor(opposingDexNumbers)
-                    ?: pickFrom(TrackRegistry.tracksFor(context))
-            }
+            MusicContext.WILD_BATTLE -> dexNumber?.let { TrackRegistry.wildTrackFor(it) }
+                ?: pickFrom(TrackRegistry.tracksFor(context))
+            MusicContext.TRAINER_BATTLE -> TrackRegistry.trainerTrackFor(opposingDexNumbers)
+                ?: pickFrom(TrackRegistry.tracksFor(context))
             else -> pickFrom(TrackRegistry.tracksFor(context))
-        }
-
-        if (track == null) {
-            LOGGER.warn("[$MOD_ID] No track resolved for context $context, leaving current music alone")
+        } ?: run {
+            LOGGER.warn("[$MOD_ID] No track for $context, leaving current music")
             return
         }
+
+        debugLog("[Battle start] Picked: ${track.id} for $context")
+        // Suspend any running pending-silence countdown — it should not keep
+        // ticking while battle music is playing. It will resume naturally
+        // when the biome watcher next fires after the battle ends (since
+        // updateAmbienceBiome is only called when no battle is active).
+        // We deliberately do NOT clear pendingTrack/pendingBiomeId so that
+        // when the battle ends, playAmbience() can find the right next track.
         play(context, track)
     }
 
-    /**
-     * Called on battle victory/flee. Resumes whatever currentAmbienceTrack was
-     * last resolved IMMEDIATELY — deliberately not silence-gated, since the
-     * silence behavior was only asked for on world-join/dimension-change and
-     * biome transitions, not battle-end. Falls back to a flat pick across the
-     * whole AMBIENCE pool only if nothing's been resolved yet.
-     */
+    // ── Ambience ──────────────────────────────────────────────────────────────
+
+    /** Called on battle end — resumes ambience immediately, no silence gate. */
     fun playAmbience() {
         if (!config.replaceAmbience) {
-            stopCurrent()
-            currentContext = MusicContext.AMBIENCE
-            return
+            stopCurrent(); currentContext = MusicContext.AMBIENCE; return
         }
-
-        val track = currentAmbienceTrack ?: pickFrom(TrackRegistry.tracksFor(MusicContext.AMBIENCE))
-        if (track == null) {
-            LOGGER.warn("[$MOD_ID] No ambience tracks registered, leaving current music alone")
-            return
+        // Prefer pendingTrack if one is queued (means a rotation happened during
+        // the battle — the old track finished, a new one was picked, and the
+        // pending-silence countdown was running). Resume the fresh pick rather
+        // than the stale currentAmbienceTrack (the track that already finished).
+        // Also clears the pending countdown since we're resuming immediately —
+        // the battle-end resume IS the "after silence" moment in this case.
+        val track = if (pendingTrack != null) {
+            val t = pendingTrack!!
+            debugLog("[Battle end resume] Using pending track: ${t.id}")
+            pendingTrack = null
+            pendingSilenceEndsAtMillis = null
+            currentBiomeId = pendingBiomeId
+            pendingBiomeId = null
+            currentAmbienceTrack = t
+            // Start budget clock for this track since we're skipping the silence.
+            val budgetMillis = randomRotationBudgetMillis()
+            trackBudgetStartMillis[t.id] = System.currentTimeMillis()
+            trackBudgetDurationMillis[t.id] = budgetMillis
+            t
+        } else {
+            currentAmbienceTrack
+                ?: pickFrom(TrackRegistry.tracksFor(MusicContext.AMBIENCE))
+                ?: run { LOGGER.warn("[$MOD_ID] No ambience tracks registered"); return }
         }
         currentAmbienceTrack = track
+        debugLog("[Battle end resume] Playing: ${track.id}")
         play(MusicContext.AMBIENCE, track)
     }
 
     /**
-     * Pillar 7 polish: called by CobbleTunesClient whenever the client's world
-     * reference changes — covers initial world join AND dimension changes with
-     * one check. Immediately silences whatever was playing (dimension change
-     * shouldn't carry the old world's ambience into the new one even for a
-     * moment) and opens a pending-silence countdown (mechanism 1) — nothing
-     * plays until it elapses, and any in-flight biome-transition debounce
-     * (mechanism 2) is discarded since this supersedes it.
+     * Called when the player dies (detected via ServerPlayerEvents.AFTER_RESPAWN
+     * with alive=false). Stops battle music immediately and opens a 30-second
+     * silence window before resuming ambience. Unlike playAmbience() (which
+     * resumes the pre-battle track), death clears all ambience state so the
+     * biome watcher re-detects and debounces the respawn biome from scratch —
+     * the player may have respawned far from where they died.
      */
-    fun beginWorldJoinSilence() {
-        stopAmbienceAudio()
+    fun handlePlayerDeath() {
+        debugLog("[Death] Stopping battle music, 30s silence before biome re-detect")
+        stopCurrent()
+        currentContext = MusicContext.AMBIENCE
 
-        pendingSilenceEndsAtMillis = System.currentTimeMillis() + (config.worldJoinSilenceSeconds * 1000).toLong()
-        pendingBiomeId = null
-        pendingTrack = null
-        debounceBiomeId = null
-        debounceEndsAtMillis = null
+        // Clear all ambience state — force a full fresh biome detection on respawn
         currentBiomeId = null
         currentAmbienceTrack = null
-    }
-
-    /**
-     * Pillar 9: called when the server signals the player has entered a structure
-     * zone (gym, Poké Center, Poké Mart). Plays the given track immediately,
-     * bypassing biome debounce/pending-silence machinery — zone music is an
-     * explicit, server-confirmed event, not a proximity guess that needs debouncing.
-     * Also clears all pending/debounce state so that leaving the zone (clearZone)
-     * starts fresh without an old pending countdown taking over.
-     */
-    fun playZoneAmbience(context: MusicContext, track: MusicTrack) {
-        if (!config.replaceAmbience) return
-        pendingSilenceEndsAtMillis = null
-        pendingBiomeId = null
-        pendingTrack = null
+        biomeTrackMemory.clear()
+        trackBudgetStartMillis.clear()
+        trackBudgetDurationMillis.clear()
         debounceBiomeId = null
         debounceEndsAtMillis = null
-        currentAmbienceTrack = track
-        play(context, track)
+
+        // Open a 30-second pending silence — the biome watcher will queue up
+        // the respawn biome's track behind it via refreshPendingTrack() and
+        // it'll fade in naturally once the silence elapses.
+        pendingBiomeId = null
+        pendingTrack = null
+        pendingSilenceEndsAtMillis = System.currentTimeMillis() + 30_000L
     }
 
-    /**
-     * Pillar 9: called when the server signals the player has left all structure
-     * zones. Resumes normal biome ambience immediately — no silence gap needed
-     * since walking out of a gym into the overworld should feel seamless.
-     * Forces a re-resolve of the current biome by clearing currentBiomeId so
-     * the next updateAmbienceBiome() tick picks up the correct biome track
-     * even if the biome hasn't changed since the player entered the zone.
-     */
-    fun clearZone() {
-        if (!config.replaceAmbience) return
-        currentBiomeId = null
-        val track = currentAmbienceTrack ?: pickFrom(TrackRegistry.tracksFor(MusicContext.AMBIENCE))
-        if (track != null) {
-            currentAmbienceTrack = track
-            play(MusicContext.AMBIENCE, track)
-        }
+    /** World join or dimension change — open pending silence, play nothing yet. */
+    fun beginWorldJoinSilence() {
+        stopCurrent()
+        ambienceSegmentStartedAtMillis = null
+        worldJoinReadyTicks = 0
+
+        pendingSilenceEndsAtMillis = System.currentTimeMillis() +
+                (config.worldJoinSilenceSeconds * 1000).toLong()
+        pendingBiomeId = null; pendingTrack = null
+        debounceBiomeId = null; debounceEndsAtMillis = null
+        currentBiomeId = null; currentAmbienceTrack = null
+        currentContext = MusicContext.AMBIENCE
+        debugLog("[World join] Silence for ${config.worldJoinSilenceSeconds}s")
     }
 
-    /**
-     * Pillar 7: called from CobbleTunesClient's client-tick biome watcher on
-     * every throttled tick, not just on change.
-     *
-     * Region is intentionally NOT passed to TrackRegistry.ambienceTrackFor() —
-     * Cobbleverse has no in-world region concept to supply one, so this always
-     * resolves against the flat, region-blind biome pool.
-     */
+    /** Called every throttled tick from CobbleTunesClient's biome watcher. */
     fun updateAmbienceBiome(biomeId: String) {
         if (!config.replaceAmbience) return
+        // Don't advance any ambience state while battle music is playing —
+        // pending silence timers should not tick down during a battle, and
+        // biome debounce should not fire. Everything resumes from playAmbience().
+        if (currentContext != MusicContext.AMBIENCE &&
+            currentContext != MusicContext.MENU) return
 
         resolvePendingSilenceIfElapsed()
 
         if (pendingSilenceEndsAtMillis != null) {
-            // A pending-silence countdown (world-join or track-end) is already
-            // running — it always wins. Don't run biome-transition debounce at
-            // all; just keep the queued track in sync with wherever the player
-            // currently is, so whatever's current WHEN the countdown elapses is
-            // what plays (see resolvePendingSilenceIfElapsed()).
             refreshPendingTrack(biomeId)
             return
         }
 
         if (debounceBiomeId != null) {
-            // A biome-transition debounce is already in flight — audio is
-            // currently silent and waiting to resolve. Always route through
-            // it here, even if biomeId happens to equal currentBiomeId (e.g.
-            // the player dipped into a different biome and walked straight
-            // back before ever committing to it) — otherwise this would be
-            // mistaken for "no change" below and leave the audio stuck silent
-            // with nothing left to resume it.
             handleBiomeTransitionDebounce(biomeId)
             return
         }
 
         if (biomeId == currentBiomeId) {
-            // Not entering a new biome — but the current track might have used
-            // up its rotation budget just by standing here.
-            rotateIfExpired(biomeId)
+            checkAndRotateCurrentTrack(biomeId)
             return
         }
 
         handleBiomeTransitionDebounce(biomeId)
     }
 
+    // ── Zone music (Pillar 9) ─────────────────────────────────────────────────
+
+    private var currentSoundStartedAtMillis: Long = 0L
+    private var worldJoinReadyTicks = 0
+    private val WORLD_JOIN_READY_TICKS = 10 // ~10s, same as menu music delay
+
     /**
-     * Mechanism 2: biome-transition debounce. Cuts audio to silence the moment
-     * ANY biome change is observed. If the observed biome changes again before
-     * the window elapses, the countdown resets against the newest biome —
-     * this is what stops a thin biome (a river cutting through a forest) from
-     * ever starting its own theme if the player's already walked past it by
-     * the time the window would've closed. Only commits once a biome has read
-     * the same for the FULL randomly-rolled window.
+     * Called when entering a structure/trigger-block zone. Deliberately does
+     * NOT try to snapshot "what to resume later" — see clearZone() below for
+     * why that approach was removed. Just clears any in-flight silence/debounce
+     * state (a zone entry is an explicit, server-confirmed event, not something
+     * that should keep an old countdown running) and plays the zone track.
      */
+    fun playZoneAmbience(context: MusicContext, track: MusicTrack) {
+        if (!config.replaceAmbience) return
+        pendingSilenceEndsAtMillis = null; pendingBiomeId = null; pendingTrack = null
+        debounceBiomeId = null; debounceEndsAtMillis = null
+        debugLog("[Zone enter] Playing: ${track.id} ($context)")
+        play(context, track)
+    }
+
+    /**
+     * Called when leaving a zone. Used to snapshot currentAmbienceTrack/
+     * currentBiomeId on zone-entry and restore them here — but that snapshot
+     * could go stale if a biome-transition debounce was IN FLIGHT the moment
+     * the zone was entered (e.g. the player walked into a structure right as
+     * they crossed into a new biome, mid-debounce). playZoneAmbience() clears
+     * that debounce, but the snapshot still captured the OLD committed biome,
+     * not the one the player was transitioning into — so on exit it could
+     * resume a track tagged with the wrong biome entirely (e.g. a plains track
+     * resumed as if the player were in a flower forest), which then got
+     * immediately rotated out again since its budget/memory didn't match.
+     *
+     * The fix: don't try to resume cached state at all. Force a full fresh
+     * biome resolution — exactly like a normal biome transition — using
+     * whatever biome the player is ACTUALLY in right now (passed in from
+     * CobbleTunesClient's live lookup). biomeTrackMemory itself is untouched,
+     * so if the player's current biome was visited before, the normal
+     * resolution path still resumes that same remembered track — this just
+     * goes through the standard debounce instead of trying to shortcut it.
+     */
+    fun clearZone(currentBiomeId: String?) {
+        if (!config.replaceAmbience) return
+        // Unconditional stop — NOT stopAmbienceAudio(), which only acts when
+        // currentContext == AMBIENCE. At this point currentContext is still
+        // whatever the zone was (GYM_AMBIENCE, VANILLA_STRUCTURE, etc.), so
+        // that guard would silently no-op and leave the zone track playing
+        // forever. Must also reset currentContext to AMBIENCE explicitly here
+        // — otherwise the debounce commit below's own
+        // "if (currentContext == AMBIENCE) play(...)" check fails too, and
+        // the timer fires with no audible result until something else
+        // happens to call play() again (e.g. re-entering a zone).
+        stopCurrent()
+        currentContext = MusicContext.AMBIENCE
+        this.currentBiomeId = null
+        this.currentAmbienceTrack = null
+        debounceBiomeId = null; debounceEndsAtMillis = null
+        pendingSilenceEndsAtMillis = null; pendingTrack = null; pendingBiomeId = null
+        debugLog("[Zone exit] Forcing fresh biome re-detection (was in zone, now at biome $currentBiomeId)")
+        // Immediately feed the current biome through the normal transition
+        // path if we know it, rather than waiting for the next throttled
+        // watcher tick — keeps the silence gap as short as the debounce
+        // window instead of also adding the watcher's own throttle delay.
+        if (currentBiomeId != null) {
+            handleBiomeTransitionDebounce(currentBiomeId)
+        }
+    }
+
+    // ── Menu music (Pillar 10) ────────────────────────────────────────────────
+
+    fun isMenuThemeAudible(): Boolean {
+        val sound = currentSound ?: return false
+        return currentContext == MusicContext.MENU &&
+                MinecraftClient.getInstance().soundManager.isPlaying(sound)
+    }
+
+    fun playMenuTheme(track: MusicTrack) {
+        if (!config.replaceMenuMusic) return
+        if (isMenuThemeAudible() && currentTrackId == track.id) return
+        debugLog("[Menu] Playing: ${track.id}")
+        play(MusicContext.MENU, track, force = true)
+    }
+
+    fun stopMenuTheme() {
+        if (currentContext == MusicContext.MENU) stopCurrent()
+    }
+
+    // ── Internal ambience logic ───────────────────────────────────────────────
+
+    /**
+     * Biome is stable and unchanged. Check if the current track has finished
+     * (sound engine reports it done) OR its time budget has elapsed — either
+     * triggers a rotation into pending silence then a fresh pick.
+     */
+    private fun checkAndRotateCurrentTrack(biomeId: String) {
+        val track = biomeTrackMemory[biomeId] ?: run {
+            handleBiomeTransitionDebounce(biomeId)
+            return
+        }
+
+        val budgetStart = trackBudgetStartMillis[track.id]
+        val budgetDuration = trackBudgetDurationMillis[track.id]
+        val budgetElapsed = if (budgetStart != null) System.currentTimeMillis() - budgetStart else 0L
+        val budgetExpired = budgetDuration != null && budgetElapsed >= budgetDuration
+
+        val soundAge = System.currentTimeMillis() - currentSoundStartedAtMillis
+        val soundFinished = currentContext == MusicContext.AMBIENCE &&
+                currentTrackId == track.id &&
+                soundAge > 2000L &&
+                (currentSound == null || !MinecraftClient.getInstance().soundManager.isPlaying(currentSound!!))
+
+        if (budgetExpired || soundFinished) {
+            val reason = if (budgetExpired) "budget elapsed (${budgetElapsed / 1000}s)" else "track finished"
+            debugLog("[Rotation] $reason — queuing next for biome $biomeId")
+            stopAmbienceAudio()
+            biomeTrackMemory.remove(biomeId)
+            trackBudgetStartMillis.remove(track.id)
+            trackBudgetDurationMillis.remove(track.id)
+
+            val fresh = resolveTrackForBiome(biomeId) ?: return
+            val silenceSeconds = randomSecondsInRange(
+                config.trackEndSilenceMinSeconds, config.trackEndSilenceMaxSeconds
+            )
+            debugLog("[Silence] Track-end silence: ${silenceSeconds.toInt()}s")
+            beginPendingSilence(biomeId, fresh, silenceSeconds)
+        }
+    }
+
     private fun handleBiomeTransitionDebounce(biomeId: String) {
         if (biomeId != debounceBiomeId) {
             stopAmbienceAudio()
             debounceBiomeId = biomeId
             val seconds = randomSecondsInRange(
-                config.biomeTransitionSilenceMinSeconds,
-                config.biomeTransitionSilenceMaxSeconds
+                config.biomeTransitionSilenceMinSeconds, config.biomeTransitionSilenceMaxSeconds
             )
             debounceEndsAtMillis = System.currentTimeMillis() + (seconds * 1000).toLong()
+            debugLog("[Debounce] Biome change → $biomeId, waiting ${seconds.toInt()}s")
             return
         }
 
         val endsAt = debounceEndsAtMillis ?: return
         if (System.currentTimeMillis() < endsAt) return
 
-        // Stable for the full window — commit to it.
-        debounceBiomeId = null
-        debounceEndsAtMillis = null
-
+        debounceBiomeId = null; debounceEndsAtMillis = null
         val track = resolveTrackForBiome(biomeId) ?: return
-        currentBiomeId = biomeId
-        currentAmbienceTrack = track
+        currentBiomeId = biomeId; currentAmbienceTrack = track
 
-        if (currentContext == MusicContext.AMBIENCE) {
-            play(MusicContext.AMBIENCE, track)
-        }
+        // Start budget clock NOW — this is when we commit to playing it.
+        val budgetMillis = randomRotationBudgetMillis()
+        trackBudgetStartMillis[track.id] = System.currentTimeMillis()
+        trackBudgetDurationMillis[track.id] = budgetMillis
+
+        debugLog("[Debounce commit] Playing ${track.id} for biome $biomeId (budget: ${budgetMillis / 1000}s)")
+        if (currentContext == MusicContext.AMBIENCE) play(MusicContext.AMBIENCE, track)
     }
 
-    /**
-     * Resolves the remembered (if not expired) or a freshly-picked track for
-     * this biome, updating biomeTrackMemory/rotation bookkeeping as needed.
-     * Does NOT touch currentBiomeId/currentAmbienceTrack or play anything —
-     * callers decide what to do with the result.
-     */
     private fun resolveTrackForBiome(biomeId: String): MusicTrack? {
         val remembered = biomeTrackMemory[biomeId]
-        if (remembered != null && !isExpired(remembered)) return remembered
-
-        val fresh = pickFreshAmbienceTrack(biomeId) ?: return null
-        remembered?.let {
-            trackProgressMillis.remove(it.id)
-            trackTargetMillis.remove(it.id)
+        if (remembered != null) return remembered
+        val fresh = if (biomeId == "cobbletunes:cave") {
+            TrackRegistry.caveAmbienceTrack()
+        } else {
+            TrackRegistry.ambienceTrackFor(biomeId, region = null)
+        } ?: run {
+            LOGGER.warn("[$MOD_ID] No ambience track for biome: $biomeId")
+            return null
         }
         biomeTrackMemory[biomeId] = fresh
         return fresh
     }
 
-    /** Keeps the pending-silence target in sync with wherever the player currently is. */
     private fun refreshPendingTrack(biomeId: String) {
         val track = resolveTrackForBiome(biomeId) ?: return
-        pendingBiomeId = biomeId
-        pendingTrack = track
+        if (pendingBiomeId != biomeId || pendingTrack?.id != track.id) {
+            debugLog("[Pending] Queued track updated to ${track.id} for biome $biomeId")
+        }
+        pendingBiomeId = biomeId; pendingTrack = track
     }
 
     private fun beginPendingSilence(biomeId: String, track: MusicTrack, seconds: Float) {
-        pendingBiomeId = biomeId
-        pendingTrack = track
+        pendingBiomeId = biomeId; pendingTrack = track
         pendingSilenceEndsAtMillis = System.currentTimeMillis() + (seconds * 1000).toLong()
     }
 
-    /** The only place mechanism 1 (pending silence) ever actually starts audible ambience. */
     private fun resolvePendingSilenceIfElapsed() {
         val endsAt = pendingSilenceEndsAtMillis ?: return
-        if (System.currentTimeMillis() < endsAt) return
+
+        // Don't fire play() until the sound engine is ready — on a fresh
+        // launch the engine initializes several seconds after the client,
+        // so play() calls before it's ready are silently discarded.
+        worldJoinReadyTicks++
+        if (worldJoinReadyTicks < WORLD_JOIN_READY_TICKS) return
+
+        if (System.currentTimeMillis() < endsAt) {
+            val remaining = (endsAt - System.currentTimeMillis()) / 1000
+            if (remaining % 5L == 0L && remaining > 0L) {
+                debugLog("[Silence] Waiting ${remaining}s...")
+            }
+            return
+        }
         pendingSilenceEndsAtMillis = null
 
-        val track = pendingTrack ?: return
-        val biomeId = pendingBiomeId
-        pendingTrack = null
-        pendingBiomeId = null
-
-        currentBiomeId = biomeId
-        currentAmbienceTrack = track
-
-        if (currentContext == MusicContext.AMBIENCE) {
-            play(MusicContext.AMBIENCE, track)
+        val track = pendingTrack ?: run {
+            LOGGER.warn("[$MOD_ID] [Silence elapsed] No pending track — nothing to play")
+            return
         }
+        val biomeId = pendingBiomeId
+        pendingTrack = null; pendingBiomeId = null
+        currentBiomeId = biomeId; currentAmbienceTrack = track
+
+        val budgetMillis = randomRotationBudgetMillis()
+        trackBudgetStartMillis[track.id] = System.currentTimeMillis()
+        trackBudgetDurationMillis[track.id] = budgetMillis
+
+        debugLog("[Silence elapsed] Playing ${track.id} (budget: ${budgetMillis / 1000}s)")
+        if (currentContext == MusicContext.AMBIENCE) play(MusicContext.AMBIENCE, track)
     }
 
-    /**
-     * Vanilla itself (net.minecraft.sound.MusicSound's minDelay/maxDelay) rolls
-     * a random silence length between two bounds rather than using a fixed
-     * one — this mirrors that shape for both track-end and biome-transition
-     * silence, just with much shorter windows appropriate to this mod's pace.
-     */
-    private fun randomSecondsInRange(minSeconds: Float, maxSeconds: Float): Float {
-        val hi = maxSeconds.coerceAtLeast(minSeconds)
-        return if (hi > minSeconds) minSeconds + (hi - minSeconds) * Math.random().toFloat() else minSeconds
+    private fun randomSecondsInRange(min: Float, max: Float): Float {
+        val hi = max.coerceAtLeast(min)
+        return if (hi > min) min + (hi - min) * Math.random().toFloat() else min
     }
 
-    private fun isExpired(track: MusicTrack): Boolean {
-        val target = trackTargetMillis[track.id] ?: return true
-        val totalElapsedMillis = (trackProgressMillis[track.id] ?: 0L) + currentSegmentElapsedMillis(track.id)
-        return totalElapsedMillis >= target
-    }
-
-    private fun currentSegmentElapsedMillis(trackId: String): Long {
-        if (ambienceSegmentTrackId != trackId) return 0L
-        val startedAt = ambienceSegmentStartedAtMillis ?: return 0L
-        return System.currentTimeMillis() - startedAt
-    }
-
-    /**
-     * Called when still standing in the same biome — handles rotation-in-place.
-     * A track legitimately finishing its rotation budget goes through
-     * mechanism 1 (pending silence), NOT the debounce — the "still count the
-     * timer through biome changes" rule applies here, matching the
-     * river-track-ends-while-you're-in-it case.
-     */
-    private fun rotateIfExpired(biomeId: String) {
-        val remembered = biomeTrackMemory[biomeId] ?: return
-        if (!isExpired(remembered)) return
-
-        stopAmbienceAudio()
-
-        trackProgressMillis.remove(remembered.id)
-        trackTargetMillis.remove(remembered.id)
-        val fresh = pickFreshAmbienceTrack(biomeId) ?: return
-        biomeTrackMemory[biomeId] = fresh
-
-        beginPendingSilence(
-            biomeId, fresh,
-            randomSecondsInRange(config.trackEndSilenceMinSeconds, config.trackEndSilenceMaxSeconds)
-        )
-    }
-
-    /**
-     * Resolves a fresh track for this biome and figures out its rotation
-     * target. If the track has a known durationSeconds, the target is
-     * min(durationSeconds, a random pick in ambienceRotationMin/MaxSeconds) —
-     * so a short track never gets forced to loop past its natural end just to
-     * fill the random window, while a long track still gets capped by that
-     * window instead of being allowed to play its full length uninterrupted.
-     * Tracks without a known duration keep the old behavior: always the full
-     * random window, since there's nothing shorter to respect.
-     */
-    private fun pickFreshAmbienceTrack(biomeId: String): MusicTrack? {
-        val fresh = TrackRegistry.ambienceTrackFor(biomeId, region = null) ?: return null
-        trackTargetMillis[fresh.id] = randomRotationTargetMillis()
-        return fresh
-    }
-
-    private fun randomRotationTargetMillis(): Long {
-        val minMs = config.trackEndSilenceMinSeconds.toLong() * 1000L
-        val maxMs = config.trackEndSilenceMaxSeconds.toLong() * 1000L
+    private fun randomRotationBudgetMillis(): Long {
+        val minMs = (config.trackEndSilenceMinSeconds * 1000).toLong()
+        val maxMs = (config.trackEndSilenceMaxSeconds * 1000).toLong()
         return if (maxMs > minMs) minMs + ((Math.random() * (maxMs - minMs)).toLong()) else minMs
     }
 
-    /**
-     * Banks elapsed real time for whatever ambience track was just playing into
-     * trackProgressMillis, then clears the active segment. Called right before
-     * switching away from an ambience track so its listen-time budget keeps
-     * accumulating correctly across interruptions instead of resetting every
-     * time it's paused.
-     */
-    private fun pauseAmbienceProgress() {
-        val trackId = ambienceSegmentTrackId ?: return
-        val startedAt = ambienceSegmentStartedAtMillis ?: return
-        val elapsed = System.currentTimeMillis() - startedAt
-        trackProgressMillis[trackId] = (trackProgressMillis[trackId] ?: 0L) + elapsed
-        ambienceSegmentTrackId = null
-        ambienceSegmentStartedAtMillis = null
-    }
-
-    /**
-     * Stops whatever's currently audible WITHOUT starting anything new —
-     * this is the actual "cut to silence" step, used by both silence
-     * mechanisms the moment they're triggered. Idempotent: safe to call when
-     * already silent.
-     */
     private fun stopAmbienceAudio() {
         if (currentContext != MusicContext.AMBIENCE) return
-        pauseAmbienceProgress()
+        ambienceSegmentStartedAtMillis = null
         stopCurrent()
     }
 
@@ -445,30 +452,22 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
     private fun play(context: MusicContext, track: MusicTrack, force: Boolean = false) {
         if (!force && context == currentContext && track.id == currentTrackId) return
 
-        if (currentContext == MusicContext.AMBIENCE) {
-            pauseAmbienceProgress()
-        }
+        if (currentContext == MusicContext.AMBIENCE) ambienceSegmentStartedAtMillis = null
 
         stopCurrent()
         val instance = FadingSoundInstance(
             soundEvent = track.soundEvent,
             targetVolume = config.musicVolume,
             fadeInSeconds = config.crossfadeSeconds,
-            // A known durationSeconds means we're tracking its real length
-            // ourselves (see pickFreshAmbienceTrack) — looping it would let
-            // Minecraft's sound engine restart it mid-cycle before our own
-            // timer ever gets a chance to cut it cleanly. track.loop only
-            // applies when durationSeconds is unknown.
             looping = track.loop
         )
         MinecraftClient.getInstance().soundManager.play(instance)
         currentSound = instance
         currentTrackId = track.id
         currentContext = context
-        LOGGER.info("[$MOD_ID] Switched music context -> $context (${track.id})")
+        currentSoundStartedAtMillis = System.currentTimeMillis()
 
         if (context == MusicContext.AMBIENCE) {
-            ambienceSegmentTrackId = track.id
             ambienceSegmentStartedAtMillis = System.currentTimeMillis()
         }
     }
@@ -479,33 +478,22 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
         currentSound = null
         currentTrackId = null
     }
+
     /**
-     * Genuine audibility check, not just "did we call play() at some point" —
-     * on a fresh game launch, the very first playMenuTheme() attempt can land
-     * before Minecraft's sound engine has finished initializing, and that
-     * play() call gets silently swallowed. currentContext/currentTrackId still
-     * get set as if it worked, so without this check there'd be no way to
-     * detect the failure and retry.
+     * Hard stop of whatever is currently playing — used when the death screen
+     * appears so music doesn't keep playing while the player is looking at
+     * "You Died!". Unlike stopCurrent() which fades out, this cuts immediately
+     * since the death screen itself is already a jarring enough transition.
+     * handlePlayerDeath() handles the post-respawn silence and biome re-detect.
      */
-    fun isMenuThemeAudible(): Boolean {
-        val sound = currentSound ?: return false
-        return currentContext == MusicContext.MENU &&
-                MinecraftClient.getInstance().soundManager.isPlaying(sound)
-    }
-
-    fun playMenuTheme(track: MusicTrack) {
-        if (!config.replaceMenuMusic) return
-        if (isMenuThemeAudible() && currentTrackId == track.id) return
-        // force = true bypasses the "already this track" guard — needed
-        // specifically for the retry case above, where our own state thinks
-        // it's already playing but the sound engine never actually started it.
-        play(MusicContext.MENU, track, force = true)
-    }
-
-    fun stopMenuTheme() {
-        if (currentContext == MusicContext.MENU) {
-            stopCurrent()
-        }
+    fun stopEverything() {
+        stopCurrent()
+        currentContext = MusicContext.AMBIENCE
+        pendingSilenceEndsAtMillis = null
+        pendingTrack = null
+        pendingBiomeId = null
+        debounceBiomeId = null
+        debounceEndsAtMillis = null
     }
 
 }

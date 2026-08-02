@@ -36,16 +36,13 @@ class FadingSoundInstance(
         this.relative = true
         this.attenuationType = SoundInstance.AttenuationType.NONE
         this.pitch = 1f
-        // Deliberately NOT setting `volume` directly here. Setting it to
-        // targetVolume causes a one-frame full-volume spike before the first
-        // real tick() call corrects it; setting it to 0f causes total silence
-        // forever, since the sound engine appears to treat an initial volume
-        // of exactly 0 as "inaudible, don't start this channel" and never
-        // revisits that once tick() raises it later. Calling tick() once here
-        // instead primes `volume` to exactly what the first real tick() call
-        // would compute anyway (elapsedTicks 0->1) — a small, non-zero value
-        // that reflects the actual start of the fade-in curve.
-        tick()
+        this.volume = if (fadeInSeconds <= 0f) {
+            targetVolume
+        } else {
+            0.05f  // absolute minimum, not a fraction of targetVolume —
+            // at low music volumes (e.g. 50%), 0.05f * targetVolume
+            // drops below the engine's channel allocation threshold
+        }
     }
 
     /** Start ramping this track's volume down; ClientMusicPlayer stops it once finished(). */
@@ -59,9 +56,13 @@ class FadingSoundInstance(
 
     override fun tick() {
         if (!fadingOut) {
-            elapsedTicks++
-            val fadeInTicks = max(1, (fadeInSeconds * 20f).toInt())
-            volume = min(1f, elapsedTicks.toFloat() / fadeInTicks) * targetVolume
+            if (fadeInSeconds <= 0f) {
+                volume = targetVolume
+            } else {
+                elapsedTicks++
+                val fadeInTicks = max(1, (fadeInSeconds * 20f).toInt())
+                volume = min(1f, elapsedTicks.toFloat() / fadeInTicks) * targetVolume
+            }
         } else {
             fadeOutElapsed++
             val outFraction = 1f - min(1f, fadeOutElapsed.toFloat() / fadeOutTicks)

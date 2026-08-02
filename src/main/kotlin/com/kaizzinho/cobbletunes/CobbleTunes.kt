@@ -9,6 +9,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import com.kaizzinho.cobbletunes.network.StructureZonePayload
 import com.kaizzinho.cobbletunes.event.StructureZoneDetector
+import com.kaizzinho.cobbletunes.network.PlayerDeathPayload
 import com.kaizzinho.cobbletunes.world.MusicTriggerBlock
 
 const val MOD_ID = "cobbletunes"
@@ -33,6 +34,7 @@ class CobbleTunes : ModInitializer {
         MusicTriggerBlock.register()
         StructureZoneDetector.register()
         CobblemonBattleListener.register()
+        PayloadTypeRegistry.playS2C().register(PlayerDeathPayload.ID, PlayerDeathPayload.CODEC)
 
         LOGGER.info("[$MOD_ID] Common init complete — battle classification runs server-side, playback client-side.")
     }
