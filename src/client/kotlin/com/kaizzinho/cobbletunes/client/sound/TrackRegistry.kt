@@ -659,45 +659,46 @@ object TrackRegistry {
         structureCategoryTracks[category]?.randomOrNull()
 
     private fun registerProximityAmbience() {
+        // zone themes loop until the player actually leaves the area
         // gym ambience, one per region
         register(MusicContext.GYM_AMBIENCE, MusicTrack(
             "gym_kanto", soundEvent("ambience.gym.kanto_gym"),
-            loop = false, regions = setOf(RegionOfOrigin.KANTO)
+            loop = true, regions = setOf(RegionOfOrigin.KANTO)
         ))
         register(MusicContext.GYM_AMBIENCE, MusicTrack(
             "gym_johto", soundEvent("ambience.gym.johto_gym"),
-            loop = false, regions = setOf(RegionOfOrigin.JOHTO)
+            loop = true, regions = setOf(RegionOfOrigin.JOHTO)
         ))
         register(MusicContext.GYM_AMBIENCE, MusicTrack(
             "gym_hoenn", soundEvent("ambience.gym.hoenn_gym"),
-            loop = false, regions = setOf(RegionOfOrigin.HOENN)
+            loop = true, regions = setOf(RegionOfOrigin.HOENN)
         ))
         register(MusicContext.GYM_AMBIENCE, MusicTrack(
             "gym_sinnoh", soundEvent("ambience.gym.sinnoh_gym"),
-            loop = false, regions = setOf(RegionOfOrigin.SINNOH)
+            loop = true, regions = setOf(RegionOfOrigin.SINNOH)
         ))
         register(MusicContext.GYM_AMBIENCE, MusicTrack(
             "gym_unova", soundEvent("ambience.gym.unova_gym"),
-            loop = false, regions = setOf(RegionOfOrigin.UNOVA)
+            loop = true, regions = setOf(RegionOfOrigin.UNOVA)
         ))
 
         // pokecenter pool
-        register(MusicContext.POKECENTER, MusicTrack("pokecenter_kanto",  soundEvent("ambience.pokecenter.kanto_center"),  loop = false))
-        register(MusicContext.POKECENTER, MusicTrack("pokecenter_johto",  soundEvent("ambience.pokecenter.johto_center"),  loop = false))
-        register(MusicContext.POKECENTER, MusicTrack("pokecenter_hoenn",  soundEvent("ambience.pokecenter.hoenn_center"),  loop = false))
-        register(MusicContext.POKECENTER, MusicTrack("pokecenter_sinnoh", soundEvent("ambience.pokecenter.sinnoh_center"), loop = false))
-        register(MusicContext.POKECENTER, MusicTrack("pokecenter_unova",  soundEvent("ambience.pokecenter.unova_center"),  loop = false))
+        register(MusicContext.POKECENTER, MusicTrack("pokecenter_kanto",  soundEvent("ambience.pokecenter.kanto_center"),  loop = true))
+        register(MusicContext.POKECENTER, MusicTrack("pokecenter_johto",  soundEvent("ambience.pokecenter.johto_center"),  loop = true))
+        register(MusicContext.POKECENTER, MusicTrack("pokecenter_hoenn",  soundEvent("ambience.pokecenter.hoenn_center"),  loop = true))
+        register(MusicContext.POKECENTER, MusicTrack("pokecenter_sinnoh", soundEvent("ambience.pokecenter.sinnoh_center"), loop = true))
+        register(MusicContext.POKECENTER, MusicTrack("pokecenter_unova",  soundEvent("ambience.pokecenter.unova_center"),  loop = true))
 
         // pokemart pool
-        register(MusicContext.POKEMART, MusicTrack("pokemart_1", soundEvent("ambience.pokemart.mart1"), loop = false))
-        register(MusicContext.POKEMART, MusicTrack("pokemart_2", soundEvent("ambience.pokemart.mart2"), loop = false))
-        register(MusicContext.POKEMART, MusicTrack("pokemart_3", soundEvent("ambience.pokemart.mart3"), loop = false))
+        register(MusicContext.POKEMART, MusicTrack("pokemart_1", soundEvent("ambience.pokemart.mart1"), loop = true))
+        register(MusicContext.POKEMART, MusicTrack("pokemart_2", soundEvent("ambience.pokemart.mart2"), loop = true))
+        register(MusicContext.POKEMART, MusicTrack("pokemart_3", soundEvent("ambience.pokemart.mart3"), loop = true))
     }
 
     private fun registerSpecialStructures() {
         fun ss(structureId: String, trackName: String) = registerSpecialStructure(
             "cobbleverse:$structureId",
-            MusicTrack("special_$structureId", soundEvent("ambience.structure.$trackName"), loop = false)
+            MusicTrack("special_$structureId", soundEvent("ambience.structure.$trackName"), loop = true)
         )
 
         // kanto

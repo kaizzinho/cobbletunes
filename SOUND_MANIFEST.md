@@ -1,29 +1,55 @@
 # CobbleTunes — Sound Manifest
 
-This is the authoritative reference for anyone building a resource pack for CobbleTunes. Every row below is a registered `SoundEvent` — if the file at the listed path doesn't exist in your resource pack, that specific context just plays nothing (no error, no crash).
+This file is the resource-pack checklist for CobbleTunes. Every key below already exists in `sounds.json` and is registered by the mod. Your pack only needs to provide the matching `.ogg` files.
 
-**Base path for everything:** `assets/cobbletunes/sounds/`
-**File format:** `.ogg`, mono or stereo, any sample rate Minecraft accepts.
+**Base folder:** `assets/cobbletunes/sounds/`  
+**Format:** `.ogg` — mono or stereo, using any sample rate supported by Minecraft.
 
-Column legend:
-- **Key** — the `sounds.json` key (also usable directly via `/playsound cobbletunes:<key> music @s` for testing)
-- **File path** — where to put your `.ogg`, relative to the base path above (omit the `.ogg` extension in `sounds.json`, but the actual file needs it)
-- **Trigger** — what causes this sound to play
+A missing file is safe. The matching music context stays silent, but the game and the rest of the soundtrack keep working.
+
+### Reading the tables
+
+- **Key** — the `sounds.json` key. You can test it with `/playsound cobbletunes:<key> music @s`.
+- **File path** — the location inside the base folder above. The real file needs the `.ogg` extension.
+- **Trigger** — the game state that routes to that `SoundEvent`.
+
+### How dynamic battle music maps to these files
+
+CobbleTunes does **not** create filenames from a trainer's name. It classifies the battle first, then chooses a shared track by role and region.
+
+For example, the RCT trainer `kanto_brock` is classified as:
+
+```text
+role   = Gym Leader
+region = Kanto
+route  = leader|kanto
+```
+
+That route plays:
+
+```text
+key:  battle.kanto.gym_leader
+file: battle/kanto/gym_leader.ogg
+```
+
+The same path can be used by every Kanto Gym Leader. Elite Four and Champion battles work the same way, using their own role context. Standard RCT types, Cobbleverse custom types, trainer-ID patterns, and the current regional progression format are all understood. If the trainer has no usable region, the client falls back to a vote based on the opposing roster.
+
+For real PvP, there is no RCT trainer metadata, so the opposing Pokémon decide the regional PvP pool.
 
 ---
 
 ## 1. Battle Music
 
-One folder per region: `battle/<region>/`. Ten regions total. Not every region has every context — some intentionally reuse one track for two roles (matches the source games, e.g. Kanto's Gym Leader/Elite Four share a theme).
+Battle files live under `battle/<region>/`. There are ten regional folders, but not every region has every role. Some entries intentionally share one sound between contexts, such as Kanto's Gym Leader and Elite Four themes.
 
 ### Kanto (`battle/kanto/`)
 
 | Key | File path | Trigger |
 |---|---|---|
 | `battle.kanto.wild` | `battle/kanto/wild.ogg` | Wild battle, opponent Dex 1–151 |
-| `battle.kanto.trainer` | `battle/kanto/trainer.ogg` | Trainer battle, majority-vote region = Kanto |
-| `battle.kanto.gym_leader` | `battle/kanto/gym_leader.ogg` | Gym Leader battle (Kanto) — also used for Elite Four |
-| `battle.kanto.champion_rival` | `battle/kanto/champion_rival.ogg` | Champion battle (Kanto) — also used for PvP pool |
+| `battle.kanto.trainer` | `battle/kanto/trainer.ogg` | Regular trainer battle resolved to Kanto (RCT region first, roster vote fallback) |
+| `battle.kanto.gym_leader` | `battle/kanto/gym_leader.ogg` | Kanto Gym Leader route; also shared by the Kanto Elite Four context |
+| `battle.kanto.champion_rival` | `battle/kanto/champion_rival.ogg` | Kanto Champion route; also available in the Kanto PvP pool |
 | `battle.kanto.legendary_default` | `battle/kanto/legendary_default.ogg` | Legendary/Mythical encounter, Kanto region default (no species override) |
 | `battle.kanto.legendary_mewtwo` | `battle/kanto/legendary_mewtwo.ogg` | Mewtwo (Dex 150) specifically |
 | `battle.kanto.legendary_deoxys` | `battle/kanto/legendary_deoxys.ogg` | Deoxys (Dex 386) specifically |
@@ -33,10 +59,10 @@ One folder per region: `battle/<region>/`. Ten regions total. Not every region h
 | Key | File path | Trigger |
 |---|---|---|
 | `battle.johto.wild` | `battle/johto/wild.ogg` | Wild battle, Dex 152–251 |
-| `battle.johto.trainer` | `battle/johto/trainer.ogg` | Trainer battle, region = Johto |
-| `battle.johto.gym_leader` | `battle/johto/gym_leader.ogg` | Gym Leader (also used for Elite Four) |
-| `battle.johto.champion` | `battle/johto/champion.ogg` | Champion battle |
-| `battle.johto.rival_pvp` | `battle/johto/rival_pvp.ogg` | Rival battle / PvP pool |
+| `battle.johto.trainer` | `battle/johto/trainer.ogg` | Regular trainer battle resolved to Johto (RCT region first, roster vote fallback) |
+| `battle.johto.gym_leader` | `battle/johto/gym_leader.ogg` | Johto Gym Leader route; also shared by Elite Four |
+| `battle.johto.champion` | `battle/johto/champion.ogg` | Johto Champion route |
+| `battle.johto.rival_pvp` | `battle/johto/rival_pvp.ogg` | Johto RCT rival or real PvP pool |
 | `battle.johto.legendary_default` | `battle/johto/legendary_default.ogg` | Legendary default, no species override |
 | `battle.johto.legendary_raikou` | `battle/johto/legendary_raikou.ogg` | Raikou (Dex 243) |
 | `battle.johto.legendary_entei` | `battle/johto/legendary_entei.ogg` | Entei (Dex 244) |
@@ -50,11 +76,11 @@ One folder per region: `battle/<region>/`. Ten regions total. Not every region h
 | Key | File path | Trigger |
 |---|---|---|
 | `battle.hoenn.wild` | `battle/hoenn/wild.ogg` | Wild battle, Dex 252–386 |
-| `battle.hoenn.trainer` | `battle/hoenn/trainer.ogg` | Trainer battle, region = Hoenn |
-| `battle.hoenn.gym_leader` | `battle/hoenn/gym_leader.ogg` | Gym Leader battle |
-| `battle.hoenn.elite_four` | `battle/hoenn/elite_four.ogg` | Elite Four (distinct from Gym Leader) |
-| `battle.hoenn.champion_wallace` | `battle/hoenn/champion_wallace.ogg` | Champion battle |
-| `battle.hoenn.rival_pvp` | `battle/hoenn/rival_pvp.ogg` | Rival battle / PvP pool |
+| `battle.hoenn.trainer` | `battle/hoenn/trainer.ogg` | Regular trainer battle resolved to Hoenn (RCT region first, roster vote fallback) |
+| `battle.hoenn.gym_leader` | `battle/hoenn/gym_leader.ogg` | Hoenn Gym Leader route |
+| `battle.hoenn.elite_four` | `battle/hoenn/elite_four.ogg` | Hoenn Elite Four route |
+| `battle.hoenn.champion_wallace` | `battle/hoenn/champion_wallace.ogg` | Hoenn Champion route |
+| `battle.hoenn.rival_pvp` | `battle/hoenn/rival_pvp.ogg` | Hoenn RCT rival or real PvP pool |
 | `battle.hoenn.legendary_regis` | `battle/hoenn/legendary_regis.ogg` | Regirock/Regice/Registeel (Dex 377–379) |
 | `battle.hoenn.legendary_super_ancient` | `battle/hoenn/legendary_super_ancient.ogg` | Groudon/Kyogre/Rayquaza (Dex 382–384) |
 | `battle.hoenn.legendary_mew` | `battle/hoenn/legendary_mew.ogg` | Mew (Dex 151) |
@@ -66,11 +92,11 @@ One folder per region: `battle/<region>/`. Ten regions total. Not every region h
 | Key | File path | Trigger |
 |---|---|---|
 | `battle.sinnoh.wild` | `battle/sinnoh/wild.ogg` | Wild battle, Dex 387–493 |
-| `battle.sinnoh.trainer` | `battle/sinnoh/trainer.ogg` | Trainer battle, region = Sinnoh |
-| `battle.sinnoh.gym_leader` | `battle/sinnoh/gym_leader.ogg` | Gym Leader battle |
-| `battle.sinnoh.elite_four` | `battle/sinnoh/elite_four.ogg` | Elite Four |
-| `battle.sinnoh.champion` | `battle/sinnoh/champion.ogg` | Champion battle |
-| `battle.sinnoh.rival_pvp` | `battle/sinnoh/rival_pvp.ogg` | Rival battle / PvP pool |
+| `battle.sinnoh.trainer` | `battle/sinnoh/trainer.ogg` | Regular trainer battle resolved to Sinnoh (RCT region first, roster vote fallback) |
+| `battle.sinnoh.gym_leader` | `battle/sinnoh/gym_leader.ogg` | Sinnoh Gym Leader route |
+| `battle.sinnoh.elite_four` | `battle/sinnoh/elite_four.ogg` | Sinnoh Elite Four route |
+| `battle.sinnoh.champion` | `battle/sinnoh/champion.ogg` | Sinnoh Champion route |
+| `battle.sinnoh.rival_pvp` | `battle/sinnoh/rival_pvp.ogg` | Sinnoh RCT rival or real PvP pool |
 | `battle.sinnoh.legendary_default` | `battle/sinnoh/legendary_default.ogg` | Legendary default |
 | `battle.sinnoh.legendary_alt` | `battle/sinnoh/legendary_alt.ogg` | Alternate legendary pool entry (region-tagged, no species override) |
 | `battle.sinnoh.legendary_dialga_palkia` | `battle/sinnoh/legendary_dialga_palkia.ogg` | Dialga/Palkia (Dex 483–484) |
@@ -86,10 +112,10 @@ One folder per region: `battle/<region>/`. Ten regions total. Not every region h
 | Key | File path | Trigger |
 |---|---|---|
 | `battle.unova.wild` | `battle/unova/wild.ogg` | Wild battle, Dex 494–649 |
-| `battle.unova.trainer` | `battle/unova/trainer.ogg` | Trainer battle, region = Unova |
-| `battle.unova.gym_leader` | `battle/unova/gym_leader.ogg` | Gym Leader (also used for Elite Four) |
-| `battle.unova.champion_iris` | `battle/unova/champion_iris.ogg` | Champion battle |
-| `battle.unova.rival_hugh` | `battle/unova/rival_hugh.ogg` | Rival battle / PvP pool |
+| `battle.unova.trainer` | `battle/unova/trainer.ogg` | Regular trainer battle resolved to Unova (RCT region first, roster vote fallback) |
+| `battle.unova.gym_leader` | `battle/unova/gym_leader.ogg` | Unova Gym Leader route; also shared by Elite Four |
+| `battle.unova.champion_iris` | `battle/unova/champion_iris.ogg` | Unova Champion route |
+| `battle.unova.rival_hugh` | `battle/unova/rival_hugh.ogg` | Unova RCT rival or real PvP pool |
 | `battle.unova.champion_kanto_pwt` | `battle/unova/champion_kanto_pwt.ogg` | PvP pool — PWT-style Kanto champion remix |
 | `battle.unova.champion_johto_pwt` | `battle/unova/champion_johto_pwt.ogg` | PvP pool — PWT-style Johto champion remix |
 | `battle.unova.champion_hoenn_pwt` | `battle/unova/champion_hoenn_pwt.ogg` | PvP pool — PWT-style Hoenn champion remix |
@@ -103,10 +129,10 @@ One folder per region: `battle/<region>/`. Ten regions total. Not every region h
 | Key | File path | Trigger |
 |---|---|---|
 | `battle.alola.wild` | `battle/alola/wild.ogg` | Wild battle, Dex 722–809 |
-| `battle.alola.trainer` | `battle/alola/trainer.ogg` | Trainer battle, region = Alola |
-| `battle.alola.island_kahuna` | `battle/alola/island_kahuna.ogg` | Island Kahuna battle (Alola has no Gyms — this fills the Gym Leader context) |
-| `battle.alola.elite_four` | `battle/alola/elite_four.ogg` | Elite Four |
-| `battle.alola.champion_summit` | `battle/alola/champion_summit.ogg` | Champion battle (also used for PvP pool) |
+| `battle.alola.trainer` | `battle/alola/trainer.ogg` | Regular trainer battle resolved to Alola (RCT region first, roster vote fallback) |
+| `battle.alola.island_kahuna` | `battle/alola/island_kahuna.ogg` | Alola Gym Leader context, represented by Island Kahunas |
+| `battle.alola.elite_four` | `battle/alola/elite_four.ogg` | Alola Elite Four route |
+| `battle.alola.champion_summit` | `battle/alola/champion_summit.ogg` | Alola Champion route; also shared by PvP |
 | `battle.alola.legendary_ultra_beast` | `battle/alola/legendary_ultra_beast.ogg` | Regional default — covers any Ultra Beast without its own override |
 | `battle.alola.legendary_tapu` | `battle/alola/legendary_tapu.ogg` | Tapu Koko/Lele/Bulu/Fini (Dex 785–788) |
 | `battle.alola.legendary_solgaleo_lunala_necrozma` | `battle/alola/legendary_solgaleo_lunala_necrozma.ogg` | Solgaleo/Lunala/Necrozma (Dex 791/792/800) |
@@ -121,10 +147,10 @@ One folder per region: `battle/<region>/`. Ten regions total. Not every region h
 | Key | File path | Trigger |
 |---|---|---|
 | `battle.galar.wild` | `battle/galar/wild.ogg` | Wild battle, Dex 810–898 |
-| `battle.galar.trainer` | `battle/galar/trainer.ogg` | Trainer battle, region = Galar |
-| `battle.galar.gym_leader` | `battle/galar/gym_leader.ogg` | Gym Leader battle |
-| `battle.galar.league_tournament` | `battle/galar/league_tournament.ogg` | Elite Four context (Galar has no E4 — League Tournament fills this role) |
-| `battle.galar.champion_leon` | `battle/galar/champion_leon.ogg` | Champion battle (also used for PvP pool) |
+| `battle.galar.trainer` | `battle/galar/trainer.ogg` | Regular trainer battle resolved to Galar (RCT region first, roster vote fallback) |
+| `battle.galar.gym_leader` | `battle/galar/gym_leader.ogg` | Galar Gym Leader route |
+| `battle.galar.league_tournament` | `battle/galar/league_tournament.ogg` | Galar Elite Four context, represented by the League Tournament |
+| `battle.galar.champion_leon` | `battle/galar/champion_leon.ogg` | Galar Champion route; also shared by PvP |
 | `battle.galar.legendary_mysterious_being` | `battle/galar/legendary_mysterious_being.ogg` | Regional default — Dynamax Adventures-style catch-all |
 | `battle.galar.legendary_eternatus` | `battle/galar/legendary_eternatus.ogg` | Eternatus (Dex 890) |
 | `battle.galar.legendary_glastrier_spectrier` | `battle/galar/legendary_glastrier_spectrier.ogg` | Glastrier/Spectrier (Dex 896–897) |
@@ -142,11 +168,11 @@ One folder per region: `battle/<region>/`. Ten regions total. Not every region h
 | Key | File path | Trigger |
 |---|---|---|
 | `battle.kalos.wild` | `battle/kalos/wild.ogg` | Wild battle, Dex 650–721 |
-| `battle.kalos.trainer` | `battle/kalos/trainer.ogg` | Trainer battle, region = Kalos |
-| `battle.kalos.gym_leader` | `battle/kalos/gym_leader.ogg` | Gym Leader battle |
-| `battle.kalos.elite_four` | `battle/kalos/elite_four.ogg` | Elite Four |
-| `battle.kalos.champion` | `battle/kalos/champion.ogg` | Champion battle (also used for PvP pool) |
-| `battle.kalos.rival_friend` | `battle/kalos/rival_friend.ogg` | Rival/friend battle, PvP pool |
+| `battle.kalos.trainer` | `battle/kalos/trainer.ogg` | Regular trainer battle resolved to Kalos (RCT region first, roster vote fallback) |
+| `battle.kalos.gym_leader` | `battle/kalos/gym_leader.ogg` | Kalos Gym Leader route |
+| `battle.kalos.elite_four` | `battle/kalos/elite_four.ogg` | Kalos Elite Four route |
+| `battle.kalos.champion` | `battle/kalos/champion.ogg` | Kalos Champion route; also shared by PvP |
+| `battle.kalos.rival_friend` | `battle/kalos/rival_friend.ogg` | Kalos RCT rival/friend or real PvP pool |
 | `battle.kalos.legendary_trio` | `battle/kalos/legendary_trio.ogg` | Xerneas/Yveltal/Zygarde (Dex 716–718) |
 | `battle.kalos.team_flare_grunt` | `battle/kalos/team_flare_grunt.ogg` | Reserved |
 | `battle.kalos.team_flare_lysandre` | `battle/kalos/team_flare_lysandre.ogg` | Reserved |
@@ -156,17 +182,17 @@ One folder per region: `battle/<region>/`. Ten regions total. Not every region h
 | Key | File path | Trigger |
 |---|---|---|
 | `battle.paldea.wild` | `battle/paldea/wild.ogg` | Wild battle, Dex 906–1025 |
-| `battle.paldea.trainer` | `battle/paldea/trainer.ogg` | Trainer battle, region = Paldea |
-| `battle.paldea.gym_leader` | `battle/paldea/gym_leader.ogg` | Gym Leader battle |
-| `battle.paldea.elite_four` | `battle/paldea/elite_four.ogg` | Elite Four |
-| `battle.paldea.champion_top` | `battle/paldea/champion_top.ogg` | Champion battle (also used for PvP pool) |
+| `battle.paldea.trainer` | `battle/paldea/trainer.ogg` | Regular trainer battle resolved to Paldea (RCT region first, roster vote fallback) |
+| `battle.paldea.gym_leader` | `battle/paldea/gym_leader.ogg` | Paldea Gym Leader route |
+| `battle.paldea.elite_four` | `battle/paldea/elite_four.ogg` | Paldea Elite Four route |
+| `battle.paldea.champion_top` | `battle/paldea/champion_top.ogg` | Paldea Champion route; also shared by PvP |
 | `battle.paldea.legendary_solgaleo_lunala_dlc` | `battle/paldea/legendary_solgaleo_lunala_dlc.ogg` | Indigo Disk DLC remix, Solgaleo/Lunala (Dex 791–792) |
 
 ---
 
 ## 2. Biome Ambience
 
-One folder per region: `ambience/<region>/`. Only Kanto, Johto, Hoenn, Sinnoh, and Unova have ambience coverage (by design — no post-Unova ambience gathered). **Tracks pool across regions per matching biome** — e.g. any region's "forest"-tagged track is a candidate for any forest-type biome, not exclusive to that region.
+Biome files live under `ambience/<region>/`. Kanto, Johto, Hoenn, Sinnoh, and Unova currently have ambience pools. These tracks are grouped by matching biome tags, not locked to the region in their folder. A forest can therefore pick any registered forest track that fits the active pool.
 
 ### Kanto (`ambience/kanto/`)
 
@@ -280,6 +306,10 @@ One folder per region: `ambience/<region>/`. Only Kanto, Johto, Hoenn, Sinnoh, a
 | `ambience.gym.sinnoh_gym` | `ambience/gym/sinnoh_gym.ogg` | Inside a Sinnoh gym structure |
 | `ambience.gym.unova_gym` | `ambience/gym/unova_gym.ogg` | Inside a Unova gym structure |
 
+**Battle-resume behavior:** entering a battle temporarily gives the audio slot to battle music. The active zone is remembered separately, so winning or forfeiting inside the Gym restores the Gym theme. If the player leaves the tracked zone during the battle, normal biome ambience resumes instead.
+
+**Current looping note:** Gym, Poké Center, Poké Mart, and exact special-structure tracks are registered with `loop = false` in the current source. They resume correctly after a battle, but a finished file does not automatically restart until the zone is triggered again.
+
 ### Poké Centers — `ambience/pokecenter/` (flat pool, random pick)
 
 | Key | File path |
@@ -290,7 +320,7 @@ One folder per region: `ambience/<region>/`. Only Kanto, Johto, Hoenn, Sinnoh, a
 | `ambience.pokecenter.sinnoh_center` | `ambience/pokecenter/sinnoh_center.ogg` |
 | `ambience.pokecenter.unova_center` | `ambience/pokecenter/unova_center.ogg` |
 
-Triggered by a `MusicTriggerBlock` with `ZoneId:"cobbletunes:pokecenter"` — place one inside a Poké Center schematic.
+Place a `MusicTriggerBlock` inside the build and set `ZoneId:"cobbletunes:pokecenter"`. The client picks one track from this pool when the zone becomes active.
 
 ### Poké Marts — `ambience/pokemart/` (flat pool, random pick)
 
@@ -300,7 +330,7 @@ Triggered by a `MusicTriggerBlock` with `ZoneId:"cobbletunes:pokecenter"` — pl
 | `ambience.pokemart.mart2` | `ambience/pokemart/mart2.ogg` |
 | `ambience.pokemart.mart3` | `ambience/pokemart/mart3.ogg` |
 
-Triggered by a `MusicTriggerBlock` with `ZoneId:"cobbletunes:pokemart"`.
+Use a `MusicTriggerBlock` with `ZoneId:"cobbletunes:pokemart"`. The client picks one of the registered Mart tracks.
 
 ### Special Structures — `ambience/structure/` (1:1, no pooling — one track per exact location)
 
@@ -338,7 +368,7 @@ Triggered by a `MusicTriggerBlock` with `ZoneId:"cobbletunes:pokemart"`.
 
 ### Vanilla & BCA Structures — `ambience/vanilla/<category>/` (pooled, random pick per category)
 
-⚠️ **Unlike the description in earlier drafts of this doc, filenames here are NOT arbitrary.** Each file is registered against an exact `SoundEvent` key — the file must match the name below exactly (case-sensitive, no extension in `sounds.json`, `.ogg` on disk) or that specific pool entry stays silent.
+**Filenames in these pools are exact.** Each one has its own `SoundEvent`, so the file must match the table exactly. Paths are case-sensitive; `sounds.json` omits `.ogg`, while the file on disk includes it.
 
 | Category folder | Key | File |
 |---|---|---|
@@ -467,7 +497,7 @@ Triggered by a `MusicTriggerBlock` with `ZoneId:"cobbletunes:pokemart"`.
 | `menu.frlg` | `menu/frlg.ogg` |
 | `menu.hgss` | `menu/hgss.ogg` |
 
-Plays continuously across the title screen and every submenu (Singleplayer list, Options, Mods, etc.) as one session — stops the instant a world loads, resumes (with a fresh random pick) when returning to the title screen.
+The selected menu track keeps playing while the player moves through the title screen and its submenus. It stops as soon as a world loads, then a fresh random menu track is chosen when the player returns to the title screen.
 
 ---
 
@@ -475,20 +505,22 @@ Plays continuously across the title screen and every submenu (Singleplayer list,
 
 | Key | File path | Trigger |
 |---|---|---|
-| `effect.lowhp` | `effect/lowhp.ogg` | Player's active battle Pokémon drops to ≤25% HP. Played once (not looped) per trigger — if your file already contains multiple "beeps," that's fine, it just plays through once. |
+| `effect.lowhp` | `effect/lowhp.ogg` | The active battle Pokémon reaches ≤25% HP. The file plays once per alert sequence, so it may contain one beep or a short repeated-beep clip. |
 
 ---
 
 ## Notes for resource pack builders
 
-- **Missing files are safe.** Any path without a matching `.ogg` simply produces silence for that specific context — no crash, no error spam beyond a one-time "file does not exist" warning in the log at startup.
-- **You don't need every file.** A partial pack (e.g. just Kanto + Johto) works fine — unmapped regions/contexts will just have nothing play until you add more.
-- **`sounds.json` format** — every entry follows:
+- **Missing files are safe.** That event stays silent. Minecraft may print a missing-file warning during resource loading, but CobbleTunes does not crash.
+- **Partial packs are fine.** A Kanto-only pack works; other regions simply stay silent until their files are added.
+- **Keys and paths must match exactly.** Renaming a file without updating `sounds.json` leaves that entry silent.
+- **The usual `sounds.json` entry looks like this:**
   ```json
   "cobbletunes.<key>": {
     "category": "music",
     "sounds": [{ "name": "cobbletunes:<file path without .ogg>", "stream": true }]
   }
   ```
-  Use `"stream": true` for all of these — they're long-form tracks, not short effects (the one exception is `effect.lowhp`, which can omit `stream` since it's a brief cue).
-- **Testing a single track** without joining a battle or walking to a biome: `/playsound cobbletunes:<key> music @s` works for any key in this document.
+  Keep `"stream": true` for music files so Minecraft streams them instead of loading the whole track into memory. The short `effect.lowhp` cue is the exception.
+- **Test any entry directly** with `/playsound cobbletunes:<key> music @s`.
+- **Dynamic trainer detection only chooses a key.** It never edits, copies, or generates an `.ogg` file at runtime.
