@@ -15,22 +15,9 @@ import net.minecraft.registry.RegistryWrapper
 import net.minecraft.util.Identifier
 import net.minecraft.util.math.BlockPos
 
-/**
- * Pillar 9: a visible but clearly "technical" block that marks the location of
- * a hand-placed structure (Poké Center, Poké Mart) for music zone detection.
- * Carries a zoneId string in its block entity, which StructureZoneDetector reads
- * when scanning nearby blocks.
- *
- * Placement: put one inside each WorldEdit schematic (hidden under floor or
- * inside a wall). Set the zone via:
- *   /setblock ~ ~ ~ cobbletunes:music_trigger{ZoneId:"cobbletunes:pokecenter"}
- *   /setblock ~ ~ ~ cobbletunes:music_trigger{ZoneId:"cobbletunes:pokemart"}
- */
 class MusicTriggerBlock(settings: Settings) : BlockWithEntity(settings) {
 
-    // Required by BlockWithEntity in 1.21.1 — codec is unused since we register
-    // this block manually rather than through a data-driven registry, but the
-    // abstract member must be implemented or the class won't compile.
+    // 1.21.1 wants a codec even though this block isn't data-driven
     override fun getCodec(): MapCodec<out BlockWithEntity> =
         throw UnsupportedOperationException("MusicTriggerBlock is not data-driven")
 
@@ -40,16 +27,14 @@ class MusicTriggerBlock(settings: Settings) : BlockWithEntity(settings) {
     override fun getRenderType(state: BlockState): BlockRenderType =
         BlockRenderType.MODEL
 
-    // ── Block entity ─────────────────────────────────────────────────────────
+    // block entity
 
     class Entity(pos: BlockPos, state: BlockState) :
         BlockEntity(TYPE, pos, state) {
 
         var zoneId: String = ""
 
-        // 1.21.1: writeNbt/readNbt both take a RegistryWrapper.WrapperLookup
-        // second parameter — the lookup is unused here since ZoneId is a plain
-        // string with no registry references, but the signature must match.
+        // lookup is unused; zone id is just a plain string
         override fun writeNbt(nbt: NbtCompound, registryLookup: RegistryWrapper.WrapperLookup) {
             super.writeNbt(nbt, registryLookup)
             nbt.putString("ZoneId", zoneId)
@@ -65,7 +50,7 @@ class MusicTriggerBlock(settings: Settings) : BlockWithEntity(settings) {
         }
     }
 
-    // ── Registration — called from CobbleTunes.onInitialize() ───────────────
+    // registration
 
     companion object {
         lateinit var INSTANCE: MusicTriggerBlock

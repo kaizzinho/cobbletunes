@@ -11,14 +11,7 @@ data class MusicTrack(
     val biomeKeys: Set<String> = emptySet(),
     val legendaryDexOverrides: Set<Int> = emptySet(),
     val regions: Set<RegionOfOrigin> = emptySet(),
-    // Optional, ambience-only. When set, ClientMusicPlayer uses
-    // min(durationSeconds, its randomly-rolled rotation target) as the actual
-    // cutoff instead of always assuming the 3:30-4:00 window, and plays the
-    // track NON-LOOPING so it never restarts mid-cycle for tracks shorter than
-    // that window. Leave null (default) for tracks whose real length isn't
-    // known yet — they keep the old "always assume the random window" behavior
-    // with no change. Fill these in gradually, per-track, whenever you know a
-    // real length; there's no need to do this for every track at once.
+    // ambience-only length hint; null keeps the normal random budget
     val durationSeconds: Int? = null
 )
 
@@ -47,21 +40,18 @@ object TrackRegistry {
             .randomOrNull()
     }
 
-    /**
-     * Pillar 3: majority vote across the opposing trainer's FULL roster, per the
-     * design locked in Volume 1 — every dex number that resolves to a region
-     * casts one vote for that region; dex numbers RegionOfOrigin can't place
-     * (unmapped ranges) are silently excluded from the vote rather than counted
-     * as "no region." Ties re-roll randomly every call (no memoized tiebreak),
-     * since `Set.random()` on the tied-region set is fresh each time this runs.
-     *
-     * Falls back to an unfiltered pick across the WHOLE TRAINER_BATTLE pool
-     * (old behavior) only when nothing in the roster maps to a region at all —
-     * this should be rare/never in practice since every registered region has
-     * TRAINER_BATTLE tracks, but keeps this from ever returning null needlessly.
-     */
-    fun trainerTrackFor(dexNumbers: List<Int>): MusicTrack? {
-        val pool = tracks[MusicContext.TRAINER_BATTLE].orEmpty()
+    fun regionalBattleTrackFor(
+        context: MusicContext,
+        dexNumbers: List<Int>,
+        preferredRegion: RegionOfOrigin? = null
+    ): MusicTrack? {
+        val pool = tracks[context].orEmpty()
+        if (pool.isEmpty()) return null
+
+        // trainer metadata beats roster voting when it gives us a region
+        preferredRegion?.let { region ->
+            pool.filter { region in it.regions }.randomOrNull()?.let { return it }
+        }
 
         val regionVotes = dexNumbers.mapNotNull { RegionOfOrigin.fromDexNumber(it) }
         if (regionVotes.isNotEmpty()) {
@@ -73,11 +63,15 @@ object TrackRegistry {
             pool.filter { chosenRegion in it.regions }.randomOrNull()?.let { return it }
         }
 
-        // No region could be determined from the roster (or no tracks registered
-        // for the voted region) — fall back to the flat, unfiltered pool.
         return pool.filter { it.regions.isEmpty() }.randomOrNull()
             ?: pool.randomOrNull()
     }
+
+    fun trainerTrackFor(
+        dexNumbers: List<Int>,
+        preferredRegion: RegionOfOrigin? = null
+    ): MusicTrack? =
+        regionalBattleTrackFor(MusicContext.TRAINER_BATTLE, dexNumbers, preferredRegion)
 
     fun wildTrackFor(dexNumber: Int): MusicTrack? {
         val pool = tracks[MusicContext.WILD_BATTLE].orEmpty()
@@ -522,7 +516,7 @@ object TrackRegistry {
         register(MusicContext.AMBIENCE, MusicTrack("unova_cave_underground_ruins", soundEvent("ambience.unova.cave_underground_ruins"), biomeKeys = UNOVA_CAVE, regions = setOf(RegionOfOrigin.UNOVA), loop = false))
         register(MusicContext.AMBIENCE, MusicTrack("unova_snowy_frozen_city", soundEvent("ambience.unova.snowy_frozen_city"), biomeKeys = UNOVA_SNOWY, regions = setOf(RegionOfOrigin.UNOVA), loop = false))
 
-        // PENDING PILLAR 9 — stronghold/dungeon variant, same pattern as Ruins of Alph
+        // todo: stronghold/dungeon variant, same idea as ruins of alph
         soundEvent("ambience.unova.stronghold_underground_ruins")
     }
 
@@ -537,7 +531,7 @@ object TrackRegistry {
         register(MusicContext.CHAMPION_BATTLE, MusicTrack("unova_champion_iris", soundEvent("battle.unova.champion_iris"), regions = setOf(RegionOfOrigin.UNOVA)))
         register(MusicContext.PVP_BATTLE, MusicTrack("unova_rival_hugh", soundEvent("battle.unova.rival_hugh"), regions = setOf(RegionOfOrigin.UNOVA)))
 
-        // PWT past-champion remixes — added to the shared PVP pool alongside Hugh's theme
+        // pwt champ remixes share the pvp pool with hugh
         register(MusicContext.PVP_BATTLE, MusicTrack("unova_pvp_champion_kanto", soundEvent("battle.unova.champion_kanto_pwt"), regions = setOf(RegionOfOrigin.KANTO)))
         register(MusicContext.PVP_BATTLE, MusicTrack("unova_pvp_champion_johto", soundEvent("battle.unova.champion_johto_pwt"), regions = setOf(RegionOfOrigin.JOHTO)))
         register(MusicContext.PVP_BATTLE, MusicTrack("unova_pvp_champion_hoenn", soundEvent("battle.unova.champion_hoenn_pwt"), regions = setOf(RegionOfOrigin.HOENN)))
@@ -545,7 +539,7 @@ object TrackRegistry {
 
         register(MusicContext.LEGENDARY_BATTLE, MusicTrack("unova_legendary_black_white_kyurem", soundEvent("battle.unova.legendary_black_white_kyurem"), legendaryDexOverrides = setOf(646)))
 
-        // PENDING: Team Plasma leadership tier — grunt / N (BW1) / Colress (B2W2)
+        // todo: team plasma boss tier (n/colress)
         soundEvent("battle.unova.team_plasma_grunt")
         soundEvent("battle.unova.team_plasma_n")
         soundEvent("battle.unova.team_plasma_colress")
@@ -553,7 +547,7 @@ object TrackRegistry {
     private fun registerAlolaBattle() {
         register(MusicContext.WILD_BATTLE, MusicTrack("alola_wild", soundEvent("battle.alola.wild"), regions = setOf(RegionOfOrigin.ALOLA)))
         register(MusicContext.TRAINER_BATTLE, MusicTrack("alola_trainer", soundEvent("battle.alola.trainer"), regions = setOf(RegionOfOrigin.ALOLA)))
-        // Alola has no gyms — Island Kahuna is the closest structural equivalent
+        // alola has kahunas instead of gyms
         register(MusicContext.GYM_LEADER_BATTLE, MusicTrack("alola_island_kahuna", soundEvent("battle.alola.island_kahuna"), regions = setOf(RegionOfOrigin.ALOLA)))
         register(MusicContext.ELITE_FOUR_BATTLE, MusicTrack("alola_elite_four", soundEvent("battle.alola.elite_four"), regions = setOf(RegionOfOrigin.ALOLA)))
 
@@ -561,14 +555,14 @@ object TrackRegistry {
         register(MusicContext.CHAMPION_BATTLE, MusicTrack("alola_champion", champion, regions = setOf(RegionOfOrigin.ALOLA)))
         register(MusicContext.PVP_BATTLE, MusicTrack("alola_pvp_champion", champion, regions = setOf(RegionOfOrigin.ALOLA)))
 
-        // Regional default: covers every Ultra Beast without its own override
+        // fallback for ultra beasts without a custom pick
         register(MusicContext.LEGENDARY_BATTLE, MusicTrack("alola_legendary_default_ultra_beast", soundEvent("battle.alola.legendary_ultra_beast"), regions = setOf(RegionOfOrigin.ALOLA)))
         register(MusicContext.LEGENDARY_BATTLE, MusicTrack("alola_legendary_tapu", soundEvent("battle.alola.legendary_tapu"), legendaryDexOverrides = setOf(785, 786, 787, 788)))
         register(MusicContext.LEGENDARY_BATTLE, MusicTrack("alola_legendary_solgaleo_lunala_necrozma", soundEvent("battle.alola.legendary_solgaleo_lunala_necrozma"), legendaryDexOverrides = setOf(791, 792, 800)))
-        // Duplicate dex 800 kept intentionally alongside the above — random pick between base/fused Necrozma
+        // dex 800 is duplicated on purpose so necrozma can roll either theme
         register(MusicContext.LEGENDARY_BATTLE, MusicTrack("alola_legendary_necrozma_fused", soundEvent("battle.alola.legendary_necrozma_fused"), legendaryDexOverrides = setOf(800)))
 
-        // PENDING: no "faction leadership" MusicContext yet
+        // todo: faction-boss ctx
         soundEvent("battle.alola.team_skull_guzma")
         soundEvent("battle.alola.aether_foundation")
         soundEvent("battle.alola.aether_president_lusamine")
@@ -579,34 +573,34 @@ object TrackRegistry {
         register(MusicContext.WILD_BATTLE, MusicTrack("galar_wild", soundEvent("battle.galar.wild"), regions = setOf(RegionOfOrigin.GALAR)))
         register(MusicContext.TRAINER_BATTLE, MusicTrack("galar_trainer", soundEvent("battle.galar.trainer"), regions = setOf(RegionOfOrigin.GALAR)))
         register(MusicContext.GYM_LEADER_BATTLE, MusicTrack("galar_gym_leader", soundEvent("battle.galar.gym_leader"), regions = setOf(RegionOfOrigin.GALAR)))
-        // Galar has no Elite Four — League Tournament is the closest structural equivalent
+        // galar's league tournament fills the e4 slot
         register(MusicContext.ELITE_FOUR_BATTLE, MusicTrack("galar_elite_four", soundEvent("battle.galar.league_tournament"), regions = setOf(RegionOfOrigin.GALAR)))
 
         val champion = soundEvent("battle.galar.champion_leon")
         register(MusicContext.CHAMPION_BATTLE, MusicTrack("galar_champion", champion, regions = setOf(RegionOfOrigin.GALAR)))
         register(MusicContext.PVP_BATTLE, MusicTrack("galar_pvp_champion", champion, regions = setOf(RegionOfOrigin.GALAR)))
 
-        // Regional default: Dynamax Adventures' randomized-legendary theme, covers everything without its own override
+        // dynamax adventures is the galar legendary fallback
         register(MusicContext.LEGENDARY_BATTLE, MusicTrack("galar_legendary_default_mysterious_being", soundEvent("battle.galar.legendary_mysterious_being"), regions = setOf(RegionOfOrigin.GALAR)))
         register(MusicContext.LEGENDARY_BATTLE, MusicTrack("galar_legendary_eternatus", soundEvent("battle.galar.legendary_eternatus"), legendaryDexOverrides = setOf(890)))
-        // Sourced from the Paldea folder (Indigo Disk remix location) but these are Galar dex numbers
+        // files sit under paldea, but these dex ids are galar
         register(MusicContext.LEGENDARY_BATTLE, MusicTrack("galar_legendary_glastrier_spectrier", soundEvent("battle.galar.legendary_glastrier_spectrier"), legendaryDexOverrides = setOf(896, 897)))
 
-        // PENDING: battle facility trainers, same bucket as Emerald/Platinum's Frontier Brain
+        // todo: battle-facility trainer ctx
         soundEvent("battle.galar.battle_tower")
     }
 
     private fun registerHisuiBattle() {
-        // Legends: Arceus has no gym/trainer/E4/champion/rival structure — only wild battles and Arceus itself
+        // hisui only needs wild + arceus tracks here
         register(MusicContext.WILD_BATTLE, MusicTrack("hisui_wild", soundEvent("battle.hisui.wild"), regions = setOf(RegionOfOrigin.HISUI)))
-        // Arceus is dex 493 (Sinnoh's number) despite living in the Hisui folder — global by dex, as usual
+        // arceus stays dex 493 even though the ogg is in hisui
         register(MusicContext.LEGENDARY_BATTLE, MusicTrack("hisui_legendary_arceus", soundEvent("battle.hisui.legendary_arceus"), legendaryDexOverrides = setOf(493)))
     }
 
     private fun registerKalosBattle() {
         register(MusicContext.WILD_BATTLE, MusicTrack("kalos_wild", soundEvent("battle.kalos.wild"), regions = setOf(RegionOfOrigin.KALOS)))
         register(MusicContext.TRAINER_BATTLE, MusicTrack("kalos_trainer", soundEvent("battle.kalos.trainer"), regions = setOf(RegionOfOrigin.KALOS)))
-        // Korrina's special "Successor" track discarded — she uses this standard theme like every other gym leader
+        // korrina uses the regular gym theme here
         register(MusicContext.GYM_LEADER_BATTLE, MusicTrack("kalos_gym_leader", soundEvent("battle.kalos.gym_leader"), regions = setOf(RegionOfOrigin.KALOS)))
         register(MusicContext.ELITE_FOUR_BATTLE, MusicTrack("kalos_elite_four", soundEvent("battle.kalos.elite_four"), regions = setOf(RegionOfOrigin.KALOS)))
 
@@ -617,7 +611,7 @@ object TrackRegistry {
 
         register(MusicContext.LEGENDARY_BATTLE, MusicTrack("kalos_legendary_trio", soundEvent("battle.kalos.legendary_trio"), legendaryDexOverrides = setOf(716, 717, 718)))
 
-        // PENDING: no "faction leadership" MusicContext yet
+        // todo: faction-boss ctx
         soundEvent("battle.kalos.team_flare_grunt")
         soundEvent("battle.kalos.team_flare_lysandre")
     }
@@ -632,56 +626,21 @@ object TrackRegistry {
         register(MusicContext.CHAMPION_BATTLE, MusicTrack("paldea_champion", champion, regions = setOf(RegionOfOrigin.PALDEA)))
         register(MusicContext.PVP_BATTLE, MusicTrack("paldea_pvp_champion", champion, regions = setOf(RegionOfOrigin.PALDEA)))
 
-        // Indigo Disk DLC remix — same dex numbers as Alola's original, duplicate kept intentionally
+        // indigo disk remix; duplicate alola dex ids are intentional
         register(MusicContext.LEGENDARY_BATTLE, MusicTrack("paldea_legendary_solgaleo_lunala_dlc", soundEvent("battle.paldea.legendary_solgaleo_lunala_dlc"), legendaryDexOverrides = setOf(791, 792)))
     }
 
-    // ── Pillar 9 extensions ────────────────────────────────────────────────────
+    // zone/structure tracks
 
-    /**
-     * Pillar 9: resolves the correct gym ambience track for the given region.
-     * Uses RegionOfOrigin tag filtering — same pattern as wildTrackFor() — so
-     * each Cobbleverse gym structure maps to its region's theme. Falls back to
-     * a random pick from the whole GYM_AMBIENCE pool if no region match exists
-     * (shouldn't happen in practice since every region with a worldgen gym
-     * structure has a registered track, but keeps this from returning null).
-     */
     fun gymAmbienceTrackFor(region: RegionOfOrigin): MusicTrack? {
         val pool = tracks[MusicContext.GYM_AMBIENCE].orEmpty()
         return pool.filter { region in it.regions }.randomOrNull()
             ?: pool.randomOrNull()
     }
 
-    /**
-     * Pillar 9 registration — gyms, Poké Centers, Poké Marts.
-     * Called from bootstrap() alongside the existing region registrations.
-     *
-     * Gym tracks: one per region currently in the Cobbleverse datapack, tagged
-     * with their RegionOfOrigin so gymAmbienceTrackFor() can resolve the right
-     * one from the structure ID. Regions not yet in the Cobbleverse datapack
-     * (Johto gyms, etc.) get their entries here ready for when those structures
-     * are added — the resolver already handles them, no code change needed then.
-     *
-     * Poké Center tracks: flat pool, no region tag. All five regional center
-     * themes go into one pool and are picked randomly — matching the games where
-     * the center theme is iconic but not region-specific per-building.
-     *
-     * Poké Mart tracks: same flat-pool approach, three tracks.
-     *
-     * Sound path convention follows the existing pattern:
-     *   ambience.<category>.<name>
-     * where category is "gym", "pokecenter", or "pokemart".
-     */
-    // Structure ID → dedicated track for SPECIAL_STRUCTURE context.
-    // Separate from the main `tracks` map since these are 1:1 lookups by
-    // structure ID, not pooled by context/region.
+    // exact structure id -> one dedicated track
     private val structureTracks: MutableMap<String, MusicTrack> = mutableMapOf()
 
-    /**
-     * Pillar 9 special structures: direct 1:1 lookup by Cobbleverse structure ID.
-     * Returns null if this structure has no registered track — caller falls back
-     * to normal biome ambience in that case.
-     */
     fun specialStructureTrackFor(structureId: String): MusicTrack? =
         structureTracks[structureId]
 
@@ -689,20 +648,18 @@ object TrackRegistry {
         structureTracks[structureId] = track
     }
 
-    // Category → pool of tracks, for vanilla/BCA structures (random pick per
-    // category, unlike structureTracks above which is 1:1 by exact structure ID).
+    // vanilla/bca category -> random pool
     private val structureCategoryTracks: MutableMap<String, MutableList<MusicTrack>> = mutableMapOf()
 
     private fun registerStructureCategoryTrack(category: String, track: MusicTrack) {
         structureCategoryTracks.getOrPut(category) { mutableListOf() }.add(track)
     }
 
-    /** Pillar 9 extension: random pick from a vanilla/BCA structure category's pool. */
     fun vanillaStructureTrackFor(category: String): MusicTrack? =
         structureCategoryTracks[category]?.randomOrNull()
 
     private fun registerProximityAmbience() {
-        // ── Gym ambience — one per region ──────────────────────────────────
+        // gym ambience, one per region
         register(MusicContext.GYM_AMBIENCE, MusicTrack(
             "gym_kanto", soundEvent("ambience.gym.kanto_gym"),
             loop = false, regions = setOf(RegionOfOrigin.KANTO)
@@ -724,35 +681,26 @@ object TrackRegistry {
             loop = false, regions = setOf(RegionOfOrigin.UNOVA)
         ))
 
-        // ── Poké Center — flat pool ─────────────────────────────────────────
+        // pokecenter pool
         register(MusicContext.POKECENTER, MusicTrack("pokecenter_kanto",  soundEvent("ambience.pokecenter.kanto_center"),  loop = false))
         register(MusicContext.POKECENTER, MusicTrack("pokecenter_johto",  soundEvent("ambience.pokecenter.johto_center"),  loop = false))
         register(MusicContext.POKECENTER, MusicTrack("pokecenter_hoenn",  soundEvent("ambience.pokecenter.hoenn_center"),  loop = false))
         register(MusicContext.POKECENTER, MusicTrack("pokecenter_sinnoh", soundEvent("ambience.pokecenter.sinnoh_center"), loop = false))
         register(MusicContext.POKECENTER, MusicTrack("pokecenter_unova",  soundEvent("ambience.pokecenter.unova_center"),  loop = false))
 
-        // ── Poké Mart — flat pool ───────────────────────────────────────────
+        // pokemart pool
         register(MusicContext.POKEMART, MusicTrack("pokemart_1", soundEvent("ambience.pokemart.mart1"), loop = false))
         register(MusicContext.POKEMART, MusicTrack("pokemart_2", soundEvent("ambience.pokemart.mart2"), loop = false))
         register(MusicContext.POKEMART, MusicTrack("pokemart_3", soundEvent("ambience.pokemart.mart3"), loop = false))
     }
 
-    /**
-     * Pillar 9 special structures: one track per Cobbleverse structure ID.
-     * Sound path convention: ambience.structure.<track_name>
-     * OGG files go in: assets/cobbletunes/sounds/ambience/structure/
-     *
-     * Note on filename mismatches intentionally preserved:
-     *   flower_paradise → route210  (that's the track chosen for this structure)
-     *   wind_plant      → wild_plant (filename typo in the source, kept as-is)
-     */
     private fun registerSpecialStructures() {
         fun ss(structureId: String, trackName: String) = registerSpecialStructure(
             "cobbleverse:$structureId",
             MusicTrack("special_$structureId", soundEvent("ambience.structure.$trackName"), loop = false)
         )
 
-        // Kanto
+        // kanto
         ss("ash",            "ash")
         ss("crown_cemetery", "crown_cemetery")
         ss("articuno",       "articuno")
@@ -760,13 +708,13 @@ object TrackRegistry {
         ss("moltres",        "moltres")
         ss("mew",            "mew")
 
-        // Johto
+        // johto
         ss("bell_tower",    "bell_tower")
         ss("burned_tower",  "burned_tower")
         ss("celebi_shrine", "celebi_shrine")
         ss("whirl_island",  "whirl_island")
 
-        // Hoenn
+        // hoenn
         ss("groudon",       "groudon")
         ss("kyogre",        "kyogre")
         ss("regirock",      "regirock")
@@ -778,7 +726,7 @@ object TrackRegistry {
         ss("sky_pillar",    "sky_pillar")
         ss("dyna_tree",     "dyna_tree")
 
-        // Sinnoh
+        // sinnoh
         ss("spear_pillar",        "spear_pillar")
         ss("snowpoint_temple",    "snowpoint_temple")
         ss("split_decision_temple","split_decision_temple")
@@ -790,13 +738,6 @@ object TrackRegistry {
         ss("manaphy",             "manaphy")
     }
 
-    /**
-     * Underground cave ambience: draws from all cave-tagged biome sets across
-     * all regions, region-blind. Called when the client detects underground
-     * conditions (sky light=0, Y≤50) in a biome that has no registered
-     * ambience tracks of its own. Named cave biomes (dripstone_caves, etc.)
-     * keep their own specific pools via normal biome resolution.
-     */
     fun caveAmbienceTrack(): MusicTrack? {
         val caveBiomes = setOf(
             "minecraft:dripstone_caves", "minecraft:lush_caves", "minecraft:deep_dark",
@@ -811,25 +752,13 @@ object TrackRegistry {
         return pool.randomOrNull()
     }
 
-    // ── Low HP beep sound effect (not a music track — no loop, no crossfade) ──
+    // low hp sfx; no loop/crossfade
     private val LOW_HP_SOUND_EVENT: net.minecraft.sound.SoundEvent by lazy {
         net.minecraft.sound.SoundEvent.of(net.minecraft.util.Identifier.of(MOD_ID, "effect.lowhp"))
     }
 
-    /** Returns the low-HP beep SoundEvent for direct playback via SoundManager. */
     fun lowHpSoundEvent(): net.minecraft.sound.SoundEvent = LOW_HP_SOUND_EVENT
 
-    /**
-     * Vanilla + BCA structure ambience — pool-based, random pick per category.
-     * Sound path convention: ambience.vanilla.<category>.<track_name>
-     * OGG files: assets/cobbletunes/sounds/ambience/vanilla/<category>/<track_name>.ogg
-     *
-     * Typos preserved intentionally to match actual filenames on disk:
-     *   village_savanna: "verdantuf_town" (missing 'r')
-     *   swamp_hut: "losrtlorn_forest" (transposed letters)
-     *   stronghold: "dragonpsiral" (transposed letters)
-     *   ruined_portal: "distorn_world" (missing 't')
-     */
     private fun registerVanillaStructures() {
         fun vs(category: String, trackName: String) = registerStructureCategoryTrack(
             category,

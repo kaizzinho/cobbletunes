@@ -8,14 +8,6 @@ import net.minecraft.sound.SoundEvent
 import kotlin.math.max
 import kotlin.math.min
 
-/**
- * A looping music/battle track that ramps its volume in on start and out on stop
- * instead of hard-cutting, so ClientMusicPlayer can crossfade between contexts.
- *
- * AbstractSoundInstance exposes `volume` as a protected mutable field, which is
- * exactly the hook we need: we recompute it every tick and the sound engine picks
- * the new value up on its own without us touching OpenAL/SoundEngine directly.
- */
 class FadingSoundInstance(
     soundEvent: SoundEvent,
     private val targetVolume: Float,
@@ -39,13 +31,10 @@ class FadingSoundInstance(
         this.volume = if (fadeInSeconds <= 0f) {
             targetVolume
         } else {
-            0.05f  // absolute minimum, not a fraction of targetVolume —
-            // at low music volumes (e.g. 50%), 0.05f * targetVolume
-            // drops below the engine's channel allocation threshold
+            0.05f  // small floor so quiet tracks still get an audio channel
         }
     }
 
-    /** Start ramping this track's volume down; ClientMusicPlayer stops it once finished(). */
     fun beginFadeOut(seconds: Float) {
         fadingOut = true
         fadeOutTicks = max(1, (seconds * 20f).toInt())

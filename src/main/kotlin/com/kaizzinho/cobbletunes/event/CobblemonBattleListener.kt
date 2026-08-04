@@ -1,9 +1,13 @@
 package com.kaizzinho.cobbletunes.event
 
 import com.cobblemon.mod.common.api.battles.model.PokemonBattle
+import com.cobblemon.mod.common.api.battles.model.actor.BattleActor
+import com.cobblemon.mod.common.api.battles.model.actor.EntityBackedBattleActor
 import com.cobblemon.mod.common.api.events.CobblemonEvents
 import com.kaizzinho.cobbletunes.LOGGER
 import com.kaizzinho.cobbletunes.MOD_ID
+import com.kaizzinho.cobbletunes.compat.rct.RawRctTrainer
+import com.kaizzinho.cobbletunes.compat.rct.RctTrainerClassifier
 import com.kaizzinho.cobbletunes.config.CobbleTunesServerConfig
 import com.kaizzinho.cobbletunes.network.BattleMusicEndPayload
 import com.kaizzinho.cobbletunes.network.BattleMusicStartPayload
@@ -11,20 +15,9 @@ import com.kaizzinho.cobbletunes.network.PlayerDeathPayload
 import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
 import net.fabricmc.loader.api.FabricLoader
+import java.lang.reflect.Modifier
+import java.util.Locale
 
-/**
- * Common/server-side code — lives in main/kotlin, NOT client/kotlin, because
- * PokemonBattle and its real ServerPlayerEntity list only exist server-side.
- *
- * Verified end-to-end against Cobblemon 1.7.3 via genSources:
- *   PokemonBattle.players, .getActor(), .isPvW/.isPvN/.isPvP, .actors
- *   BattleActor.pokemonList → BattlePokemon.effectedPokemon → Pokemon.species
- *   Species.labels (HashSet<String>), .nationalPokedexNumber: Int
- *
- * Pillar 4: RCT integration via RctBridge (below). All RCT class references are
- * isolated inside that object so the JVM never attempts to load them when RCT is
- * absent — FabricLoader.isModLoaded("rctmod") gates every call site.
- */
 object CobblemonBattleListener {
 
     fun register() {
@@ -38,8 +31,12 @@ object CobblemonBattleListener {
                     continue
                 }
 
-                val opposingSpecies = battle.actors
+                // side isn't exposed by these mappings, so grab every actor except us
+                val opposingActors: List<BattleActor> = battle.actors
                     .filter { it != playerActor }
+                    .toList()
+
+                val opposingSpecies = opposingActors
                     .flatMap { it.pokemonList }
                     .map { it.effectedPokemon.species }
 
@@ -51,19 +48,32 @@ object CobblemonBattleListener {
                 val dexNumber = primarySpecies?.nationalPokedexNumber ?: -1
                 val opposingDexNumbers = opposingSpecies.map { it.nationalPokedexNumber }
 
-                // Pillar 4: resolve RCT tier if the mod is loaded and this is an
-                // NPC battle — empty string means "not an RCT NPC" on the client.
-                val trainerTier = if (battle.isPvN) RctBridge.resolveTrainerTier(battle) else ""
+                val trainerRoute = if (battle.isPvN) {
+                    RctBridge.resolveTrainerRoute(battle, opposingActors)
+                } else {
+                    ""
+                }
 
-                val payload = BattleMusicStartPayload(
-                    isWild = battle.isPvW,
-                    isTrainer = battle.isPvN,
-                    isLegendary = isLegendary,
-                    dexNumber = dexNumber,
-                    opposingDexNumbers = opposingDexNumbers,
-                    trainerTier = trainerTier
+                if (CobbleTunesServerConfig.current.debugLogging) {
+                    LOGGER.info(
+                        "[$MOD_ID] [Debug] [Battle payload] player=${player.name.string} " +
+                            "battle=${battle.battleId} isWild=${battle.isPvW} " +
+                            "isTrainer=${battle.isPvN} route='$trainerRoute' " +
+                            "opposingDex=$opposingDexNumbers"
+                    )
+                }
+
+                ServerPlayNetworking.send(
+                    player,
+                    BattleMusicStartPayload(
+                        isWild = battle.isPvW,
+                        isTrainer = battle.isPvN,
+                        isLegendary = isLegendary,
+                        dexNumber = dexNumber,
+                        opposingDexNumbers = opposingDexNumbers,
+                        trainerTier = trainerRoute
+                    )
                 )
-                ServerPlayNetworking.send(player, payload)
             }
         }
 
@@ -79,19 +89,7 @@ object CobblemonBattleListener {
             }
         }
 
-        // Death during a battle: Cobblemon has no BATTLE_DEFEAT event, so we
-        // use Fabric's AFTER_RESPAWN instead. This fires after the player has
-        // already respawned and the battle has ended server-side. We send
-        // PlayerDeathPayload rather than BattleMusicEndPayload because death
-        // needs a silence window before resuming ambience — the player may
-        // have respawned in a completely different biome, so we should not
-        // resume the pre-battle ambience track but instead let the biome
-        // watcher re-detect and debounce normally after the silence.
-        //
-        // !! VERIFY ServerPlayerEvents.AFTER_RESPAWN's exact signature !!
-        // Standard Fabric API shape: (oldPlayer, newPlayer, alive) where
-        // alive=false means the player actually died (vs dimension change).
-        // alive=true means this was a dimension-change "respawn", not death.
+        // cobblemon has no defeat event, so use the real respawn flag instead
         ServerPlayerEvents.AFTER_RESPAWN.register { _, newPlayer, alive ->
             if (!alive) {
                 ServerPlayNetworking.send(newPlayer, PlayerDeathPayload)
@@ -104,59 +102,136 @@ object CobblemonBattleListener {
         LOGGER.info("[$MOD_ID] CobblemonBattleListener registered (server-side battle classification).")
     }
 
-    /**
-     * Pillar 4: soft-dependency bridge to RCT. Every RCT class reference lives
-     * inside this object so the JVM class-loader never touches them unless this
-     * object is actually accessed. The isModLoaded guard at every call site
-     * ensures that — if RCT is absent, resolveTrainerTier() returns "" immediately
-     * without ever triggering a class-load of anything from rctmod or rctapi.
-     *
-     * Chain used (all confirmed via decompilation of the real jars):
-     *   BattleState.findFirst(battle) — static helper on rctapi's BattleState.
-     *   BattleState.getParticipants2() — the NPC/trainer side of the battle.
-     *   Trainer.getEntity() — the raw LivingEntity for each participant.
-     *   TrainerMob.getTrainerId() — stable string ID ("kanto_brock", etc.)
-     *   RCTMod.getInstance().getTrainerManager().getData(mob) — TrainerMobData.
-     *   TrainerMobData.getType().id() — tier string: "leader", "e4", "champ",
-     *     "rival", "normal", or a team-affiliation type.
-     */
     private object RctBridge {
+        private const val RCT_MOD_ID = "rctmod"
+        private const val RCT_MOD_CLASS = "com.gitlab.srcmc.rctmod.api.RCTMod"
+
         private val rctAvailable by lazy {
-            FabricLoader.getInstance().isModLoaded("rctmod")
+            FabricLoader.getInstance().isModLoaded(RCT_MOD_ID)
         }
 
-        fun resolveTrainerTier(battle: PokemonBattle): String {
+        private var compatibilityFailureLogged = false
+
+        private data class TrainerProbe(
+            val raw: RawRctTrainer,
+            val dataFound: Boolean
+        )
+
+        fun resolveTrainerRoute(
+            battle: PokemonBattle,
+            opposingActors: List<BattleActor>
+        ): String {
             if (!rctAvailable) return ""
+
             return try {
-                resolveInternal(battle)
+                for (actor in opposingActors) {
+                    val entity = (actor as? EntityBackedBattleActor<*>)?.entity ?: continue
+                    val trainerId = invokeNoArg(entity, "getTrainerId") as? String ?: continue
+                    if (trainerId.isBlank()) continue
+
+                    val probe = readTrainerData(entity, trainerId)
+                    val result = RctTrainerClassifier.classify(probe.raw)
+                    val route = result.route()
+
+                    if (CobbleTunesServerConfig.current.debugLogging) {
+                        val source = result.source.name.lowercase(Locale.ROOT).replace('_', '-')
+                        LOGGER.info(
+                            "[$MOD_ID] [Debug] [RCT] battle=${battle.battleId} " +
+                                "actor=${actor.javaClass.name} entity=${entity.javaClass.name} " +
+                                "trainerId='${result.trainerId}' dataFound=${probe.dataFound} " +
+                                "rawType='${result.rawType.ifEmpty { "missing" }}' " +
+                                "optional=${result.optional} role='${result.role.routeId}' " +
+                                "region='${result.region ?: "unknown"}' source=$source route='$route'"
+                        )
+                    }
+                    return route
+                }
+
+                if (CobbleTunesServerConfig.current.debugLogging) {
+                    LOGGER.info(
+                        "[$MOD_ID] [Debug] [RCT] No RCT trainer actor in battle " +
+                            "${battle.battleId}; using regular trainer music"
+                    )
+                }
+                ""
             } catch (e: Exception) {
-                LOGGER.warn("[$MOD_ID] RCT tier resolution failed for battle ${battle.battleId}: ${e.message}")
+                logCompatibilityFailure(e)
+                ""
+            } catch (e: LinkageError) {
+                logCompatibilityFailure(e)
                 ""
             }
         }
 
-        private fun resolveInternal(battle: PokemonBattle): String {
-            val state = com.gitlab.srcmc.rctapi.api.battle.BattleState.findFirst(battle)
-                ?: return ""
+        private fun readTrainerData(entity: Any, trainerId: String): TrainerProbe {
+            val missing = TrainerProbe(
+                raw = RawRctTrainer(trainerId, "", optional = false),
+                dataFound = false
+            )
 
-            val opponents = state.participants2.toList()
+            val rctModClass = Class.forName(RCT_MOD_CLASS, false, entity.javaClass.classLoader)
+            val getInstance = rctModClass.methods.firstOrNull { method ->
+                method.name == "getInstance" &&
+                    method.parameterCount == 0 &&
+                    Modifier.isStatic(method.modifiers)
+            } ?: return missing
 
-            for (trainer in opponents) {
-                val entity = trainer.entity
-                if (entity !is com.gitlab.srcmc.rctmod.world.entities.TrainerMob) continue
+            val rctMod = getInstance.invoke(null) ?: return missing
+            val trainerManager = invokeNoArg(rctMod, "getTrainerManager") ?: return missing
 
-                val tmd = com.gitlab.srcmc.rctmod.api.RCTMod.getInstance()
-                    .getTrainerManager()
-                    .getData(entity)
+            // string lookup is the clean path in rct 0.18.1; entity lookup is a fallback
+            val trainerData = invokeOneArg(trainerManager, "getData", trainerId)
+                ?: invokeOneArg(trainerManager, "getData", entity)
+                ?: return missing
 
-                val tierId: String = tmd.getType().id() ?: return ""
+            val type = invokeNoArg(trainerData, "getType")
+            val typeId = when (type) {
+                is String -> type
+                null -> ""
+                else -> (invokeNoArg(type, "id") ?: invokeNoArg(type, "getId"))?.toString().orEmpty()
+            }.trim().lowercase(Locale.ROOT)
 
-                if (tierId == "leader" || tierId == "e4" ||
-                    tierId == "champ" || tierId == "rival") {
-                    return tierId
-                }
+            val optional = invokeNoArg(trainerData, "isOptional") as? Boolean ?: false
+
+            return TrainerProbe(
+                raw = RawRctTrainer(
+                    trainerId = trainerId,
+                    typeId = typeId,
+                    optional = optional
+                ),
+                dataFound = true
+            )
+        }
+
+        private fun invokeNoArg(target: Any, methodName: String): Any? {
+            val method = target.javaClass.methods.firstOrNull {
+                it.name == methodName && it.parameterCount == 0
+            } ?: return null
+            return method.invoke(target)
+        }
+
+        private fun invokeOneArg(target: Any, methodName: String, argument: Any): Any? {
+            val candidates = target.javaClass.methods.filter {
+                it.name == methodName && it.parameterCount == 1
             }
-            return ""
+
+            val method = candidates.firstOrNull {
+                it.parameterTypes[0] == argument.javaClass
+            } ?: candidates.firstOrNull {
+                it.parameterTypes[0].isAssignableFrom(argument.javaClass)
+            } ?: return null
+
+            return method.invoke(target, argument)
+        }
+
+        private fun logCompatibilityFailure(error: Throwable) {
+            if (compatibilityFailureLogged) return
+            compatibilityFailureLogged = true
+            LOGGER.warn(
+                "[$MOD_ID] [RCT] Optional integration is incompatible or unavailable; " +
+                    "RCT battles will fall back to ordinary trainer music",
+                error
+            )
         }
     }
 }

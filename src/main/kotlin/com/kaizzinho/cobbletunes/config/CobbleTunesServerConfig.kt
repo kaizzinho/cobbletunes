@@ -6,19 +6,6 @@ import com.kaizzinho.cobbletunes.MOD_ID
 import net.fabricmc.loader.api.FabricLoader
 import java.io.File
 
-/**
- * Server-side/common debug config — separate from CobbleTunesClientConfig
- * because CobblemonBattleListener and StructureZoneDetector live in
- * main/kotlin (common source set) and cannot reference client-only classes.
- * On a dedicated server this runs in an entirely separate JVM from any
- * client, so the two configs are genuinely independent files even though
- * they share the same field name/meaning — enabling debug logging for a
- * bug report means toggling BOTH files' debugLogging to true if the issue
- * could involve server-side behavior (structure detection, RCT tier
- * resolution), or just the client one if it's purely an audio/playback issue.
- *
- * Serialized to config/cobbletunes-server.json.
- */
 data class CobbleTunesServerConfig(
     var debugLogging: Boolean = false
 ) {
@@ -29,7 +16,6 @@ data class CobbleTunesServerConfig(
 
         private var instance: CobbleTunesServerConfig = CobbleTunesServerConfig()
 
-        /** Current loaded config — call load() once at startup before reading this. */
         val current: CobbleTunesServerConfig get() = instance
 
         fun load(): CobbleTunesServerConfig {

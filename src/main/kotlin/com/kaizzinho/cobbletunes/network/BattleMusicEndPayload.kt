@@ -6,10 +6,6 @@ import net.minecraft.network.codec.PacketCodec
 import net.minecraft.network.packet.CustomPayload
 import net.minecraft.util.Identifier
 
-/**
- * Sent server -> client on BATTLE_VICTORY or BATTLE_FLED. No fields needed —
- * the client always just falls back to ambience regardless of which one fired.
- */
 object BattleMusicEndPayload : CustomPayload {
     override fun getId(): CustomPayload.Id<out CustomPayload> = ID
 

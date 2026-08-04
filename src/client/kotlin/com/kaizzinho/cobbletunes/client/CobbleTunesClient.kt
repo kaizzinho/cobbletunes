@@ -18,11 +18,6 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking
 class CobbleTunesClient : ClientModInitializer {
     private var onDeathScreen = false
 
-    /**
-     * Routine trace logging (death screen trigger, low HP trigger) — only
-     * prints when config.debugLogging is enabled. Startup logs and
-     * LOGGER.warn calls elsewhere in this file are NOT gated by this.
-     */
     private fun debugLog(message: String) {
         if (config.debugLogging) {
             LOGGER.info("[$MOD_ID] [Debug] $message")
@@ -37,15 +32,8 @@ class CobbleTunesClient : ClientModInitializer {
 
         private const val AMBIENCE_CHECK_INTERVAL_TICKS = 20
 
-        /**
-         * Pillar 9: maps Cobbleverse structure IDs to the RegionOfOrigin used by
-         * TrackRegistry.gymAmbienceTrackFor(). All known Cobbleverse gym structures
-         * and their region. "team_rocket_tower" and the Kanto league / spires are
-         * mapped to KANTO since that's the region their music belongs to.
-         * Add Johto/Hoenn/Sinnoh entries here once those gym datapacks exist.
-         */
         private val STRUCTURE_TO_REGION: Map<String, RegionOfOrigin> = mapOf(
-            // Kanto gyms
+            // kanto gyms
             "cobbleverse:brock"              to RegionOfOrigin.KANTO,
             "cobbleverse:misty"              to RegionOfOrigin.KANTO,
             "cobbleverse:ltsurge"            to RegionOfOrigin.KANTO,
@@ -59,7 +47,7 @@ class CobbleTunesClient : ClientModInitializer {
             "cobbleverse:crown_spire"        to RegionOfOrigin.KANTO,
             "cobbleverse:dawn_tower"         to RegionOfOrigin.KANTO,
             "cobbleverse:dusk_tower"         to RegionOfOrigin.KANTO,
-            // Johto gyms
+            // johto gyms
             "cobbleverse:valerio"            to RegionOfOrigin.JOHTO,
             "cobbleverse:chiara"             to RegionOfOrigin.JOHTO,
             "cobbleverse:angelo"             to RegionOfOrigin.JOHTO,
@@ -70,7 +58,7 @@ class CobbleTunesClient : ClientModInitializer {
             "cobbleverse:sandra"             to RegionOfOrigin.JOHTO,
             "cobbleverse:johto_league"       to RegionOfOrigin.JOHTO,
             "cobbleverse:rocket_radio_tower" to RegionOfOrigin.JOHTO,
-            // Hoenn gyms
+            // hoenn gyms
             "cobbleverse:rudi"               to RegionOfOrigin.HOENN,
             "cobbleverse:adriano"            to RegionOfOrigin.HOENN,
             "cobbleverse:tell_pat"           to RegionOfOrigin.HOENN,
@@ -80,7 +68,7 @@ class CobbleTunesClient : ClientModInitializer {
             "cobbleverse:walter"             to RegionOfOrigin.HOENN,
             "cobbleverse:petra"              to RegionOfOrigin.HOENN,
             "cobbleverse:hoenn_league"       to RegionOfOrigin.HOENN,
-            // Sinnoh gyms
+            // sinnoh gyms
             "cobbleverse:gardenia"           to RegionOfOrigin.SINNOH,
             "cobbleverse:ferruccio"          to RegionOfOrigin.SINNOH,
             "cobbleverse:marzia"             to RegionOfOrigin.SINNOH,
@@ -99,7 +87,7 @@ class CobbleTunesClient : ClientModInitializer {
     private var pendingMenuTrack: com.kaizzinho.cobbletunes.client.sound.MusicTrack? = null
     private var menuReadyTicks = 0
 
-    // Low HP beep state
+    // low hp beep state
     private var lowHpBeepsRemaining = 0
     private var lowHpBeepCooldownTicks = 0
     private var lowHpCheckCounter = 0
@@ -124,18 +112,21 @@ class CobbleTunesClient : ClientModInitializer {
         LOGGER.info("[$MOD_ID] Client init complete.")
     }
 
-    /**
-     * Pillar 4/6/9 routing. Battle contexts resolve from isWild/isTrainer/trainerTier.
-     * Pillar 9: StructureZonePayload is received here and routed to the correct
-     * proximity context (GYM_AMBIENCE, POKECENTER, POKEMART) or clears the zone
-     * (empty string → resume normal biome ambience via musicPlayer.clearZone()).
-     */
     private fun registerNetworkReceivers() {
         ClientPlayNetworking.registerGlobalReceiver(BattleMusicStartPayload.ID) { payload, context ->
             context.client().execute {
+                // route stays string-based so old packets like "leader" still work
+                val routeParts = payload.trainerTier.split('|', limit = 2)
+                val trainerTier = routeParts.firstOrNull().orEmpty()
+                val preferredRegion = routeParts.getOrNull(1)?.let { regionId ->
+                    RegionOfOrigin.entries.firstOrNull {
+                        it.name.equals(regionId, ignoreCase = true)
+                    }
+                }
+
                 val musicContext = when {
                     payload.isWild -> if (payload.isLegendary) MusicContext.LEGENDARY_BATTLE else MusicContext.WILD_BATTLE
-                    payload.isTrainer -> when (payload.trainerTier) {
+                    payload.isTrainer -> when (trainerTier) {
                         "leader" -> MusicContext.GYM_LEADER_BATTLE
                         "e4"     -> MusicContext.ELITE_FOUR_BATTLE
                         "champ"  -> MusicContext.CHAMPION_BATTLE
@@ -145,7 +136,18 @@ class CobbleTunesClient : ClientModInitializer {
                     else -> MusicContext.PVP_BATTLE
                 }
                 val dexNumber = payload.dexNumber.takeIf { it >= 0 }
-                musicPlayer.playBattleContext(musicContext, dexNumber, payload.opposingDexNumbers)
+
+                debugLog(
+                    "[Battle route] raw='${payload.trainerTier}' tier='$trainerTier' " +
+                            "region=${preferredRegion?.name ?: "roster-vote"} context=$musicContext"
+                )
+
+                musicPlayer.playBattleContext(
+                    context = musicContext,
+                    dexNumber = dexNumber,
+                    opposingDexNumbers = payload.opposingDexNumbers,
+                    preferredRegion = preferredRegion
+                )
             }
         }
 
@@ -157,7 +159,7 @@ class CobbleTunesClient : ClientModInitializer {
             context.client().execute { musicPlayer.handlePlayerDeath() }
         }
 
-        // Pillar 9: zone change from server
+        // zone updates come from the server tracker
         ClientPlayNetworking.registerGlobalReceiver(StructureZonePayload.ID) { payload, context ->
             context.client().execute {
                 if (payload.zoneId.isBlank()) {
@@ -170,7 +172,7 @@ class CobbleTunesClient : ClientModInitializer {
                     return@execute
                 }
 
-                // Trigger-block zones ("cobbletunes:pokecenter" / "cobbletunes:pokemart")
+                // hand-placed pokecenter/pokemart zones
                 when (payload.zoneId) {
                     "cobbletunes:pokecenter" -> {
                         val track = TrackRegistry.tracksFor(MusicContext.POKECENTER).randomOrNull()
@@ -184,7 +186,7 @@ class CobbleTunesClient : ClientModInitializer {
                     }
                 }
 
-                // Worldgen gym structure — resolve region then pick gym track
+                // worldgen gym: use its region for the ambience pick
                 val region = STRUCTURE_TO_REGION[payload.zoneId]
                 if (region != null) {
                     val track = TrackRegistry.gymAmbienceTrackFor(region)
@@ -192,8 +194,7 @@ class CobbleTunesClient : ClientModInitializer {
                     return@execute
                 }
 
-                // Vanilla/BCA structure — category-pool lookup (random pick per
-                // category, unlike SPECIAL_STRUCTURE's 1:1 lookup below).
+                // vanilla/bca structures use a small pool per category
                 if (payload.zoneId.startsWith("cobbletunes:vanilla_structure:")) {
                     val category = payload.zoneId.removePrefix("cobbletunes:vanilla_structure:")
                     val vanillaTrack = TrackRegistry.vanillaStructureTrackFor(category)
@@ -205,7 +206,7 @@ class CobbleTunesClient : ClientModInitializer {
                     return@execute
                 }
 
-                // Special structure — direct 1:1 track lookup by structure ID
+                // special structures map straight to one track
                 val specialTrack = TrackRegistry.specialStructureTrackFor(payload.zoneId)
                 if (specialTrack != null) {
                     musicPlayer.playZoneAmbience(MusicContext.SPECIAL_STRUCTURE, specialTrack)
@@ -234,14 +235,11 @@ class CobbleTunesClient : ClientModInitializer {
                 lastWorld = world
                 ambienceCheckCounter = 0
                 if (world != null) {
-                    // Explicitly reset menu state before world join silence —
-                    // the menu watcher's else branch fires on the same tick
-                    // but order isn't guaranteed, and menu music must be stopped
-                    // before beginWorldJoinSilence() or it keeps restarting.
+                    // reset this here too; tick callback order isn't guaranteed
                     pendingMenuTrack = null
                     musicPlayer.beginWorldJoinSilence()
                 } else {
-                    // Returned to menu — reset menu tick counter so music restarts.
+                    // no extra 10s wait when coming back to the menu
                     menuReadyTicks = 200
                 }
                 return@register
@@ -259,21 +257,11 @@ class CobbleTunesClient : ClientModInitializer {
                 .orElse(null)
                 ?: return@register
 
-            // Underground cave detection: sky light=0 (no sky access) AND Y≤50.
-            // Torches/lava raise block light but NOT sky light, so they don't
-            // interfere. Night surface has sky light=0 but Y>50, so excluded.
-            // Player houses are typically built above Y=50, so also excluded.
-            // Only activates when the surface biome has no registered tracks —
-            // named cave biomes (dripstone_caves, lush_caves etc.) keep their
-            // own specific pools via normal biome resolution.
+            // sky light ignores torches, and y<=50 keeps nighttime surfaces out
             val skyLight = currentWorld.getLightLevel(
                 net.minecraft.world.LightType.SKY, player.blockPos
             )
-            // Cave override: sky light=0 (sealed, no direct sky access) AND Y≤50.
-            // Applies regardless of what the surface biome is — underground desert,
-            // underground forest etc. all play cave music when genuinely sealed in.
-            // Named cave biomes (dripstone_caves etc.) at Y>50 still use their own
-            // biome tracks via normal resolution since sky light may not be 0 there.
+            // sealed underground areas share the cave pool, whatever biome is above
             val isCave = skyLight == 0 && player.blockPos.y <= 50
 
             if (isCave) {
@@ -284,12 +272,6 @@ class CobbleTunesClient : ClientModInitializer {
         }
     }
 
-    /**
-     * Pillar 10: menu music. Plays while no world is loaded — covers the title
-     * screen and all submenus (singleplayer list, options, etc.) as one session.
-     * Retries every tick until audible, which covers the fresh-launch case where
-     * the sound engine isn't ready on the very first attempt.
-     */
     private fun registerMenuMusicWatcher() {
         ClientTickEvents.END_CLIENT_TICK.register { client ->
             if (!config.replaceMenuMusic) return@register
@@ -309,9 +291,8 @@ class CobbleTunesClient : ClientModInitializer {
                     musicPlayer.playMenuTheme(track)
                 }
                 client.musicTracker.stop()
-            }else {
-                // World loaded — engine is already running, so skip the wait
-                // if the player later returns to the menu.
+            } else {
+                // the sound engine is warm now, so future menu returns can start asap
                 menuReadyTicks = 200
                 if (pendingMenuTrack != null) {
                     musicPlayer.stopMenuTheme()
@@ -320,28 +301,15 @@ class CobbleTunesClient : ClientModInitializer {
             }
         }
     }
-    /**
-     * Stops all music the moment the death screen appears — before the player
-     * presses Respawn. The actual silence window + biome re-detection is handled
-     * by handlePlayerDeath() which fires after respawn via PlayerDeathPayload.
-     * This purely handles the "silence during the death screen" part.
-     *
-     * !! VERIFY net.minecraft.client.gui.screen.DeathScreen's exact class name
-     * against your Yarn mappings !! Standard 1.21.1 name but not genSources-confirmed.
-     */
     private fun registerDeathScreenWatcher() {
         ClientTickEvents.END_CLIENT_TICK.register { client ->
-            // Only relevant while actually in a world — skip entirely on
-            // title screen, loading screens, and dimension transitions.
-            // This prevents the loading screen from being misidentified
-            // as a death screen during world join.
+            // loading/menu screens can look like death during world swaps, so skip them
             if (client.world == null || client.player == null) return@register
 
             val isDeathScreen = try {
                 client.currentScreen is net.minecraft.client.gui.screen.DeathScreen
             } catch (e: Exception) {
-                // If DeathScreen class name differs in Yarn mappings,
-                // fail silently rather than breaking ambience.
+                // mapping mismatch shouldn't break the whole music loop
                 false
             }
 
@@ -355,20 +323,9 @@ class CobbleTunesClient : ClientModInitializer {
         }
     }
 
-    /**
-     * Plays the low-HP beep sound 3–5 times whenever the player's active
-     * Pokémon drops to ≤25% HP, or a low-HP mon is switched in.
-     * Uses Cobblemon's client-side battle API — no server packet needed.
-     * Tracks the last low-HP Pokémon by UUID so the beep only retriggers
-     * on a switch-in or recovery-then-drop, not on every tick while low.
-     *
-     * !! VERIFY CobblemonClient.battle / side1.actors / activePokemon chains !!
-     * All confirmed via decompilation of Cobblemon 1.7.3 jar, but worth a
-     * ctrl-click check in IntelliJ after adding this.
-     */
     private fun registerLowHpWatcher() {
         ClientTickEvents.END_CLIENT_TICK.register { client ->
-            // Tick down and fire ongoing beep sequence
+            // finish the current beep pair first
             if (lowHpBeepsRemaining > 0) {
                 if (lowHpBeepCooldownTicks > 0) {
                     lowHpBeepCooldownTicks--
@@ -385,40 +342,40 @@ class CobbleTunesClient : ClientModInitializer {
                 return@register
             }
 
-            // Throttle the HP check to every 10 ticks (~0.5s)
+            // hp checks every ~0.5s are plenty
             lowHpCheckCounter++
             if (lowHpCheckCounter < LOW_HP_CHECK_INTERVAL_TICKS) return@register
             lowHpCheckCounter = 0
 
-            // No battle active — reset trigger state
+            // leaving battle arms the trigger again
             val battle = com.cobblemon.mod.common.client.CobblemonClient.battle
                 ?: run { lastLowHpPokemonUuid = null; return@register }
 
             val playerUuid = client.player?.uuid ?: return@register
 
-            // Find the player's actor across both sides
+            // player actor can be on either side
             val playerActor = (battle.side1.actors + battle.side2.actors)
                 .firstOrNull { it.uuid == playerUuid } ?: return@register
 
-            // Find any active Pokémon at ≤25% HP that is still alive
+            // only active, living mons at 25% or less
             val lowHpMon = playerActor.activePokemon
                 .mapNotNull { it.battlePokemon }
                 .firstOrNull { mon ->
                     val ratio = if (mon.isHpFlat) {
                         if (mon.maxHp > 0f) mon.hpValue / mon.maxHp else 1f
                     } else {
-                        mon.hpValue  // already a 0–1 ratio
+                        mon.hpValue  // already 0..1 here
                     }
                     ratio in 0.001f..0.25f
                 }
 
             if (lowHpMon == null) {
-                // No low-HP mon — reset so retrigger works if HP drops again
+                // let it trigger again after hp recovers
                 lastLowHpPokemonUuid = null
                 return@register
             }
 
-            // Same mon as last check — don't retrigger
+            // don't restart the beeps every check
             if (lowHpMon.uuid == lastLowHpPokemonUuid) return@register
 
             lastLowHpPokemonUuid = lowHpMon.uuid

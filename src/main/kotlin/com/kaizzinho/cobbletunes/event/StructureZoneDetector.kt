@@ -14,21 +14,15 @@ import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
 
 object StructureZoneDetector {
 
-    private const val ZONE_CHECK_INTERVAL_TICKS = 100  // ~5 seconds
-    private const val CHUNK_SCAN_RADIUS = 3             // chunks around player to scan for structure references
-    // How close the player must actually be to a structure's REAL bounding box
-    // (not just "a reference chunk was found nearby") to count as inside it.
-    // Sprawling jigsaw structures — villages especially — leave a structure
-    // reference in every chunk their bounding box touches, including outlying
-    // paths/houses far from the visible center, so the reference scan alone
-    // is not a reliable proximity signal on its own.
+    private const val ZONE_CHECK_INTERVAL_TICKS = 100  // ~5s
+    private const val CHUNK_SCAN_RADIUS = 3             // chunks around the player
+    // chunk refs are broad, so confirm distance against the real bounding box
     private const val STRUCTURE_PROXIMITY_MARGIN = 24.0
-    private const val TRIGGER_BLOCK_RADIUS = 12        // blocks, for MusicTriggerBlock scan
+    private const val TRIGGER_BLOCK_RADIUS = 12        // trigger-block scan
 
-    // All known Cobbleverse worldgen gym/league structures → their zoneId string.
-    // The zoneId is sent verbatim to the client, which maps it to a RegionOfOrigin.
+    // cobbleverse structures -> zone ids sent to the client
     private val GYM_STRUCTURES: Map<Identifier, String> = mapOf(
-        // Kanto gyms
+        // kanto gyms
         Identifier.of("cobbleverse", "brock")             to "cobbleverse:brock",
         Identifier.of("cobbleverse", "misty")             to "cobbleverse:misty",
         Identifier.of("cobbleverse", "ltsurge")           to "cobbleverse:ltsurge",
@@ -37,13 +31,13 @@ object StructureZoneDetector {
         Identifier.of("cobbleverse", "sabrina")           to "cobbleverse:sabrina",
         Identifier.of("cobbleverse", "blaine")            to "cobbleverse:blaine",
         Identifier.of("cobbleverse", "giovanni")          to "cobbleverse:giovanni",
-        // Kanto league / special
+        // kanto league + extras
         Identifier.of("cobbleverse", "kanto_league")      to "cobbleverse:kanto_league",
         Identifier.of("cobbleverse", "team_rocket_tower") to "cobbleverse:team_rocket_tower",
         Identifier.of("cobbleverse", "crown_spire")       to "cobbleverse:crown_spire",
         Identifier.of("cobbleverse", "dawn_tower")        to "cobbleverse:dawn_tower",
         Identifier.of("cobbleverse", "dusk_tower")        to "cobbleverse:dusk_tower",
-        // Johto gyms (gym leaders have custom NPC names in Cobbleverse)
+        // johto gyms
         Identifier.of("cobbleverse", "valerio")           to "cobbleverse:valerio",
         Identifier.of("cobbleverse", "chiara")            to "cobbleverse:chiara",
         Identifier.of("cobbleverse", "angelo")            to "cobbleverse:angelo",
@@ -52,10 +46,10 @@ object StructureZoneDetector {
         Identifier.of("cobbleverse", "jasmine")           to "cobbleverse:jasmine",
         Identifier.of("cobbleverse", "raffaello")         to "cobbleverse:raffaello",
         Identifier.of("cobbleverse", "sandra")            to "cobbleverse:sandra",
-        // Johto league / special
+        // johto league + extras
         Identifier.of("cobbleverse", "johto_league")      to "cobbleverse:johto_league",
         Identifier.of("cobbleverse", "rocket_radio_tower") to "cobbleverse:rocket_radio_tower",
-        // Hoenn gyms
+        // hoenn gyms
         Identifier.of("cobbleverse", "rudi")              to "cobbleverse:rudi",
         Identifier.of("cobbleverse", "adriano")           to "cobbleverse:adriano",
         Identifier.of("cobbleverse", "tell_pat")          to "cobbleverse:tell_pat",
@@ -64,9 +58,9 @@ object StructureZoneDetector {
         Identifier.of("cobbleverse", "fiammetta")         to "cobbleverse:fiammetta",
         Identifier.of("cobbleverse", "walter")            to "cobbleverse:walter",
         Identifier.of("cobbleverse", "petra")             to "cobbleverse:petra",
-        // Hoenn league
+        // hoenn league
         Identifier.of("cobbleverse", "hoenn_league")      to "cobbleverse:hoenn_league",
-        // Sinnoh gyms
+        // sinnoh gyms
         Identifier.of("cobbleverse", "gardenia")          to "cobbleverse:gardenia",
         Identifier.of("cobbleverse", "ferruccio")         to "cobbleverse:ferruccio",
         Identifier.of("cobbleverse", "marzia")            to "cobbleverse:marzia",
@@ -75,11 +69,11 @@ object StructureZoneDetector {
         Identifier.of("cobbleverse", "bianca")            to "cobbleverse:bianca",
         Identifier.of("cobbleverse", "omar")              to "cobbleverse:omar",
         Identifier.of("cobbleverse", "pedro")             to "cobbleverse:pedro",
-        // Sinnoh league
+        // sinnoh league
         Identifier.of("cobbleverse", "sinnoh_league")     to "cobbleverse:sinnoh_league",
         Identifier.of("cobbleverse", "team_galactic_hq")  to "cobbleverse:team_galactic_hq",
 
-        // Kanto special structures
+        // kanto extras
         Identifier.of("cobbleverse", "ash")            to "cobbleverse:ash",
         Identifier.of("cobbleverse", "crown_cemetery") to "cobbleverse:crown_cemetery",
         Identifier.of("cobbleverse", "articuno")       to "cobbleverse:articuno",
@@ -87,13 +81,13 @@ object StructureZoneDetector {
         Identifier.of("cobbleverse", "moltres")        to "cobbleverse:moltres",
         Identifier.of("cobbleverse", "mew")            to "cobbleverse:mew",
 
-        // Johto special structures
+        // johto extras
         Identifier.of("cobbleverse", "bell_tower")     to "cobbleverse:bell_tower",
         Identifier.of("cobbleverse", "burned_tower")   to "cobbleverse:burned_tower",
         Identifier.of("cobbleverse", "celebi_shrine")  to "cobbleverse:celebi_shrine",
         Identifier.of("cobbleverse", "whirl_island")   to "cobbleverse:whirl_island",
 
-        // Hoenn special structures
+        // hoenn extras
         Identifier.of("cobbleverse", "groudon")        to "cobbleverse:groudon",
         Identifier.of("cobbleverse", "kyogre")         to "cobbleverse:kyogre",
         Identifier.of("cobbleverse", "regirock")       to "cobbleverse:regirock",
@@ -105,7 +99,7 @@ object StructureZoneDetector {
         Identifier.of("cobbleverse", "sky_pillar")     to "cobbleverse:sky_pillar",
         Identifier.of("cobbleverse", "dyna_tree")      to "cobbleverse:dyna_tree",
 
-        // Sinnoh special structures
+        // sinnoh extras
         Identifier.of("cobbleverse", "spear_pillar")         to "cobbleverse:spear_pillar",
         Identifier.of("cobbleverse", "snowpoint_temple")     to "cobbleverse:snowpoint_temple",
         Identifier.of("cobbleverse", "split_decision_temple") to "cobbleverse:split_decision_temple",
@@ -117,12 +111,7 @@ object StructureZoneDetector {
         Identifier.of("cobbleverse", "manaphy")              to "cobbleverse:manaphy",
     )
 
-    // Pillar 9 extension: vanilla + BCA structures. zoneId format is
-    // "cobbletunes:vanilla_structure:<category>" — CobbleTunesClient strips
-    // the prefix and looks up the category in TrackRegistry.vanillaStructureTrackFor().
-    // Unlike GYM_STRUCTURES (1:1 structure→zoneId), several vanilla structure
-    // variants map to the SAME category (ocean_ruin_cold/warm both → "ocean_ruin",
-    // all 7 ruined_portal variants → "ruined_portal") since they share one pool.
+    // vanilla/bca variants can share one client-side music category
     private val VANILLA_AND_BCA_STRUCTURES: Map<Identifier, String> = mapOf(
         Identifier.of("minecraft", "village_plains")   to "cobbletunes:vanilla_structure:village_plains",
         Identifier.of("minecraft", "village_desert")   to "cobbletunes:vanilla_structure:village_desert",
@@ -158,13 +147,13 @@ object StructureZoneDetector {
         Identifier.of("minecraft", "ruined_portal_ocean")    to "cobbletunes:vanilla_structure:ruined_portal",
         Identifier.of("minecraft", "ruined_portal_nether")   to "cobbletunes:vanilla_structure:ruined_portal",
         Identifier.of("minecraft", "end_city")         to "cobbletunes:vanilla_structure:end_city",
-        // BCA (CobblemonAdditions) — namespace confirmed via its datapack.
+        // bca villages
         Identifier.of("bca", "village/small") to "cobbletunes:vanilla_structure:bca_village_small",
         Identifier.of("bca", "village/mid")   to "cobbletunes:vanilla_structure:bca_village_mid",
         Identifier.of("bca", "village/large") to "cobbletunes:vanilla_structure:bca_village_large",
     )
 
-    // Per-player zone tracking — avoids sending packets when nothing changed.
+    // only send a packet when the player's zone really changes
     private val playerZoneCache: MutableMap<java.util.UUID, String> = mutableMapOf()
     private var tickCounter = 0
 
@@ -191,11 +180,11 @@ object StructureZoneDetector {
 
 
     private fun detectZone(player: ServerPlayerEntity, world: ServerWorld): String {
-        // 1. Check for nearby MusicTriggerBlock (hand-placed structures)
+        // hand-placed zones get first dibs
         val triggerZone = scanForTriggerBlock(player, world)
         if (triggerZone != null) return triggerZone
 
-        // 2. Check for nearby worldgen gym structure
+        // then check nearby worldgen structures
         return locateNearbyGym(player, world) ?: ""
     }
 
@@ -223,10 +212,7 @@ object StructureZoneDetector {
     private fun locateNearbyGym(player: ServerPlayerEntity, world: ServerWorld): String? {
         val structureRegistry = world.registryManager.get(RegistryKeys.STRUCTURE)
 
-        // Build reverse map: Structure object → zoneId, for O(1) lookup
-        // against whatever structureReferences returns per chunk. Combines
-        // Cobbleverse structures with vanilla/BCA structures into one lookup
-        // since the chunk scan itself is identical for both.
+        // reverse map makes each chunk ref lookup cheap
         val structureToZone = mutableMapOf<net.minecraft.world.gen.structure.Structure, String>()
         for ((structureId, zoneId) in GYM_STRUCTURES) {
             val structure = structureRegistry.get(structureId) ?: continue
@@ -257,8 +243,7 @@ object StructureZoneDetector {
                 for ((structure, _) in chunk.structureReferences) {
                     val zoneId = structureToZone[structure] ?: continue
 
-                    // Reference found — now verify REAL proximity against the
-                    // structure's actual bounding box before accepting it.
+                    // ref found; now check the actual box distance
                     val start = accessor.getStructureAt(playerPos, structure)
                     if (!start.hasChildren()) continue
 

@@ -1,10 +1,5 @@
 package com.kaizzinho.cobbletunes.client.sound
 
-/**
- * Pillar 1/2/3: which real Pokémon region a species originates from, keyed
- * by National Dex number range. Hisui is deliberately its own entry, not
- * folded into Galar, despite being Gen 8 — different game, different themes.
- */
 enum class RegionOfOrigin(val dexRange: IntRange) {
     KANTO(1..151),
     JOHTO(152..251),
