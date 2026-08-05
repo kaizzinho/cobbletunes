@@ -44,7 +44,8 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
         context: MusicContext,
         dexNumber: Int? = null,
         opposingDexNumbers: List<Int> = emptyList(),
-        preferredRegion: RegionOfOrigin? = null
+        preferredRegion: RegionOfOrigin? = null,
+        factionTheme: String? = null
     ) {
         if (!config.replaceBattleMusic) return
 
@@ -69,6 +70,9 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
                     dexNumbers = opposingDexNumbers,
                     preferredRegion = preferredRegion
                 ) ?: pickFrom(TrackRegistry.tracksFor(context))
+            MusicContext.FACTION_BATTLE -> factionTheme
+                ?.let(TrackRegistry::factionBattleTrackFor)
+                ?: pickFrom(TrackRegistry.tracksFor(MusicContext.TRAINER_BATTLE))
             else -> pickFrom(TrackRegistry.tracksFor(context))
         } ?: run {
             LOGGER.warn("[$MOD_ID] No track for $context, leaving current music")
@@ -77,7 +81,9 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
 
         debugLog(
             "[Battle start] Picked: ${track.id} for $context" +
-                    (preferredRegion?.let { " (preferredRegion=$it)" } ?: "")
+                (factionTheme?.let { " (factionTheme=$it)" }
+                    ?: preferredRegion?.let { " (preferredRegion=$it)" }
+                    ?: "")
         )
         // keep pending biome info around; battle-end resume will use it
         play(context, track)
@@ -401,6 +407,7 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
         MusicContext.ELITE_FOUR_BATTLE,
         MusicContext.CHAMPION_BATTLE,
         MusicContext.PVP_BATTLE,
+        MusicContext.FACTION_BATTLE,
         MusicContext.LEGENDARY_BATTLE
     )
 

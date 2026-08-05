@@ -510,6 +510,18 @@
     "category": "music",
     "sounds": [{ "name": "cobbletunes:battle/unova/legendary_black_white_kyurem", "stream": true }]
   },
+  "battle.unova.team_plasma_grunt": {
+    "category": "music",
+    "sounds": [{ "name": "cobbletunes:battle/unova/team_plasma_grunt", "stream": true }]
+  },
+  "battle.unova.team_plasma_n": {
+    "category": "music",
+    "sounds": [{ "name": "cobbletunes:battle/unova/team_plasma_n", "stream": true }]
+  },
+  "battle.unova.team_plasma_colress": {
+    "category": "music",
+    "sounds": [{ "name": "cobbletunes:battle/unova/team_plasma_colress", "stream": true }]
+  },
   "battle.alola.wild": {
     "category": "music",
     "sounds": [{ "name": "cobbletunes:battle/alola/wild", "stream": true }]

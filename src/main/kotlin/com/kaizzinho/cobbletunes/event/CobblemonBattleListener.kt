@@ -141,6 +141,9 @@ object CobblemonBattleListener {
                                 "trainerId='${result.trainerId}' dataFound=${probe.dataFound} " +
                                 "rawType='${result.rawType.ifEmpty { "missing" }}' " +
                                 "optional=${result.optional} role='${result.role.routeId}' " +
+                                "faction='${result.faction?.id.orEmpty()}' " +
+                                "rank='${result.factionRank?.name?.lowercase(Locale.ROOT).orEmpty()}' " +
+                                "theme='${result.factionTheme.orEmpty()}' " +
                                 "region='${result.region ?: "unknown"}' source=$source route='$route'"
                         )
                     }

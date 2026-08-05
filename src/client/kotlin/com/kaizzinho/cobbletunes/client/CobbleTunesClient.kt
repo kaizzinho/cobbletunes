@@ -117,7 +117,12 @@ class CobbleTunesClient : ClientModInitializer {
             context.client().execute {
                 // route stays string-based so old packets like "leader" still work
                 val routeParts = payload.trainerTier.split('|', limit = 2)
-                val trainerTier = routeParts.firstOrNull().orEmpty()
+                val routeHead = routeParts.firstOrNull().orEmpty()
+                val factionTheme = routeHead
+                    .takeIf { it.startsWith("faction:") }
+                    ?.substringAfter("faction:")
+                    ?.takeIf { it.isNotBlank() }
+                val trainerTier = routeHead.takeUnless { factionTheme != null }.orEmpty()
                 val preferredRegion = routeParts.getOrNull(1)?.let { regionId ->
                     RegionOfOrigin.entries.firstOrNull {
                         it.name.equals(regionId, ignoreCase = true)
@@ -126,6 +131,7 @@ class CobbleTunesClient : ClientModInitializer {
 
                 val musicContext = when {
                     payload.isWild -> if (payload.isLegendary) MusicContext.LEGENDARY_BATTLE else MusicContext.WILD_BATTLE
+                    payload.isTrainer && factionTheme != null -> MusicContext.FACTION_BATTLE
                     payload.isTrainer -> when (trainerTier) {
                         "leader" -> MusicContext.GYM_LEADER_BATTLE
                         "e4"     -> MusicContext.ELITE_FOUR_BATTLE
@@ -139,14 +145,16 @@ class CobbleTunesClient : ClientModInitializer {
 
                 debugLog(
                     "[Battle route] raw='${payload.trainerTier}' tier='$trainerTier' " +
-                            "region=${preferredRegion?.name ?: "roster-vote"} context=$musicContext"
+                        "factionTheme='${factionTheme.orEmpty()}' " +
+                        "region=${preferredRegion?.name ?: "roster-vote"} context=$musicContext"
                 )
 
                 musicPlayer.playBattleContext(
                     context = musicContext,
                     dexNumber = dexNumber,
                     opposingDexNumbers = payload.opposingDexNumbers,
-                    preferredRegion = preferredRegion
+                    preferredRegion = preferredRegion,
+                    factionTheme = factionTheme
                 )
             }
         }

@@ -12,7 +12,9 @@ data class MusicTrack(
     val legendaryDexOverrides: Set<Int> = emptySet(),
     val regions: Set<RegionOfOrigin> = emptySet(),
     // ambience-only length hint; null keeps the normal random budget
-    val durationSeconds: Int? = null
+    val durationSeconds: Int? = null,
+    // faction routes point straight at one of these ids
+    val factionThemes: Set<String> = emptySet()
 )
 
 object TrackRegistry {
@@ -72,6 +74,14 @@ object TrackRegistry {
         preferredRegion: RegionOfOrigin? = null
     ): MusicTrack? =
         regionalBattleTrackFor(MusicContext.TRAINER_BATTLE, dexNumbers, preferredRegion)
+
+    fun factionBattleTrackFor(themeId: String): MusicTrack? {
+        val normalized = themeId.trim().lowercase()
+        return tracks[MusicContext.FACTION_BATTLE]
+            .orEmpty()
+            .filter { normalized in it.factionThemes }
+            .randomOrNull()
+    }
 
     fun wildTrackFor(dexNumber: Int): MusicTrack? {
         val pool = tracks[MusicContext.WILD_BATTLE].orEmpty()
@@ -418,7 +428,14 @@ object TrackRegistry {
         register(MusicContext.LEGENDARY_BATTLE, MusicTrack("johto_legendary_lugia", soundEvent("battle.johto.legendary_lugia"), legendaryDexOverrides = setOf(249)))
         register(MusicContext.LEGENDARY_BATTLE, MusicTrack("johto_legendary_ho_oh", soundEvent("battle.johto.legendary_ho_oh"), legendaryDexOverrides = setOf(250)))
 
-        soundEvent("battle.johto.team_rocket")
+        register(
+            MusicContext.FACTION_BATTLE,
+            MusicTrack(
+                "johto_team_rocket",
+                soundEvent("battle.johto.team_rocket"),
+                factionThemes = setOf("team_rocket")
+            )
+        )
     }
 
     private fun registerHoennAmbience() {
@@ -467,8 +484,22 @@ object TrackRegistry {
         register(MusicContext.LEGENDARY_BATTLE, MusicTrack("hoenn_legendary_super_ancient", soundEvent("battle.hoenn.legendary_super_ancient"), legendaryDexOverrides = setOf(382, 383, 384)))
         register(MusicContext.LEGENDARY_BATTLE, MusicTrack("hoenn_legendary_mew", soundEvent("battle.hoenn.legendary_mew"), legendaryDexOverrides = setOf(151)))
 
-        soundEvent("battle.hoenn.team_aqua_magma_grunt")
-        soundEvent("battle.hoenn.team_aqua_magma_leaders")
+        register(
+            MusicContext.FACTION_BATTLE,
+            MusicTrack(
+                "hoenn_team_aqua_magma_grunt",
+                soundEvent("battle.hoenn.team_aqua_magma_grunt"),
+                factionThemes = setOf("team_aqua_magma_grunt")
+            )
+        )
+        register(
+            MusicContext.FACTION_BATTLE,
+            MusicTrack(
+                "hoenn_team_aqua_magma_leaders",
+                soundEvent("battle.hoenn.team_aqua_magma_leaders"),
+                factionThemes = setOf("team_aqua_magma_leaders")
+            )
+        )
     }
 
     private fun registerSinnohAmbience() {
@@ -504,9 +535,30 @@ object TrackRegistry {
         register(MusicContext.LEGENDARY_BATTLE, MusicTrack("sinnoh_legendary_giratina", soundEvent("battle.sinnoh.legendary_giratina"), legendaryDexOverrides = setOf(487)))
         register(MusicContext.LEGENDARY_BATTLE, MusicTrack("sinnoh_legendary_lake_trio", soundEvent("battle.sinnoh.legendary_lake_trio"), legendaryDexOverrides = setOf(480, 481, 482)))
 
-        soundEvent("battle.sinnoh.team_galactic_grunt")
-        soundEvent("battle.sinnoh.team_galactic_commander")
-        soundEvent("battle.sinnoh.team_galactic_boss")
+        register(
+            MusicContext.FACTION_BATTLE,
+            MusicTrack(
+                "sinnoh_team_galactic_grunt",
+                soundEvent("battle.sinnoh.team_galactic_grunt"),
+                factionThemes = setOf("team_galactic_grunt")
+            )
+        )
+        register(
+            MusicContext.FACTION_BATTLE,
+            MusicTrack(
+                "sinnoh_team_galactic_commander",
+                soundEvent("battle.sinnoh.team_galactic_commander"),
+                factionThemes = setOf("team_galactic_commander")
+            )
+        )
+        register(
+            MusicContext.FACTION_BATTLE,
+            MusicTrack(
+                "sinnoh_team_galactic_boss",
+                soundEvent("battle.sinnoh.team_galactic_boss"),
+                factionThemes = setOf("team_galactic_boss")
+            )
+        )
         soundEvent("battle.sinnoh.frontier_brain")
     }
 
@@ -539,10 +591,30 @@ object TrackRegistry {
 
         register(MusicContext.LEGENDARY_BATTLE, MusicTrack("unova_legendary_black_white_kyurem", soundEvent("battle.unova.legendary_black_white_kyurem"), legendaryDexOverrides = setOf(646)))
 
-        // todo: team plasma boss tier (n/colress)
-        soundEvent("battle.unova.team_plasma_grunt")
-        soundEvent("battle.unova.team_plasma_n")
-        soundEvent("battle.unova.team_plasma_colress")
+        register(
+            MusicContext.FACTION_BATTLE,
+            MusicTrack(
+                "unova_team_plasma_grunt",
+                soundEvent("battle.unova.team_plasma_grunt"),
+                factionThemes = setOf("team_plasma_grunt")
+            )
+        )
+        register(
+            MusicContext.FACTION_BATTLE,
+            MusicTrack(
+                "unova_team_plasma_n",
+                soundEvent("battle.unova.team_plasma_n"),
+                factionThemes = setOf("team_plasma_n")
+            )
+        )
+        register(
+            MusicContext.FACTION_BATTLE,
+            MusicTrack(
+                "unova_team_plasma_colress",
+                soundEvent("battle.unova.team_plasma_colress"),
+                factionThemes = setOf("team_plasma_colress")
+            )
+        )
     }
     private fun registerAlolaBattle() {
         register(MusicContext.WILD_BATTLE, MusicTrack("alola_wild", soundEvent("battle.alola.wild"), regions = setOf(RegionOfOrigin.ALOLA)))

@@ -7,11 +7,30 @@ enum class TrainerRole(val routeId: String) {
     GYM_LEADER("leader"),
     ELITE_FOUR("e4"),
     CHAMPION("champ"),
-    RIVAL("rival")
+    RIVAL("rival"),
+    FACTION_GRUNT("faction_grunt"),
+    FACTION_ADMIN("faction_admin"),
+    FACTION_BOSS("faction_boss")
+}
+
+enum class TrainerFaction(val id: String, val homeRegion: String?) {
+    TEAM_ROCKET("team_rocket", null),
+    TEAM_AQUA("team_aqua", "hoenn"),
+    TEAM_MAGMA("team_magma", "hoenn"),
+    TEAM_GALACTIC("team_galactic", "sinnoh"),
+    TEAM_PLASMA("team_plasma", "unova")
+}
+
+enum class FactionRank {
+    GRUNT,
+    ADMIN,
+    BOSS
 }
 
 enum class TrainerDetectionSource {
     EXACT_OVERRIDE,
+    FACTION_TYPE,
+    FACTION_ID,
     RCT_TYPE,
     CUSTOM_TYPE,
     TRAINER_ID,
@@ -27,7 +46,10 @@ data class RawRctTrainer(
 
 data class TrainerOverride(
     val role: TrainerRole,
-    val region: String? = null
+    val region: String? = null,
+    val faction: TrainerFaction? = null,
+    val factionRank: FactionRank? = null,
+    val factionTheme: String? = null
 )
 
 data class TrainerClassification(
@@ -36,9 +58,17 @@ data class TrainerClassification(
     val trainerId: String,
     val rawType: String,
     val optional: Boolean,
-    val source: TrainerDetectionSource
+    val source: TrainerDetectionSource,
+    val faction: TrainerFaction? = null,
+    val factionRank: FactionRank? = null,
+    val factionTheme: String? = null
 ) {
     fun route(): String {
+        factionTheme?.let { theme ->
+            val route = "faction:$theme"
+            return region?.let { "$route|$it" } ?: route
+        }
+
         if (role == TrainerRole.NORMAL && region == null) return ""
         return region?.let { "${role.routeId}|$it" } ?: role.routeId
     }
@@ -48,6 +78,13 @@ object RctTrainerClassifier {
     private val regions = setOf(
         "kanto", "johto", "hoenn", "sinnoh", "unova",
         "kalos", "alola", "galar", "hisui", "paldea"
+    )
+
+    private data class FactionMatch(
+        val faction: TrainerFaction,
+        val rank: FactionRank,
+        val theme: String,
+        val source: TrainerDetectionSource
     )
 
     fun classify(
@@ -64,13 +101,29 @@ object RctTrainerClassifier {
                 raw = raw,
                 role = override.role,
                 region = normalizeRegion(override.region) ?: regionFrom(typeId) ?: regionFrom(trainerId),
-                source = TrainerDetectionSource.EXACT_OVERRIDE
+                source = TrainerDetectionSource.EXACT_OVERRIDE,
+                faction = override.faction,
+                factionRank = override.factionRank,
+                factionTheme = override.factionTheme
             )
         }
 
         val typeRegion = regionFrom(typeId)
         val idRegion = regionFrom(trainerId)
         val region = typeRegion ?: idRegion
+
+        // check factions before generic ids, otherwise leader_giovanni looks like a gym leader
+        factionMatch(trainerId, typeId)?.let { match ->
+            return result(
+                raw = raw,
+                role = roleFor(match.rank),
+                region = region ?: match.faction.homeRegion,
+                source = match.source,
+                faction = match.faction,
+                factionRank = match.rank,
+                factionTheme = match.theme
+            )
+        }
 
         // native rct roles are the safest signal
         roleFromStandardType(typeId)?.let { role ->
@@ -104,6 +157,185 @@ object RctTrainerClassifier {
         }
 
         return result(raw, TrainerRole.NORMAL, region, TrainerDetectionSource.ORDINARY)
+    }
+
+    private fun factionMatch(trainerId: String, typeId: String): FactionMatch? {
+        val fromType = factionFromType(typeId)
+        val faction = fromType ?: factionFromTrainerId(trainerId) ?: return null
+        val source = if (fromType != null) {
+            TrainerDetectionSource.FACTION_TYPE
+        } else {
+            TrainerDetectionSource.FACTION_ID
+        }
+
+        return when (faction) {
+            TrainerFaction.TEAM_ROCKET -> classifyRocket(trainerId, source)
+            TrainerFaction.TEAM_AQUA -> classifyAquaMagma(trainerId, faction, source)
+            TrainerFaction.TEAM_MAGMA -> classifyAquaMagma(trainerId, faction, source)
+            TrainerFaction.TEAM_GALACTIC -> classifyGalactic(trainerId, source)
+            TrainerFaction.TEAM_PLASMA -> classifyPlasma(trainerId, source)
+        }
+    }
+
+    private fun classifyRocket(
+        trainerId: String,
+        source: TrainerDetectionSource
+    ): FactionMatch {
+        val rank = when {
+            trainerId.contains("giovanni") ||
+                trainerId.startsWith("boss_") ||
+                trainerId.startsWith("leader_giovanni") -> FactionRank.BOSS
+
+            trainerId.contains("admin") ||
+                containsAny(
+                    trainerId,
+                    "archer", "ariana", "apollo", "atena",
+                    "proton", "petrel", "executive", "general", "officer"
+                ) -> FactionRank.ADMIN
+
+            else -> FactionRank.GRUNT
+        }
+
+        // rocket only has one reserved ogg, so every rank shares it
+        return FactionMatch(
+            faction = TrainerFaction.TEAM_ROCKET,
+            rank = rank,
+            theme = "team_rocket",
+            source = source
+        )
+    }
+
+    private fun classifyAquaMagma(
+        trainerId: String,
+        faction: TrainerFaction,
+        source: TrainerDetectionSource
+    ): FactionMatch {
+        val bossNames = when (faction) {
+            TrainerFaction.TEAM_AQUA -> arrayOf("ivan", "archie")
+            TrainerFaction.TEAM_MAGMA -> arrayOf("max", "maxie")
+            else -> emptyArray()
+        }
+        val adminNames = when (faction) {
+            TrainerFaction.TEAM_AQUA -> arrayOf("shelly", "matt")
+            TrainerFaction.TEAM_MAGMA -> arrayOf("courtney", "tabitha")
+            else -> emptyArray()
+        }
+
+        val rank = when {
+            containsAny(trainerId, *bossNames) ||
+                trainerId.contains("boss") ||
+                trainerId.contains("leader") -> FactionRank.BOSS
+
+            containsAny(trainerId, *adminNames) ||
+                trainerId.contains("admin") ||
+                trainerId.contains("commander") ||
+                trainerId.contains("executive") -> FactionRank.ADMIN
+
+            else -> FactionRank.GRUNT
+        }
+
+        val theme = if (rank == FactionRank.GRUNT) {
+            "team_aqua_magma_grunt"
+        } else {
+            "team_aqua_magma_leaders"
+        }
+
+        return FactionMatch(faction, rank, theme, source)
+    }
+
+    private fun classifyGalactic(
+        trainerId: String,
+        source: TrainerDetectionSource
+    ): FactionMatch {
+        val rank = when {
+            trainerId.contains("cyrus") || trainerId.contains("boss") -> FactionRank.BOSS
+
+            trainerId.contains("commander") ||
+                containsAny(trainerId, "mars", "jupiter", "saturn", "charon") -> FactionRank.ADMIN
+
+            else -> FactionRank.GRUNT
+        }
+
+        val theme = when (rank) {
+            FactionRank.GRUNT -> "team_galactic_grunt"
+            FactionRank.ADMIN -> "team_galactic_commander"
+            FactionRank.BOSS -> "team_galactic_boss"
+        }
+
+        return FactionMatch(
+            faction = TrainerFaction.TEAM_GALACTIC,
+            rank = rank,
+            theme = theme,
+            source = source
+        )
+    }
+
+    private fun classifyPlasma(
+        trainerId: String,
+        source: TrainerDetectionSource
+    ): FactionMatch {
+        val tokens = trainerId.split('_').filter { it.isNotBlank() }
+        val isN = "n" in tokens
+        val isColress = containsAny(trainerId, "colress", "achroma")
+        val isBoss = isN || isColress || containsAny(trainerId, "ghetsis", "boss", "king")
+        val isAdmin = containsAny(
+            trainerId,
+            "zinzolin", "sage", "shadow_triad", "admin", "commander", "executive"
+        )
+
+        val rank = when {
+            isBoss -> FactionRank.BOSS
+            isAdmin -> FactionRank.ADMIN
+            else -> FactionRank.GRUNT
+        }
+
+        val theme = when {
+            isN -> "team_plasma_n"
+            isColress -> "team_plasma_colress"
+            rank != FactionRank.GRUNT -> "team_plasma_colress"
+            else -> "team_plasma_grunt"
+        }
+
+        return FactionMatch(
+            faction = TrainerFaction.TEAM_PLASMA,
+            rank = rank,
+            theme = theme,
+            source = source
+        )
+    }
+
+    private fun factionFromType(typeId: String): TrainerFaction? = when {
+        typeId == "team_rocket" || typeId.startsWith("team_rocket_") -> TrainerFaction.TEAM_ROCKET
+        typeId == "team_aqua" || typeId.startsWith("team_aqua_") -> TrainerFaction.TEAM_AQUA
+        typeId == "team_magma" || typeId.startsWith("team_magma_") -> TrainerFaction.TEAM_MAGMA
+        typeId == "team_galactic" || typeId.startsWith("team_galactic_") -> TrainerFaction.TEAM_GALACTIC
+        typeId == "team_plasma" || typeId.startsWith("team_plasma_") -> TrainerFaction.TEAM_PLASMA
+        else -> null
+    }
+
+    private fun factionFromTrainerId(trainerId: String): TrainerFaction? = when {
+        trainerId.startsWith("team_rocket_") ||
+            trainerId.startsWith("rocket_admin_") ||
+            trainerId.startsWith("boss_giovanni_") -> TrainerFaction.TEAM_ROCKET
+
+        trainerId.startsWith("team_aqua_") -> TrainerFaction.TEAM_AQUA
+        trainerId.startsWith("team_magma_") -> TrainerFaction.TEAM_MAGMA
+
+        trainerId.startsWith("team_galactic_") ||
+            trainerId.startsWith("commander_mars_") ||
+            trainerId.startsWith("commander_jupiter_") ||
+            trainerId.startsWith("commander_saturn_") -> TrainerFaction.TEAM_GALACTIC
+
+        trainerId.startsWith("team_plasma_") ||
+            trainerId.startsWith("plasma_") -> TrainerFaction.TEAM_PLASMA
+
+        else -> null
+    }
+
+    private fun roleFor(rank: FactionRank): TrainerRole = when (rank) {
+        FactionRank.GRUNT -> TrainerRole.FACTION_GRUNT
+        FactionRank.ADMIN -> TrainerRole.FACTION_ADMIN
+        FactionRank.BOSS -> TrainerRole.FACTION_BOSS
     }
 
     private fun roleFromStandardType(typeId: String): TrainerRole? = when (typeId) {
@@ -167,14 +399,20 @@ object RctTrainerClassifier {
         raw: RawRctTrainer,
         role: TrainerRole,
         region: String?,
-        source: TrainerDetectionSource
+        source: TrainerDetectionSource,
+        faction: TrainerFaction? = null,
+        factionRank: FactionRank? = null,
+        factionTheme: String? = null
     ) = TrainerClassification(
         role = role,
         region = region,
         trainerId = raw.trainerId,
         rawType = raw.typeId,
         optional = raw.optional,
-        source = source
+        source = source,
+        faction = faction,
+        factionRank = factionRank,
+        factionTheme = factionTheme
     )
 
     private fun regionFrom(value: String): String? =
@@ -182,6 +420,9 @@ object RctTrainerClassifier {
 
     private fun normalizeRegion(value: String?): String? =
         value?.let(::normalize)?.takeIf { it in regions }
+
+    private fun containsAny(value: String, vararg parts: String): Boolean =
+        parts.any { it.isNotBlank() && value.contains(it) }
 
     private fun normalize(value: String): String =
         value.trim()
