@@ -17,7 +17,7 @@ import net.minecraft.util.math.BlockPos
 
 class MusicTriggerBlock(settings: Settings) : BlockWithEntity(settings) {
 
-    // 1.21.1 wants a codec even though this block isn't data-driven
+    // vanilla needs a codec for custom blocks
     override fun getCodec(): MapCodec<out BlockWithEntity> =
         throw UnsupportedOperationException("MusicTriggerBlock is not data-driven")
 
@@ -27,14 +27,12 @@ class MusicTriggerBlock(settings: Settings) : BlockWithEntity(settings) {
     override fun getRenderType(state: BlockState): BlockRenderType =
         BlockRenderType.MODEL
 
-    // block entity
 
     class Entity(pos: BlockPos, state: BlockState) :
         BlockEntity(TYPE, pos, state) {
 
         var zoneId: String = ""
 
-        // lookup is unused; zone id is just a plain string
         override fun writeNbt(nbt: NbtCompound, registryLookup: RegistryWrapper.WrapperLookup) {
             super.writeNbt(nbt, registryLookup)
             nbt.putString("ZoneId", zoneId)
@@ -50,7 +48,6 @@ class MusicTriggerBlock(settings: Settings) : BlockWithEntity(settings) {
         }
     }
 
-    // registration
 
     companion object {
         lateinit var INSTANCE: MusicTriggerBlock

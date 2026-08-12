@@ -15,5 +15,19 @@ enum class RegionOfOrigin(val dexRange: IntRange) {
     companion object {
         fun fromDexNumber(dexNumber: Int): RegionOfOrigin? =
             entries.firstOrNull { dexNumber in it.dexRange }
+
+        fun fromRegionalVariant(value: String): RegionOfOrigin? {
+            val normalized = value.trim().lowercase()
+                .replace('_', '-')
+                .replace(' ', '-')
+
+            return when {
+                "alola" in normalized || "alolan" in normalized -> ALOLA
+                "galar" in normalized || "galarian" in normalized -> GALAR
+                "hisui" in normalized || "hisuian" in normalized -> HISUI
+                "paldea" in normalized || "paldean" in normalized -> PALDEA
+                else -> null
+            }
+        }
     }
 }

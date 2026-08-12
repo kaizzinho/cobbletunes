@@ -20,6 +20,7 @@ class FadingSoundInstance(
     private var fadingOut = false
     private var fadeOutTicks = 1
     private var fadeOutElapsed = 0
+    private var fadeOutStartVolume = 0f
     private var done = false
 
     init {
@@ -31,11 +32,12 @@ class FadingSoundInstance(
         this.volume = if (fadeInSeconds <= 0f) {
             targetVolume
         } else {
-            0.05f  // small floor so quiet tracks still get an audio channel
+            0.05f // small floor keeps quiet tracks alive
         }
     }
 
     fun beginFadeOut(seconds: Float) {
+        fadeOutStartVolume = volume
         fadingOut = true
         fadeOutTicks = max(1, (seconds * 20f).toInt())
         fadeOutElapsed = 0
@@ -55,7 +57,7 @@ class FadingSoundInstance(
         } else {
             fadeOutElapsed++
             val outFraction = 1f - min(1f, fadeOutElapsed.toFloat() / fadeOutTicks)
-            volume = outFraction * targetVolume
+            volume = outFraction * fadeOutStartVolume
             if (fadeOutElapsed >= fadeOutTicks) {
                 done = true
             }

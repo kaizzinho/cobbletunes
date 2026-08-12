@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "cobbletunes",
-  "version": "${version}",
+  "version": "0.1.0",
   "name": "CobbleTunes - Music Framework",
   "description": "A framework for replacing Minecraft music with Poké soundtracks — battle themes, ambience, structure/proximity music, and menu themes. Ships without audio; requires a resource pack to actually play music.",
   "authors": [
@@ -35,5 +35,10 @@
   },
   "custom": {
     "cobbletunes:cobbleverse_compatible": true
+  },
+  "suggests": {
+    "wildbosses": "*",
+    "rctmod": "*",
+    "cobblemon_loot_menu": "*"
   }
 }

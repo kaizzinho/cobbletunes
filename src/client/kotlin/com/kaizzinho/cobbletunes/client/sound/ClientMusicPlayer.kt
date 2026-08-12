@@ -19,93 +19,177 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
     private var currentAmbienceTrack: MusicTrack? = null
     private var currentBiomeId: String? = null
 
-    // zone state lives separately so battles can safely borrow the audio slot
+    // zone state stays separate from playback
     private var activeZoneContext: MusicContext? = null
     private var activeZoneTrack: MusicTrack? = null
 
-    // biome memory + rotation timers
+    // latest biome target survives battle and victory
+    private var overrideBiomeId: String? = null
+    private var overrideBiomeTrack: MusicTrack? = null
+
     private val biomeTrackMemory: MutableMap<String, MusicTrack> = mutableMapOf()
     private val trackBudgetStartMillis: MutableMap<String, Long> = mutableMapOf()
     private val trackBudgetDurationMillis: MutableMap<String, Long> = mutableMapOf()
     private var ambienceSegmentStartedAtMillis: Long? = null
 
-    // silence queued before the next track
     private var pendingBiomeId: String? = null
     private var pendingTrack: MusicTrack? = null
     private var pendingSilenceEndsAtMillis: Long? = null
 
-    // short debounce while the biome settles
     private var debounceBiomeId: String? = null
     private var debounceEndsAtMillis: Long? = null
 
-    // battle
 
     fun playBattleContext(
         context: MusicContext,
         dexNumber: Int? = null,
         opposingDexNumbers: List<Int> = emptyList(),
+        opposingRegionalVariants: List<String> = emptyList(),
+        primaryRegionalVariant: String = "",
+        legendaryForm: String = "",
         preferredRegion: RegionOfOrigin? = null,
         factionTheme: String? = null
     ) {
         if (!config.replaceBattleMusic) return
 
-        // don't clear zone state here; we may need it right after the battle
+        // keep zone state for battle resume
+        val routedContext = if (
+            context == MusicContext.TRAINER_BATTLE &&
+            activeZoneContext == MusicContext.BATTLE_TOWER
+        ) MusicContext.BATTLE_TOWER_BATTLE else context
 
-        val track = when (context) {
+        val track = when (routedContext) {
             MusicContext.LEGENDARY_BATTLE -> {
                 if (dexNumber == null) {
                     LOGGER.warn("[$MOD_ID] LEGENDARY_BATTLE without dex number, falling back to WILD_BATTLE pool")
                     pickFrom(TrackRegistry.tracksFor(MusicContext.WILD_BATTLE))
-                } else TrackRegistry.legendaryTrackFor(dexNumber)
+                } else TrackRegistry.legendaryTrackFor(
+                    dexNumber,
+                    legendaryForm,
+                    primaryRegionalVariant
+                )
             }
-            MusicContext.WILD_BATTLE -> dexNumber?.let { TrackRegistry.wildTrackFor(it) }
+            MusicContext.WILD_BATTLE -> dexNumber?.let {
+                TrackRegistry.wildTrackFor(it, primaryRegionalVariant)
+            }
                 ?: pickFrom(TrackRegistry.tracksFor(context))
             MusicContext.TRAINER_BATTLE,
             MusicContext.GYM_LEADER_BATTLE,
             MusicContext.ELITE_FOUR_BATTLE,
             MusicContext.CHAMPION_BATTLE,
-            MusicContext.PVP_BATTLE ->
+            MusicContext.PVP_BATTLE,
+            MusicContext.FRONTIER_BRAIN_BATTLE ->
                 TrackRegistry.regionalBattleTrackFor(
-                    context = context,
+                    context = routedContext,
                     dexNumbers = opposingDexNumbers,
-                    preferredRegion = preferredRegion
-                ) ?: pickFrom(TrackRegistry.tracksFor(context))
+                    preferredRegion = preferredRegion,
+                    regionalVariants = opposingRegionalVariants
+                ) ?: pickFrom(TrackRegistry.tracksFor(routedContext))
             MusicContext.FACTION_BATTLE -> factionTheme
                 ?.let(TrackRegistry::factionBattleTrackFor)
-                ?: pickFrom(TrackRegistry.tracksFor(MusicContext.TRAINER_BATTLE))
-            else -> pickFrom(TrackRegistry.tracksFor(context))
+                ?: TrackRegistry.regionalBattleTrackFor(
+                    MusicContext.TRAINER_BATTLE,
+                    opposingDexNumbers,
+                    preferredRegion,
+                    opposingRegionalVariants
+                )
+            MusicContext.BATTLE_TOWER_BATTLE -> TrackRegistry.battleTowerBattleTrack()
+            else -> pickFrom(TrackRegistry.tracksFor(routedContext))
         } ?: run {
             LOGGER.warn("[$MOD_ID] No track for $context, leaving current music")
             return
         }
 
         debugLog(
-            "[Battle start] Picked: ${track.id} for $context" +
+            "[Battle start] Picked: ${track.id} for $routedContext" +
                 (factionTheme?.let { " (factionTheme=$it)" }
                     ?: preferredRegion?.let { " (preferredRegion=$it)" }
                     ?: "")
         )
-        // keep pending biome info around; battle-end resume will use it
-        play(context, track)
+        // keep newest biome for resume
+        play(routedContext, track)
     }
 
-    // ambience
+    fun playBossBattle(
+        tierName: String,
+        opposingDexNumbers: List<Int>,
+        opposingRegionalVariants: List<String> = emptyList()
+    ) {
+        if (!config.replaceBattleMusic) return
+
+        val pick = TrackRegistry.bossTrackFor(
+            opposingDexNumbers,
+            tierName,
+            opposingRegionalVariants
+        ) ?: run {
+            LOGGER.warn("[$MOD_ID] No regional Boss track available, leaving current music")
+            return
+        }
+
+        debugLog(
+            "[Boss battle] tier=${tierName.uppercase()} region=${pick.region?.name ?: "UNKNOWN"} " +
+                "source=${pick.source} track=${pick.track.id}"
+        )
+        play(pick.context, pick.track)
+    }
+
+    fun playVictoryTheme(track: MusicTrack) {
+        if (!config.replaceBattleMusic) return
+        debugLog("[Victory] Playing immediately: ${track.id}")
+        play(
+            context = MusicContext.VICTORY,
+            track = track,
+            force = true,
+            fadeInSeconds = 0.20f,
+            fadeOutSeconds = 0.25f
+        )
+    }
+
+    fun finishVictoryTheme() {
+        if (currentContext != MusicContext.VICTORY) return
+        debugLog("[Victory] Ending; resuming latest world music")
+        playAmbience()
+    }
+
 
     fun playAmbience() {
         if (!config.replaceAmbience) {
             stopCurrent(); currentContext = MusicContext.AMBIENCE; return
         }
 
-        // zone wins over biome here, incl. forfeits inside gyms
+        // zone beats biome on resume
         val zoneContext = activeZoneContext
         val zoneTrack = activeZoneTrack
         if (zoneContext != null && zoneTrack != null) {
+            overrideBiomeId = null
+            overrideBiomeTrack = null
             debugLog("[Battle end resume] Restoring active zone: ${zoneTrack.id} ($zoneContext)")
             play(zoneContext, zoneTrack, force = true)
             return
         }
 
-        // a queued pick is fresher than the old ambience track
+        // latest biome beats stale ambience
+        val latestOverrideTrack = overrideBiomeTrack
+        if (latestOverrideTrack != null) {
+            val latestOverrideBiome = overrideBiomeId
+            overrideBiomeId = null
+            overrideBiomeTrack = null
+            pendingTrack = null
+            pendingBiomeId = null
+            pendingSilenceEndsAtMillis = null
+            debounceBiomeId = null
+            debounceEndsAtMillis = null
+            currentBiomeId = latestOverrideBiome
+            currentAmbienceTrack = latestOverrideTrack
+            val budgetMillis = randomRotationBudgetMillis()
+            trackBudgetStartMillis[latestOverrideTrack.id] = System.currentTimeMillis()
+            trackBudgetDurationMillis[latestOverrideTrack.id] = budgetMillis
+            debugLog("[Battle end resume] Using latest observed biome: ${latestOverrideTrack.id} ($latestOverrideBiome)")
+            play(MusicContext.AMBIENCE, latestOverrideTrack, force = true)
+            return
+        }
+
+        // queued track beats stale ambience
         val track = if (pendingTrack != null) {
             val t = pendingTrack!!
             debugLog("[Battle end resume] Using pending track: ${t.id}")
@@ -114,7 +198,6 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
             currentBiomeId = pendingBiomeId
             pendingBiomeId = null
             currentAmbienceTrack = t
-            // start its timer now since we skipped the gap
             val budgetMillis = randomRotationBudgetMillis()
             trackBudgetStartMillis[t.id] = System.currentTimeMillis()
             trackBudgetDurationMillis[t.id] = budgetMillis
@@ -134,18 +217,19 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
         stopCurrent()
         currentContext = MusicContext.AMBIENCE
 
-        // respawn may be far away, so toss all old world/zone state
+        // respawn clears old world state
         currentBiomeId = null
         currentAmbienceTrack = null
         activeZoneContext = null
         activeZoneTrack = null
+        overrideBiomeId = null
+        overrideBiomeTrack = null
         biomeTrackMemory.clear()
         trackBudgetStartMillis.clear()
         trackBudgetDurationMillis.clear()
         debounceBiomeId = null
         debounceEndsAtMillis = null
 
-        // watcher queues the respawn biome while this 30s gap runs
         pendingBiomeId = null
         pendingTrack = null
         pendingSilenceEndsAtMillis = System.currentTimeMillis() + 30_000L
@@ -162,13 +246,26 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
         debounceBiomeId = null; debounceEndsAtMillis = null
         currentBiomeId = null; currentAmbienceTrack = null
         activeZoneContext = null; activeZoneTrack = null
+        overrideBiomeId = null; overrideBiomeTrack = null
         currentContext = MusicContext.AMBIENCE
         debugLog("[World join] Silence for ${config.worldJoinSilenceSeconds}s")
     }
 
     fun updateAmbienceBiome(biomeId: String) {
         if (!config.replaceAmbience) return
-        // freeze ambience timers while a battle ctx owns the player
+
+        // battle victory blocks playback not detection
+        if (isWorldOverrideContext(currentContext)) {
+            val track = resolveTrackForBiome(biomeId) ?: return
+            if (overrideBiomeId != biomeId || overrideBiomeTrack?.id != track.id) {
+                debugLog("[Biome update during override] Remembering: ${track.id} ($biomeId)")
+            }
+            overrideBiomeId = biomeId
+            overrideBiomeTrack = track
+            return
+        }
+
+        // zone state stays authoritative
         if (currentContext != MusicContext.AMBIENCE &&
             currentContext != MusicContext.MENU) return
 
@@ -192,11 +289,10 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
         handleBiomeTransitionDebounce(biomeId)
     }
 
-    // zone music
 
     private var currentSoundStartedAtMillis: Long = 0L
     private var worldJoinReadyTicks = 0
-    private val WORLD_JOIN_READY_TICKS = 10 // ~10s, same as menu music delay
+    private val WORLD_JOIN_READY_TICKS = 10
 
     fun playZoneAmbience(context: MusicContext, track: MusicTrack) {
         if (!config.replaceAmbience) return
@@ -206,9 +302,9 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
         pendingSilenceEndsAtMillis = null; pendingBiomeId = null; pendingTrack = null
         debounceBiomeId = null; debounceEndsAtMillis = null
 
-        // zone packets during battle only update memory, not the audible track
-        if (isBattleContext(currentContext)) {
-            debugLog("[Zone update during battle] Remembering: ${track.id} ($context)")
+        // zone updates survive battle and victory
+        if (isWorldOverrideContext(currentContext)) {
+            debugLog("[Zone update during override] Remembering: ${track.id} ($context)")
             return
         }
 
@@ -221,12 +317,12 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
         activeZoneTrack = null
         if (!config.replaceAmbience) return
 
-        // same deal on exit: update state, leave battle audio alone
-        if (isBattleContext(currentContext)) {
-            debugLog("[Zone exit during battle] Cleared active zone; battle music continues")
+        // zone exits survive battle and victory
+        if (isWorldOverrideContext(currentContext)) {
+            debugLog("[Zone exit during override] Cleared active zone; override music continues")
             return
         }
-        // stopCurrent is intentional; stopAmbienceAudio ignores zone ctxs
+        // stop current is needed on zone exit
         stopCurrent()
         currentContext = MusicContext.AMBIENCE
         this.currentBiomeId = null
@@ -234,13 +330,12 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
         debounceBiomeId = null; debounceEndsAtMillis = null
         pendingSilenceEndsAtMillis = null; pendingTrack = null; pendingBiomeId = null
         debugLog("[Zone exit] Forcing fresh biome re-detection (was in zone, now at biome $currentBiomeId)")
-        // kick the debounce now instead of waiting for the next watcher tick
+        // start debounce right after zone exit
         if (currentBiomeId != null) {
             handleBiomeTransitionDebounce(currentBiomeId)
         }
     }
 
-    // menu music
 
     fun isMenuThemeAudible(): Boolean {
         val sound = currentSound ?: return false
@@ -259,7 +354,6 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
         if (currentContext == MusicContext.MENU) stopCurrent()
     }
 
-    // ambience internals
 
     private fun checkAndRotateCurrentTrack(biomeId: String) {
         val track = biomeTrackMemory[biomeId] ?: run {
@@ -314,7 +408,7 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
         val track = resolveTrackForBiome(biomeId) ?: return
         currentBiomeId = biomeId; currentAmbienceTrack = track
 
-        // timer starts when the track actually commits
+        // timer starts when track commits
         val budgetMillis = randomRotationBudgetMillis()
         trackBudgetStartMillis[track.id] = System.currentTimeMillis()
         trackBudgetDurationMillis[track.id] = budgetMillis
@@ -354,7 +448,7 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
     private fun resolvePendingSilenceIfElapsed() {
         val endsAt = pendingSilenceEndsAtMillis ?: return
 
-        // fresh launches can drop sounds until the engine is ready
+        // retry startup audio until engine is ready
         worldJoinReadyTicks++
         if (worldJoinReadyTicks < WORLD_JOIN_READY_TICKS) return
 
@@ -408,25 +502,36 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
         MusicContext.CHAMPION_BATTLE,
         MusicContext.PVP_BATTLE,
         MusicContext.FACTION_BATTLE,
+        MusicContext.FRONTIER_BRAIN_BATTLE,
+        MusicContext.BATTLE_TOWER_BATTLE,
         MusicContext.LEGENDARY_BATTLE
     )
+
+    private fun isWorldOverrideContext(context: MusicContext): Boolean =
+        isBattleContext(context) || context == MusicContext.VICTORY
 
     private fun pickFrom(candidates: List<MusicTrack>): MusicTrack? =
         if (config.shuffleAmbienceTracks) candidates.randomOrNull() else candidates.firstOrNull()
 
-    private fun play(context: MusicContext, track: MusicTrack, force: Boolean = false) {
+    private fun play(
+        context: MusicContext,
+        track: MusicTrack,
+        force: Boolean = false,
+        fadeInSeconds: Float = config.crossfadeSeconds,
+        fadeOutSeconds: Float = config.crossfadeSeconds
+    ) {
         if (!force && context == currentContext && track.id == currentTrackId) return
 
         if (currentContext == MusicContext.AMBIENCE) ambienceSegmentStartedAtMillis = null
 
-        stopCurrent()
+        stopCurrent(fadeOutSeconds)
         val instance = FadingSoundInstance(
             soundEvent = track.soundEvent,
             targetVolume = config.musicVolume,
-            fadeInSeconds = config.crossfadeSeconds,
+            fadeInSeconds = fadeInSeconds,
             looping = track.loop
         )
-        // missing oggs should be a quiet no-op, not an empty-event warning
+        // missing oggs stay silent
         val mc = MinecraftClient.getInstance()
         if (mc.soundManager.getKeys().none {
                 it.toString() == track.soundEvent.id.toString()
@@ -447,9 +552,9 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
         }
     }
 
-    private fun stopCurrent() {
+    private fun stopCurrent(fadeOutSeconds: Float = config.crossfadeSeconds) {
         val sound = currentSound ?: return
-        sound.beginFadeOut(config.crossfadeSeconds)
+        sound.beginFadeOut(fadeOutSeconds)
         currentSound = null
         currentTrackId = null
     }
@@ -457,6 +562,10 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
     fun stopEverything() {
         stopCurrent()
         currentContext = MusicContext.AMBIENCE
+        activeZoneContext = null
+        activeZoneTrack = null
+        overrideBiomeId = null
+        overrideBiomeTrack = null
         pendingSilenceEndsAtMillis = null
         pendingTrack = null
         pendingBiomeId = null

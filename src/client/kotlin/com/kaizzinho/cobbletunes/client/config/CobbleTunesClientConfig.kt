@@ -13,14 +13,14 @@ data class CobbleTunesClientConfig(
     var musicVolume: Float = 1.0f,
     var crossfadeSeconds: Float = 2.5f,
     var shuffleAmbienceTracks: Boolean = true,
-    // world/dimension join uses one fixed gap; track/biome gaps use ranges
-    // biome transitions debounce and restart if the biome changes again
+    // join gap is fixed while track gaps use ranges
+    // biome debounce resets on each change
     var worldJoinSilenceSeconds: Float = 10f,
     var trackEndSilenceMinSeconds: Float = 90f,
     var trackEndSilenceMaxSeconds: Float = 180f,
     var biomeTransitionSilenceMinSeconds: Float = 4f,
     var biomeTransitionSilenceMaxSeconds: Float = 8f,
-    // handy for bug reports; server-side traces have their own cfg file
+    // server debug uses its own config
     var debugLogging: Boolean = false
 ) {
     companion object {

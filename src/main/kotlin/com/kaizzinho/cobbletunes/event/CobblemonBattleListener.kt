@@ -11,6 +11,7 @@ import com.kaizzinho.cobbletunes.compat.rct.RctTrainerClassifier
 import com.kaizzinho.cobbletunes.config.CobbleTunesServerConfig
 import com.kaizzinho.cobbletunes.network.BattleMusicEndPayload
 import com.kaizzinho.cobbletunes.network.BattleMusicStartPayload
+import com.kaizzinho.cobbletunes.network.BattleVictoryPayload
 import com.kaizzinho.cobbletunes.network.PlayerDeathPayload
 import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
@@ -31,35 +32,54 @@ object CobblemonBattleListener {
                     continue
                 }
 
-                // side isn't exposed by these mappings, so grab every actor except us
+                // side is hidden so use every actor except us
                 val opposingActors: List<BattleActor> = battle.actors
                     .filter { it != playerActor }
                     .toList()
 
-                val opposingSpecies = opposingActors
+                val opposingPokemon = opposingActors
                     .flatMap { it.pokemonList }
-                    .map { it.effectedPokemon.species }
+                    .map { it.effectedPokemon }
+                val opposingSpecies = opposingPokemon.map { it.species }
 
-                val legendarySpecies = opposingSpecies.firstOrNull { species ->
-                    "legendary" in species.labels || "mythical" in species.labels
+                val legendaryPokemon = opposingPokemon.firstOrNull { pokemon ->
+                    "legendary" in pokemon.species.labels || "mythical" in pokemon.species.labels
                 }
-                val isLegendary = legendarySpecies != null
-                val primarySpecies = legendarySpecies ?: opposingSpecies.firstOrNull()
-                val dexNumber = primarySpecies?.nationalPokedexNumber ?: -1
+                val isLegendary = legendaryPokemon != null
+                val primaryPokemon = legendaryPokemon ?: opposingPokemon.firstOrNull()
+                val dexNumber = primaryPokemon?.species?.nationalPokedexNumber ?: -1
+                val legendaryForm = legendaryPokemon?.form?.name.orEmpty()
                 val opposingDexNumbers = opposingSpecies.map { it.nationalPokedexNumber }
+                val opposingRegionalVariants = opposingPokemon.map { pokemon ->
+                    resolveRegionalVariant(
+                        pokemon.species.nationalPokedexNumber,
+                        pokemon.form.name,
+                        pokemon.aspects
+                    )
+                }
+                val primaryRegionalVariant = primaryPokemon?.let { pokemon ->
+                    resolveRegionalVariant(
+                        pokemon.species.nationalPokedexNumber,
+                        pokemon.form.name,
+                        pokemon.aspects
+                    )
+                }.orEmpty()
 
-                val trainerRoute = if (battle.isPvN) {
-                    RctBridge.resolveTrainerRoute(battle, opposingActors)
-                } else {
-                    ""
+                val bossTier = WildBossesBridge.resolveTier(opposingActors)
+                val trainerRoute = when {
+                    bossTier != null -> "boss|${bossTier.lowercase()}"
+                    battle.isPvN -> RctBridge.resolveTrainerRoute(battle, opposingActors)
+                    else -> ""
                 }
 
                 if (CobbleTunesServerConfig.current.debugLogging) {
                     LOGGER.info(
                         "[$MOD_ID] [Debug] [Battle payload] player=${player.name.string} " +
                             "battle=${battle.battleId} isWild=${battle.isPvW} " +
-                            "isTrainer=${battle.isPvN} route='$trainerRoute' " +
-                            "opposingDex=$opposingDexNumbers"
+                            "isTrainer=${battle.isPvN} bossTier=${bossTier ?: "none"} " +
+                            "route='$trainerRoute' form='${legendaryForm.ifEmpty { "base" }}' " +
+                            "regional='${primaryRegionalVariant.ifEmpty { "standard" }}' " +
+                            "opposingDex=$opposingDexNumbers regionalVariants=$opposingRegionalVariants"
                     )
                 }
 
@@ -71,6 +91,9 @@ object CobblemonBattleListener {
                         isLegendary = isLegendary,
                         dexNumber = dexNumber,
                         opposingDexNumbers = opposingDexNumbers,
+                        opposingRegionalVariants = opposingRegionalVariants,
+                        primaryRegionalVariant = primaryRegionalVariant,
+                        legendaryForm = legendaryForm,
                         trainerTier = trainerRoute
                     )
                 )
@@ -78,8 +101,14 @@ object CobblemonBattleListener {
         }
 
         CobblemonEvents.BATTLE_VICTORY.subscribe { event ->
+            val winnerActors = event.winners.toSet()
             for (player in event.battle.players) {
-                ServerPlayNetworking.send(player, BattleMusicEndPayload)
+                val playerActor = event.battle.getActor(player)
+                val actuallyWon = !event.wasWildCapture && playerActor in winnerActors
+                ServerPlayNetworking.send(
+                    player,
+                    if (actuallyWon) BattleVictoryPayload else BattleMusicEndPayload
+                )
             }
         }
 
@@ -89,7 +118,7 @@ object CobblemonBattleListener {
             }
         }
 
-        // cobblemon has no defeat event, so use the real respawn flag instead
+        // defeat uses the real respawn flag
         ServerPlayerEvents.AFTER_RESPAWN.register { _, newPlayer, alive ->
             if (!alive) {
                 ServerPlayNetworking.send(newPlayer, PlayerDeathPayload)
@@ -100,6 +129,28 @@ object CobblemonBattleListener {
         }
 
         LOGGER.info("[$MOD_ID] CobblemonBattleListener registered (server-side battle classification).")
+    }
+
+    private fun resolveRegionalVariant(
+        dexNumber: Int,
+        formName: String,
+        aspects: Set<String>
+    ): String {
+        val candidates = aspects + formName
+        for (candidate in candidates) {
+            val normalized = candidate.trim().lowercase(Locale.ROOT)
+                .replace('_', '-')
+                .replace(' ', '-')
+
+            when {
+                "alola" in normalized || "alolan" in normalized -> return "alola"
+                "galar" in normalized || "galarian" in normalized -> return "galar"
+                "hisui" in normalized || "hisuian" in normalized -> return "hisui"
+                "paldea" in normalized || "paldean" in normalized -> return "paldea"
+                dexNumber == 550 && "white-striped" in normalized -> return "hisui"
+            }
+        }
+        return ""
     }
 
     private object RctBridge {
@@ -182,7 +233,7 @@ object CobblemonBattleListener {
             val rctMod = getInstance.invoke(null) ?: return missing
             val trainerManager = invokeNoArg(rctMod, "getTrainerManager") ?: return missing
 
-            // string lookup is the clean path in rct 0.18.1; entity lookup is a fallback
+            // rct string lookup first entity lookup fallback
             val trainerData = invokeOneArg(trainerManager, "getData", trainerId)
                 ?: invokeOneArg(trainerManager, "getData", entity)
                 ?: return missing

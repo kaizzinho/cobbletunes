@@ -1,9 +1,9 @@
 # CobbleTunes — Music Framework 🎵🎮
 
-![Status](https://img.shields.io/badge/status-em%20desenvolvimento-yellow)
+![Status](https://img.shields.io/badge/status-release%20candidate-yellow)
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-62B47A?logo=minecraft&logoColor=white)
-![Fabric](https://img.shields.io/badge/Fabric-Loom-DBB69B?logo=fabric&logoColor=white)
-![Kotlin](https://img.shields.io/badge/Kotlin-2.1.21-7F52FF?logo=kotlin&logoColor=white)
+![Fabric](https://img.shields.io/badge/Fabric-Loader%200.17.2%2B-DBB69B?logo=minecraft&logoColor=white)
+![Kotlin](https://img.shields.io/badge/Kotlin-Fabric%20Language%20Kotlin-7F52FF?logo=kotlin&logoColor=white)
 ![Cobblemon](https://img.shields.io/badge/Cobblemon-1.7.3-3E8E41)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![Audio](https://img.shields.io/badge/audio-not%20included-lightgrey)
@@ -14,282 +14,592 @@
 
 ## English
 
-### What is CobbleTunes?
+### Overview
 
-**CobbleTunes** is a dynamic music framework for [Cobblemon](https://cobblemon.com/) on Fabric/Kotlin. It watches battles, biomes, structures, menus, and a few other game states, then picks the right music context for each one.
+**CobbleTunes** is a dynamic music framework for Cobblemon on Fabric. It replaces Minecraft music with context-aware battle themes, regional ambience, structure music, Victory themes, Battle Tower music, title-screen tracks, and low-HP cues.
 
-The repository contains the music logic, not the soundtrack. It doesn't ship, download, or generate copyrighted OST files. A resource pack provides the `.ogg` files, while CobbleTunes decides when each one should play.
+The mod ships the routing and playback system only. It does **not** include, download, or generate Pokémon OST files. Music is supplied by a normal Minecraft resource pack under `assets/cobbletunes/sounds/`.
 
-### What it can detect
+The current source defines **404 sound events** across battle, Victory, Battle Tower, ambience, menu, and effects. The complete list is in [`SOUND_MANIFEST.md`](./SOUND_MANIFEST.md).
 
-CobbleTunes currently handles:
+### What it does
 
-- wild and legendary/mythical battles;
-- regular NPC trainer battles;
-- Gym Leaders, Elite Four, Champions, and RCT rivals;
-- real player-versus-player battles;
-- biome and underground ambience;
-- Cobbleverse, vanilla, and BCA structure proximity;
-- hand-placed Poké Center and Poké Mart music zones;
-- title-screen music, low-HP alerts, and player death transitions.
-
-### How battle routing works
-
-Battle classification happens on the server. The client only receives a compact result and turns it into a music context.
-
-A normal flow looks like this:
+Battle classification runs on the server and playback runs on the client. CobbleTunes inspects the opponent, resolves a role and region, sends a compact route, then chooses the matching registered `SoundEvent`.
 
 ```text
-Cobblemon battle event
-    -> inspect the opposing actors
-    -> classify the battle and trainer role
-    -> resolve the trainer region when possible
-    -> send the route to the client
-    -> pick a registered SoundEvent from TrackRegistry
+Cobblemon battle
+→ classify wild trainer pvp boss faction or facility battle
+→ resolve role and region
+→ apply species form and regional variant overrides
+→ send route to the client
+→ play the matching music context
 ```
 
-The route keeps the role and region separate. A Kanto Gym Leader, for example, becomes:
+World music uses a similar priority model:
+
+```text
+battle
+↓
+victory and loot menu
+↓
+structure trigger and battle tower zone
+↓
+biome ambience
+```
+
+Lower-priority world detection keeps running while battle or Victory music owns the audio slot, so the current zone or biome is ready when the higher-priority music ends.
+
+### Key Features
+
+- [x] **Regional battle music** for Kanto, Johto, Hoenn, Sinnoh, Unova, Kalos, Alola, Galar, Hisui, and Paldea.
+- [x] **Wild, trainer, Gym Leader, Elite Four, Champion, rival, PvP, faction, Frontier Brain, Battle Tower, and Legendary/Mythical contexts.**
+- [x] **Regional form routing** so Alolan, Galarian, Hisuian, and Paldean forms use their form region instead of the base species region.
+- [x] **Form-aware Legendary routing** for encounters such as Kyurem, Necrozma, Eternatus, Calyrex, Terapagos, and the Galarian birds.
+- [x] **Dynamic RCT classification** with role, region, faction, rank, trainer ID, and progression-aware routing.
+- [x] **Villain faction themes** for Rocket, Aqua, Magma, Galactic, Plasma, Flare, Skull, Aether Foundation, Lusamine, and Ultra Recon Squad routes.
+- [x] **Frontier Brain music** with a dedicated battle context.
+- [x] **WildBosses integration** with tier-weighted regional PvP, generic Legendary, and BW World Tournament pools.
+- [x] **Species-safe Boss pools** that keep unique Legendary encounter themes out of unrelated Boss fights.
+- [x] **Victory + Cobblemon Loot Menu integration** with instant Victory start, fast battle-to-Victory fade, menu confirmation grace, looping while the loot screen is open, and current-zone resume afterward.
+- [x] **Battle Tower floor pools** with low, mid, high, and final tiers plus dedicated Battle Tower battle music.
+- [x] **Biome ambience memory and rotation** with silence windows and biome-transition debounce.
+- [x] **Underground ambience detection** using sky light and player height.
+- [x] **Cobbleverse exact structures**, **vanilla structures**, and **BCA village pools**.
+- [x] **Hand-placed music zones** for Poké Centers, Poké Marts, Gyms, special locations, and Battle Tower floors.
+- [x] **Title-screen music** that stays active across submenus and stops when a world loads.
+- [x] **Low-HP cue** for the active battle Pokémon with a boosted effect volume.
+- [x] **Player-death handling** and safe world/zone reset.
+- [x] **Client and server debug logging**, disabled by default.
+
+### Requirements
+
+#### Required
+
+- Minecraft `1.21.1`
+- Fabric Loader `0.17.2+`
+- Fabric API
+- Fabric Language Kotlin `1.13.3+`
+- Cobblemon `1.7.3`
+- Java `21`
+
+For multiplayer, install CobbleTunes on both the client and server. The server performs battle and structure classification while the client owns playback.
+
+#### Optional integrations
+
+- **Radical Cobblemon Trainers** — trainer role, region, faction, and progression-aware battle routing.
+- **WildBosses** — Boss-specific weighted regional battle pools.
+- **Cobblemon Loot Menu** — post-battle Victory music while the loot screen is active.
+- **CobblemonAdditions / BCA structures** — additional village-size structure pools when those structures exist in the world.
+
+RCT, WildBosses, and Cobblemon Loot Menu are soft integrations. Missing optional mods do not prevent CobbleTunes from loading.
+
+### Battle routing
+
+#### Standard regional contexts
+
+CobbleTunes keeps the battle role separate from the region. A Kanto Gym Leader route looks like:
 
 ```text
 leader|kanto
 ```
 
-The client reads that as `GYM_LEADER_BATTLE` with Kanto as the preferred region, then chooses the Kanto Gym Leader `SoundEvent`. Brock doesn't need a custom `brock.ogg`; he uses the shared regional path documented in [`SOUND_MANIFEST.md`](./SOUND_MANIFEST.md).
+A Sinnoh Frontier Brain route looks like:
 
-### Dynamic RCT detection
+```text
+frontier|sinnoh
+```
 
-[Radical Cobblemon Trainers](https://modrinth.com/mod/rctmod) is optional. When it is installed, CobbleTunes reads the opposing RCT trainer through Cobblemon's entity-backed battle actor. The integration is reflection-based, so RCT classes are never required for CobbleTunes to start.
+A faction route keeps the exact theme ID:
 
-The classifier doesn't rely on a hardcoded list of trainer names. It checks the available data in this order:
+```text
+faction:team_galactic_commander|sinnoh
+```
 
-1. standard RCT roles such as `leader`, `e4`, `champ`, and `rival`;
-2. regional custom types such as `kanto_league` or `sinnoh_champion`;
-3. role hints inside the trainer ID, such as `hoenn_league_fosco`;
-4. the current Cobbleverse progression pattern, where a non-optional regional trainer such as `kanto_brock` is treated as a Gym Leader;
-5. regular trainer music if none of the stronger signals match.
+When trainer metadata contains a region, that region wins. If it does not, the opposing roster votes by region.
 
-The region comes from the RCT type or trainer ID whenever possible. If no region is available, the client falls back to a majority vote using the opposing Pokémon's Pokédex regions. Ties are picked randomly between the tied regions.
+#### Regional variants
 
-If RCT is missing or its API changes, CobbleTunes logs the compatibility issue once and safely falls back to regular trainer music.
+National Dex numbers alone are not enough for regional forms. CobbleTunes also sends regional-form metadata with the battle packet.
 
-### PvP and rivals
+Examples:
 
-Real PvP battles do not use RCT. They go straight to the `PVP_BATTLE` context, and the opposing roster is used to choose a regional pool.
+```text
+alolan exeggutor → alola
+alolan grimer and muk → alola
+galarian weezing → galar
+hisuian growlithe → hisui
+paldean wooper → paldea
+```
 
-RCT rivals also use the PvP/rival context, but their region can come directly from trainer metadata instead of the roster vote.
+The regional variant affects wild themes, trainer roster voting, WildBosses regional pools, Legendary fallback routing, and Victory region selection.
 
-### Structure music and battle resume
+#### RCT trainer roles and factions
 
-`StructureZoneDetector` checks nearby worldgen structures and `MusicTriggerBlock`s on the server. It confirms proximity against the structure's real bounding box before sending a zone update to the client.
+RCT integration is reflection-based. CobbleTunes reads the trainer ID and type when available, then classifies the encounter without making RCT a hard dependency.
 
-The client keeps the active zone in its own state instead of tying it to whatever sound is currently audible. This matters when a battle starts inside a Gym, Poké Center, Poké Mart, or another tracked structure:
+Recognized role routes include:
 
-- battle music temporarily takes over;
-- zone packets received during the battle update the saved zone without interrupting the battle theme;
-- after a victory or forfeit, the active zone theme is restored;
-- if the player left the zone during the battle, biome ambience resumes instead.
+```text
+normal
+leader
+e4
+champ
+rival
+frontier
+```
 
-### Project layout
+Recognized faction families include Team Rocket, Team Aqua, Team Magma, Team Galactic, Team Plasma, Team Flare, Team Skull, Aether Foundation, and Ultra Recon Squad.
 
-- **`src/main/kotlin`** — server/common entrypoint, Cobblemon battle events, RCT compatibility, trainer classification, structure detection, trigger blocks, configs, and network payloads.
-- **`src/client/kotlin`** — packet handling, track routing, biome watching, menu music, low-HP logic, fading sounds, and all client playback state.
-- **`src/main/resources/assets/cobbletunes/sounds.json`** — every registered sound key and its expected resource-pack path.
+Faction matching runs before broad role matching. This keeps cases such as Rocket Giovanni separate from a normal regional Gym Leader Giovanni route.
 
-### Main features
+### Legendary and Mythical routing
 
-- [x] **Context-based battle music** for wild, legendary, trainer, Gym Leader, Elite Four, Champion, rival, and PvP battles.
-- [x] **Dynamic RCT trainer classification** using type, trainer ID, region, and progression metadata.
-- [x] **Regional track routing** with trainer metadata first and roster voting as fallback.
-- [x] **Biome ambience memory** so revisiting a biome can bring back its previous track.
-- [x] **Natural track rotation and silence windows** instead of immediately chaining songs together.
-- [x] **Biome transition debounce** to avoid changing music for tiny biomes the player crosses in a few seconds.
-- [x] **Underground cave detection** based on sky light and height, not only the surface biome.
-- [x] **Structure and trigger-block ambience** for Gyms, special structures, villages, Poké Centers, and Poké Marts.
-- [x] **Zone restoration after battles**, including forfeits inside tracked structures.
-- [x] **Menu music**, **low-HP cue**, and **player-death handling**.
-- [x] **Optional RCT integration** with a safe ordinary-trainer fallback.
-- [x] **Client and server debug logs**, disabled by default.
+Dedicated encounter tracks are selected by species and, where needed, form. Generic regional Legendary tracks remain available as fallbacks.
 
-### Config files
+Current form-sensitive cases include:
 
-CobbleTunes creates two files inside the instance's `config` folder:
+- Galarian Articuno, Zapdos, and Moltres;
+- base vs Black/White Kyurem;
+- base, fused, and Ultra Necrozma;
+- Eternatus vs Eternamax Eternatus;
+- Calyrex vs Ice Rider / Shadow Rider Calyrex;
+- Terapagos vs Stellar Terapagos.
 
-- `cobbletunes-client.json` — music replacement toggles, volume, crossfade time, silence ranges, shuffle, and client debug logs;
-- `cobbletunes-server.json` — server-side battle/zone debug logs.
+The resource pack also contains dedicated encounter themes for major Legendary/Mythical groups across the supported regions. See the manifest for every mapped file.
 
-A full restart is recommended after changing server-side settings.
+### WildBosses integration
 
-### Audio and licensing
+WildBosses is optional. When a battle is identified as an actual Boss encounter, CobbleTunes uses the Boss species region and tier to build a weighted pool.
 
-No Pokémon OST files are included. Those tracks are copyrighted by their respective owners, and this project does not host or redistribute them.
+| Tier | Regional rival/PvP | Generic Legendary | BW World Tournament |
+|---|---:|---:|---:|
+| Uncommon | 80% | 15% | 5% |
+| Rare | 70% | 20% | 10% |
+| Epic | 60% | 30% | 10% |
+| Legendary | 50% | 35% | 15% |
+| Mythic | 45% | 40% | 15% |
 
-To add music, build a resource pack with `.ogg` files under:
+Species-specific Legendary themes are excluded from generic Boss pools. If another valid option exists, CobbleTunes also avoids immediately repeating the previous Boss track for that region.
+
+### Victory and Cobblemon Loot Menu
+
+Victory music is a soft integration with `cobblemon_loot_menu`.
+
+When a supported battle is won:
+
+```text
+battle victory
+→ Victory track starts immediately
+→ battle fades out in about 0.25 s
+→ Victory fades in in about 0.20 s
+→ CobbleTunes waits up to 3 s for the loot screen to appear
+```
+
+The three-second window does **not** delay the music. Victory is already playing during that time. If the Loot Menu opens, Victory keeps looping until the screen closes. If no loot screen appears, Victory ends and world music resumes.
+
+Biome and structure detection continue while Victory owns playback. When the loot screen closes, CobbleTunes restores the **latest** valid structure, Battle Tower floor, or biome instead of returning to stale pre-battle ambience.
+
+Hisui intentionally has no traditional Victory theme in this pack.
+
+### Battle Tower
+
+Battle Tower ambience uses four pools:
+
+```text
+battle_tower_low
+battle_tower_mid
+battle_tower_high
+battle_tower_final
+```
+
+Floor trigger IDs such as `cobbletunes:battle_tower_floor_1` through `cobbletunes:battle_tower_floor_10` resolve into those pools. Nearby floor triggers are checked nearest-first so vertically overlapping floors do not steal each other's music.
+
+A trainer battle that begins while the current zone is `BATTLE_TOWER` is routed to the dedicated Galar Battle Tower battle theme.
+
+### Ambience and structures
+
+Regional biome ambience is currently defined for Kanto, Johto, Hoenn, Sinnoh, and Unova. Tracks are mapped to vanilla and Terralith biome groups such as plains, forests, caves, oceans, mountains, snow, deserts, and volcanic areas.
+
+Biome tracks use memory, rotation budgets, silence ranges, and transition debounce. Crossing a tiny biome does not immediately force a new track if the biome changes again during the debounce window.
+
+Structure music has higher priority than biome ambience. Supported sources include:
+
+- Cobbleverse Gym and League structures;
+- exact named Cobbleverse structures and Legendary locations;
+- vanilla structures such as Ancient Cities, Strongholds, Mansions, Trial Chambers, Villages, Shipwrecks, Ruined Portals, and more;
+- BCA small, mid, and large village pools;
+- hand-placed `MusicTriggerBlock` zones.
+
+Zone music loops until the player leaves the zone. Battle and Victory music temporarily take priority without discarding the current zone state.
+
+### Low HP cue
+
+The active battle Pokémon is checked periodically. When a living active Pokémon reaches 25% HP or lower, CobbleTunes plays a two-beep alert sequence.
+
+The effect uses `1.35x` the configured music volume, capped at `1.5`, so it remains audible over battle music.
+
+### Configuration
+
+CobbleTunes creates two JSON files in `config/`.
+
+#### `cobbletunes-client.json`
+
+| Option | Default |
+|---|---:|
+| `replaceAmbience` | `true` |
+| `replaceMenuMusic` | `true` |
+| `replaceBattleMusic` | `true` |
+| `musicVolume` | `1.0` |
+| `crossfadeSeconds` | `2.5` |
+| `shuffleAmbienceTracks` | `true` |
+| `worldJoinSilenceSeconds` | `10` |
+| `trackEndSilenceMinSeconds` | `90` |
+| `trackEndSilenceMaxSeconds` | `180` |
+| `biomeTransitionSilenceMinSeconds` | `4` |
+| `biomeTransitionSilenceMaxSeconds` | `8` |
+| `debugLogging` | `false` |
+
+#### `cobbletunes-server.json`
+
+| Option | Default |
+|---|---:|
+| `debugLogging` | `false` |
+
+### Resource pack
+
+CobbleTunes does not include soundtrack files. Put your `.ogg` files under:
 
 ```text
 assets/cobbletunes/sounds/
 ```
 
-Every expected key and path is listed in [`SOUND_MANIFEST.md`](./SOUND_MANIFEST.md). Missing files are safe: that specific event stays silent instead of crashing the game.
+The included `sounds.json` defines all 404 expected sound events. [`SOUND_MANIFEST.md`](./SOUND_MANIFEST.md) mirrors those entries and explains their routing.
+
+Missing audio is handled as silence instead of crashing the music system.
+
+### Project layout
+
+- **`src/main/kotlin`** — common/server entrypoint, battle events, RCT classification, WildBosses bridge, structure detection, trigger blocks, configs, and networking.
+- **`src/client/kotlin`** — packet routing, region selection, Victory/Loot Menu bridge, ambience watching, music state, fades, menu music, and low-HP handling.
+- **`src/main/resources/assets/cobbletunes/sounds.json`** — all sound keys and resource-pack paths.
 
 ### Building
 
-Java 21 is required. From the project root:
+Java 21 is required. From the complete project root:
 
 ```powershell
-./gradlew clean build -PexcludeAudio
+.\gradlew clean build
 ```
 
-The built JAR will be placed in `build/libs/`.
+If your project uses the audio-exclusion build property:
 
-### Roadmap
+```powershell
+.\gradlew clean build -PexcludeAudio
+```
 
-- [ ] Add post-Sinnoh Cobbleverse proximity mappings as those structures become available.
-- [ ] Expand post-Unova biome ambience coverage.
-- [ ] Add more vanilla/BCA structure pools.
-- [ ] Move exceptional trainer-role overrides to a small external config if future datapacks need them.
+The built JAR is placed in `build/libs/`.
+
+### Audio and licensing
+
+No Pokémon OST audio is distributed with CobbleTunes. Soundtrack files belong to their respective rights holders and must be supplied separately by the resource-pack user or pack maintainer.
 
 ### License
 
-The code is available under the MIT license. Audio packs are separate works and keep their own licensing terms.
+CobbleTunes source code is available under the MIT license.
 
 ---
 
 ## Português
 
-### O que é o CobbleTunes?
+### Visão geral
 
-**CobbleTunes** é um framework de música dinâmica para [Cobblemon](https://cobblemon.com/) em Fabric/Kotlin. Ele acompanha batalhas, biomas, estruturas, menus e alguns outros estados do jogo para escolher o contexto musical certo em cada situação.
+**CobbleTunes** é um framework de música dinâmica para Cobblemon em Fabric. Ele substitui a música do Minecraft por temas de batalha, ambientação regional, músicas de estruturas, temas de vitória, Battle Tower, menu e alerta de HP baixo de acordo com o contexto atual.
 
-O repositório contém a lógica musical, não a trilha sonora. Ele não distribui, baixa nem gera arquivos de OST protegidos por direitos autorais. O resource pack fornece os arquivos `.ogg`, e o CobbleTunes decide quando cada um deve tocar.
+O mod contém apenas a lógica de roteamento e reprodução. Ele **não** inclui, baixa ou gera arquivos de OST de Pokémon. As músicas são fornecidas por um resource pack normal dentro de `assets/cobbletunes/sounds/`.
 
-### O que ele detecta
+O código atual define **404 eventos de som** entre batalhas, vitória, Battle Tower, ambientação, menu e efeitos. A lista completa está em [`SOUND_MANIFEST.md`](./SOUND_MANIFEST.md).
 
-Atualmente, o CobbleTunes lida com:
+### O que ele faz
 
-- batalhas selvagens e lendárias/míticas;
-- batalhas contra treinadores NPC comuns;
-- Líderes de Ginásio, Elite Four, Campeões e rivais do RCT;
-- batalhas reais entre jogadores;
-- ambientação por bioma e ambiente subterrâneo;
-- proximidade de estruturas do Cobbleverse, vanilla e BCA;
-- zonas manuais de Centro Pokémon e Poké Mart;
-- música de menu, alerta de HP baixo e transições após a morte do jogador.
-
-### Como a rota de batalha funciona
-
-A classificação da batalha acontece no servidor. O cliente recebe apenas um resultado compacto e transforma isso em um contexto musical.
-
-O fluxo normal é este:
+A classificação das batalhas acontece no servidor e a reprodução acontece no cliente. O CobbleTunes analisa o adversário, resolve função e região, envia uma rota compacta e escolhe o `SoundEvent` correspondente.
 
 ```text
-evento de batalha do Cobblemon
-    -> analisa os atores adversários
-    -> classifica a batalha e o papel do treinador
-    -> resolve a região quando possível
-    -> envia a rota ao cliente
-    -> escolhe um SoundEvent registrado no TrackRegistry
+batalha do Cobblemon
+→ classifica selvagem treinador pvp boss facção ou facility
+→ resolve função e região
+→ aplica forma e variante regional
+→ envia a rota ao cliente
+→ toca o contexto musical correspondente
 ```
 
-A rota mantém o papel e a região separados. Um Líder de Ginásio de Kanto, por exemplo, vira:
+A prioridade da música no mundo funciona assim:
+
+```text
+batalha
+↓
+vitória e loot menu
+↓
+estrutura trigger e battle tower
+↓
+ambientação de bioma
+```
+
+As detecções de prioridade menor continuam atualizando em segundo plano enquanto batalha ou vitória controlam o áudio. Assim o CobbleTunes já sabe qual zona ou bioma deve voltar quando a música prioritária termina.
+
+### Principais recursos
+
+- [x] **Música regional de batalha** para Kanto, Johto, Hoenn, Sinnoh, Unova, Kalos, Alola, Galar, Hisui e Paldea.
+- [x] **Contextos de selvagem, treinador, Líder de Ginásio, Elite Four, Campeão, rival, PvP, facção, Frontier Brain, Battle Tower e Lendário/Mítico.**
+- [x] **Roteamento de formas regionais** para que formas de Alola, Galar, Hisui e Paldea usem a região da forma em vez da região da espécie base.
+- [x] **Roteamento de lendários por forma** para casos como Kyurem, Necrozma, Eternatus, Calyrex, Terapagos e as aves de Galar.
+- [x] **Classificação dinâmica do RCT** usando função, região, facção, rank, ID do treinador e progressão.
+- [x] **Temas de facções** para Rocket, Aqua, Magma, Galactic, Plasma, Flare, Skull, Aether Foundation, Lusamine e Ultra Recon Squad.
+- [x] **Música de Frontier Brain** com contexto próprio.
+- [x] **Integração com WildBosses** usando pools regionais ponderados por tier.
+- [x] **Pools seguros para Bosses** sem usar temas lendários específicos em encontros aleatórios.
+- [x] **Integração de vitória com Cobblemon Loot Menu** com início imediato, fade rápido, janela de confirmação, loop durante o menu e retorno para a zona atual.
+- [x] **Pools de Battle Tower** para andares baixos, médios, altos e finais com tema de batalha dedicado.
+- [x] **Memória e rotação de ambientação por bioma** com intervalos de silêncio e debounce.
+- [x] **Detecção subterrânea** usando luz do céu e altura do jogador.
+- [x] **Estruturas exatas do Cobbleverse**, **estruturas vanilla** e **pools de vilas BCA**.
+- [x] **Zonas manuais de música** para Centros Pokémon, Poké Marts, Ginásios, locais especiais e andares da Battle Tower.
+- [x] **Música de menu** contínua entre os submenus da tela inicial.
+- [x] **Alerta de HP baixo** com volume reforçado.
+- [x] **Tratamento de morte do jogador** e limpeza segura de estado do mundo.
+- [x] **Logs de debug no cliente e servidor**, desligados por padrão.
+
+### Requisitos
+
+#### Obrigatórios
+
+- Minecraft `1.21.1`
+- Fabric Loader `0.17.2+`
+- Fabric API
+- Fabric Language Kotlin `1.13.3+`
+- Cobblemon `1.7.3`
+- Java `21`
+
+Em multiplayer, instale o CobbleTunes no cliente e no servidor. O servidor classifica batalhas e estruturas enquanto o cliente controla a reprodução.
+
+#### Integrações opcionais
+
+- **Radical Cobblemon Trainers** — melhora a detecção de função, região, facção e progressão.
+- **WildBosses** — ativa pools musicais próprios para Bosses.
+- **Cobblemon Loot Menu** — ativa temas de vitória enquanto a tela de loot está aberta.
+- **CobblemonAdditions / estruturas BCA** — adiciona pools para tamanhos de vila quando essas estruturas existem no mundo.
+
+RCT, WildBosses e Cobblemon Loot Menu são integrações leves. A ausência desses mods não impede o CobbleTunes de carregar.
+
+### Roteamento de batalha
+
+#### Contextos regionais
+
+O CobbleTunes mantém a função separada da região. Um Líder de Ginásio de Kanto usa:
 
 ```text
 leader|kanto
 ```
 
-O cliente interpreta isso como `GYM_LEADER_BATTLE`, com Kanto como região preferida, e escolhe o `SoundEvent` regional. O Brock não precisa de um arquivo `brock.ogg`; ele usa o tema compartilhado de Líder de Ginásio de Kanto descrito no [`SOUND_MANIFEST.md`](./SOUND_MANIFEST.md).
+Um Frontier Brain de Sinnoh usa:
 
-### Detecção dinâmica do RCT
+```text
+frontier|sinnoh
+```
 
-O [Radical Cobblemon Trainers](https://modrinth.com/mod/rctmod) é opcional. Quando ele está instalado, o CobbleTunes encontra o treinador adversário através do ator de batalha do Cobblemon e lê os dados do RCT por reflexão. Por isso, as classes do RCT não são necessárias para o CobbleTunes iniciar.
+Uma facção mantém o ID exato do tema:
 
-O classificador não depende de uma lista fixa de nomes. Ele verifica os dados disponíveis nesta ordem:
+```text
+faction:team_galactic_commander|sinnoh
+```
 
-1. papéis padrão do RCT, como `leader`, `e4`, `champ` e `rival`;
-2. tipos regionais personalizados, como `kanto_league` ou `sinnoh_champion`;
-3. indícios no ID do treinador, como `hoenn_league_fosco`;
-4. o padrão de progressão atual do Cobbleverse, no qual um treinador regional não opcional, como `kanto_brock`, é tratado como Líder de Ginásio;
-5. música de treinador comum quando nenhum sinal mais forte combina.
+Quando os metadados do treinador informam uma região, ela tem prioridade. Caso contrário, a equipe adversária vota pela região.
 
-A região vem do tipo ou do ID do treinador sempre que possível. Quando ela não está disponível, o cliente faz uma votação pela região de origem dos Pokémon adversários. Em caso de empate, uma das regiões empatadas é escolhida aleatoriamente.
+#### Variantes regionais
 
-Se o RCT não estiver instalado ou mudar sua API, o CobbleTunes registra o problema de compatibilidade uma vez e volta para a música comum de treinador sem derrubar o jogo.
+O número da Pokédex Nacional não é suficiente para formas regionais. O pacote de batalha também envia os dados da variante regional.
 
-### PvP e rivais
+Exemplos:
 
-Batalhas reais entre jogadores não dependem do RCT. Elas entram diretamente no contexto `PVP_BATTLE`, e a equipe adversária é usada para escolher o pool regional.
+```text
+exeggutor de alola → alola
+grimer e muk de alola → alola
+weezing de galar → galar
+growlithe de hisui → hisui
+wooper de paldea → paldea
+```
 
-Rivais do RCT também usam o contexto de rival/PvP, mas a região pode vir diretamente dos dados do treinador em vez da votação da equipe.
+A variante regional afeta temas selvagens, votação da equipe de treinadores, pools do WildBosses, fallback de lendários e seleção da região da vitória.
 
-### Música de estrutura e retorno após a batalha
+#### Funções e facções do RCT
 
-O `StructureZoneDetector` procura estruturas de worldgen e `MusicTriggerBlock`s próximos no servidor. Antes de enviar a mudança de zona, ele confirma a distância usando a caixa delimitadora real da estrutura.
+A integração com RCT usa reflexão. O CobbleTunes lê ID e tipo do treinador quando disponíveis sem transformar o RCT em dependência obrigatória.
 
-O cliente guarda a zona ativa separadamente da música que está tocando naquele momento. Isso é importante quando uma batalha começa dentro de um Ginásio, Centro Pokémon, Poké Mart ou outra estrutura rastreada:
+Rotas reconhecidas incluem:
 
-- a música de batalha assume temporariamente;
-- pacotes de zona recebidos durante a batalha atualizam o estado salvo sem cortar o tema da batalha;
-- após uma vitória ou desistência, o tema da zona ativa volta;
-- se o jogador sair da zona durante a batalha, a ambientação do bioma retorna.
+```text
+normal
+leader
+e4
+champ
+rival
+frontier
+```
 
-### Organização do projeto
+As famílias de facção reconhecidas incluem Team Rocket, Team Aqua, Team Magma, Team Galactic, Team Plasma, Team Flare, Team Skull, Aether Foundation e Ultra Recon Squad.
 
-- **`src/main/kotlin`** — inicialização comum/servidor, eventos do Cobblemon, compatibilidade com RCT, classificação de treinadores, detecção de estruturas, blocos de zona, configs e payloads de rede.
-- **`src/client/kotlin`** — recebimento de pacotes, escolha das faixas, observação de biomas, música de menu, HP baixo, fades e todo o estado de reprodução no cliente.
-- **`src/main/resources/assets/cobbletunes/sounds.json`** — todas as chaves de som e os caminhos esperados no resource pack.
+A detecção de facção acontece antes das regras amplas de função. Isso mantém Giovanni da Rocket separado de uma rota normal de Líder de Ginásio regional.
 
-### Funcionalidades principais
+### Lendários e míticos
 
-- [x] **Música de batalha por contexto** para selvagem, lendário, treinador, Líder de Ginásio, Elite Four, Campeão, rival e PvP.
-- [x] **Classificação dinâmica de treinadores do RCT** usando tipo, ID, região e dados de progressão.
-- [x] **Escolha regional de faixa** com metadados do treinador como prioridade e votação da equipe como fallback.
-- [x] **Memória de ambientação por bioma**, permitindo retomar a faixa usada anteriormente.
-- [x] **Rotação natural e intervalos de silêncio**, sem emendar uma música na outra o tempo todo.
-- [x] **Debounce na troca de bioma** para evitar mudanças causadas por biomas muito estreitos.
-- [x] **Detecção de cavernas** por luz do céu e altura, independente do bioma da superfície.
-- [x] **Ambientação por estrutura e bloco de gatilho** para Ginásios, estruturas especiais, vilas, Centros Pokémon e Poké Marts.
-- [x] **Retorno da zona após batalhas**, incluindo desistências dentro de estruturas rastreadas.
-- [x] **Música de menu**, **alerta de HP baixo** e **tratamento de morte do jogador**.
-- [x] **Integração opcional com RCT**, com fallback seguro para treinador comum.
-- [x] **Logs de depuração no cliente e servidor**, desativados por padrão.
+Temas dedicados são escolhidos por espécie e por forma quando necessário. Temas lendários regionais genéricos continuam disponíveis como fallback.
 
-### Arquivos de configuração
+Os casos sensíveis à forma incluem:
 
-O CobbleTunes cria dois arquivos dentro da pasta `config` da instância:
+- Articuno, Zapdos e Moltres de Galar;
+- Kyurem base e Black/White Kyurem;
+- Necrozma base, fundido e Ultra Necrozma;
+- Eternatus e Eternamax Eternatus;
+- Calyrex e suas formas Ice Rider / Shadow Rider;
+- Terapagos e Stellar Terapagos.
 
-- `cobbletunes-client.json` — opções de substituição de música, volume, crossfade, intervalos de silêncio, shuffle e logs do cliente;
-- `cobbletunes-server.json` — logs do servidor para classificação de batalha e mudanças de zona.
+O resource pack também possui temas dedicados para vários grupos lendários e míticos das regiões suportadas. O manifest contém o mapeamento completo.
 
-É recomendado reiniciar o jogo por completo após alterar opções do servidor.
+### Integração com WildBosses
 
-### Áudio e licenciamento
+O WildBosses é opcional. Quando uma batalha é realmente identificada como Boss, o CobbleTunes usa a região da espécie e o tier para montar um pool ponderado.
 
-Nenhuma faixa oficial de Pokémon é incluída. Essas músicas pertencem aos seus respectivos detentores de direitos, e o projeto não hospeda nem redistribui esse conteúdo.
+| Tier | Rival/PvP regional | Lendário genérico | BW World Tournament |
+|---|---:|---:|---:|
+| Uncommon | 80% | 15% | 5% |
+| Rare | 70% | 20% | 10% |
+| Epic | 60% | 30% | 10% |
+| Legendary | 50% | 35% | 15% |
+| Mythic | 45% | 40% | 15% |
 
-Para adicionar música, crie um resource pack com os arquivos `.ogg` dentro de:
+Temas de encontros lendários específicos ficam fora dos pools genéricos de Boss. Quando existe outra opção válida, o mod também evita repetir imediatamente a última música de Boss usada naquela região.
+
+### Vitória e Cobblemon Loot Menu
+
+A música de vitória é uma integração leve com `cobblemon_loot_menu`.
+
+Quando uma batalha suportada é vencida:
+
+```text
+vitória da batalha
+→ música de vitória começa na hora
+→ batalha sai em cerca de 0.25 s
+→ vitória entra em cerca de 0.20 s
+→ CobbleTunes espera até 3 s pela tela de loot
+```
+
+Os três segundos **não** atrasam a música. O tema de vitória já está tocando durante esse período. Se o Loot Menu abrir, a música continua em loop até a tela fechar. Se nenhuma tela aparecer, o tema termina e a música do mundo volta.
+
+A detecção de bioma e estrutura continua funcionando durante a vitória. Quando o menu fecha, o CobbleTunes volta para a **última** estrutura, andar da Battle Tower ou bioma válido em vez de usar uma ambientação antiga salva antes da batalha.
+
+Hisui não possui tema tradicional de vitória neste pack.
+
+### Battle Tower
+
+A ambientação da Battle Tower usa quatro pools:
+
+```text
+battle_tower_low
+battle_tower_mid
+battle_tower_high
+battle_tower_final
+```
+
+IDs de trigger como `cobbletunes:battle_tower_floor_1` até `cobbletunes:battle_tower_floor_10` são convertidos nesses pools. Triggers próximos são verificados do mais próximo para o mais distante para evitar conflito vertical entre andares.
+
+Uma batalha de treinador iniciada enquanto a zona atual é `BATTLE_TOWER` usa o tema de batalha da Battle Tower de Galar.
+
+### Ambientação e estruturas
+
+A ambientação regional por bioma está definida para Kanto, Johto, Hoenn, Sinnoh e Unova. As faixas são agrupadas entre biomas vanilla e Terralith como planícies, florestas, cavernas, oceanos, montanhas, neve, desertos e regiões vulcânicas.
+
+As músicas de bioma usam memória, orçamento de rotação, intervalos de silêncio e debounce. Cruzar um bioma muito pequeno não força imediatamente uma nova música caso o bioma mude novamente durante a janela de debounce.
+
+Música de estrutura tem prioridade sobre ambientação de bioma. As fontes suportadas incluem:
+
+- Ginásios e Ligas do Cobbleverse;
+- estruturas exatas e locais lendários do Cobbleverse;
+- estruturas vanilla como Ancient Cities, Strongholds, Mansions, Trial Chambers, Villages, Shipwrecks, Ruined Portals e outras;
+- pools de vilas BCA pequenas, médias e grandes;
+- zonas manuais com `MusicTriggerBlock`.
+
+Músicas de zona ficam em loop até o jogador sair. Batalha e vitória assumem temporariamente o áudio sem apagar o estado atual da zona.
+
+### Alerta de HP baixo
+
+O Pokémon ativo é verificado periodicamente durante a batalha. Quando um Pokémon ativo e vivo chega a 25% de HP ou menos, o CobbleTunes toca uma sequência de dois alertas.
+
+O efeito usa `1.35x` o volume configurado para música, limitado a `1.5`, para continuar audível durante a batalha.
+
+### Configuração
+
+O CobbleTunes cria dois JSONs dentro de `config/`.
+
+#### `cobbletunes-client.json`
+
+| Opção | Padrão |
+|---|---:|
+| `replaceAmbience` | `true` |
+| `replaceMenuMusic` | `true` |
+| `replaceBattleMusic` | `true` |
+| `musicVolume` | `1.0` |
+| `crossfadeSeconds` | `2.5` |
+| `shuffleAmbienceTracks` | `true` |
+| `worldJoinSilenceSeconds` | `10` |
+| `trackEndSilenceMinSeconds` | `90` |
+| `trackEndSilenceMaxSeconds` | `180` |
+| `biomeTransitionSilenceMinSeconds` | `4` |
+| `biomeTransitionSilenceMaxSeconds` | `8` |
+| `debugLogging` | `false` |
+
+#### `cobbletunes-server.json`
+
+| Opção | Padrão |
+|---|---:|
+| `debugLogging` | `false` |
+
+### Resource pack
+
+O CobbleTunes não inclui arquivos de soundtrack. Coloque os `.ogg` dentro de:
 
 ```text
 assets/cobbletunes/sounds/
 ```
 
-Todas as chaves e caminhos esperados estão listados no [`SOUND_MANIFEST.md`](./SOUND_MANIFEST.md). Arquivos ausentes são seguros: apenas aquele evento fica em silêncio, sem causar crash.
+O `sounds.json` incluído define todos os 404 eventos esperados. [`SOUND_MANIFEST.md`](./SOUND_MANIFEST.md) espelha essas entradas e explica o roteamento.
+
+Áudio ausente vira silêncio sem derrubar o sistema de música.
+
+### Organização do projeto
+
+- **`src/main/kotlin`** — inicialização comum/servidor, eventos de batalha, classificação do RCT, ponte com WildBosses, estruturas, trigger blocks, configs e rede.
+- **`src/client/kotlin`** — roteamento dos pacotes, região, ponte de Victory/Loot Menu, observação de biomas, estado musical, fades, menu e HP baixo.
+- **`src/main/resources/assets/cobbletunes/sounds.json`** — todas as chaves e caminhos do resource pack.
 
 ### Compilação
 
-É necessário usar Java 21. Na raiz do projeto:
+Java 21 é obrigatório. Na raiz do projeto completo:
 
 ```powershell
-./gradlew clean build -PexcludeAudio
+.\gradlew clean build
 ```
 
-O JAR compilado será gerado em `build/libs/`.
+Se o projeto estiver usando a opção de exclusão de áudio:
 
-### Roadmap
+```powershell
+.\gradlew clean build -PexcludeAudio
+```
 
-- [ ] Adicionar estruturas de proximidade pós-Sinnoh conforme elas forem disponibilizadas pelo Cobbleverse.
-- [ ] Expandir a ambientação por bioma após Unova.
-- [ ] Criar mais pools para estruturas vanilla/BCA.
-- [ ] Mover exceções futuras de papel de treinador para uma pequena configuração externa, caso novos datapacks precisem disso.
+O JAR compilado fica em `build/libs/`.
+
+### Áudio e licença
+
+Nenhuma OST de Pokémon é distribuída com o CobbleTunes. As faixas pertencem aos respectivos detentores de direitos e devem ser fornecidas separadamente pelo usuário ou mantenedor do resource pack.
 
 ### Licença
 
-O código está disponível sob a licença MIT. Resource packs de áudio são trabalhos separados e mantêm suas próprias condições de licença.
+O código-fonte do CobbleTunes está disponível sob a licença MIT.

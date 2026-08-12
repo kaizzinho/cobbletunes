@@ -4,6 +4,7 @@ import com.kaizzinho.cobbletunes.config.CobbleTunesServerConfig
 import com.kaizzinho.cobbletunes.event.CobblemonBattleListener
 import com.kaizzinho.cobbletunes.network.BattleMusicEndPayload
 import com.kaizzinho.cobbletunes.network.BattleMusicStartPayload
+import com.kaizzinho.cobbletunes.network.BattleVictoryPayload
 import net.fabricmc.api.ModInitializer
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry
 import org.slf4j.Logger
@@ -23,6 +24,7 @@ class CobbleTunes : ModInitializer {
 
         PayloadTypeRegistry.playS2C().register(BattleMusicStartPayload.ID, BattleMusicStartPayload.CODEC)
         PayloadTypeRegistry.playS2C().register(BattleMusicEndPayload.ID, BattleMusicEndPayload.CODEC)
+        PayloadTypeRegistry.playS2C().register(BattleVictoryPayload.ID, BattleVictoryPayload.CODEC)
         PayloadTypeRegistry.playS2C().register(StructureZonePayload.ID, StructureZonePayload.CODEC)
         PayloadTypeRegistry.playS2C().register(PlayerDeathPayload.ID, PlayerDeathPayload.CODEC)
 

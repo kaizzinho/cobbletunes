@@ -1,841 +1,3638 @@
 {
-  "ambience.kanto.plains_road_to_viridian": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:ambience/kanto/plains_road_to_viridian", "stream": true }]
-  },
-  "ambience.kanto.plains_pallet_town": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:ambience/kanto/plains_pallet_town", "stream": true }]
-  },
-  "ambience.kanto.route_lavender_somber": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:ambience/kanto/route_lavender_somber", "stream": true }]
-  },
-  "ambience.kanto.forest_viridian": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:ambience/kanto/forest_viridian", "stream": true }]
-  },
-  "ambience.kanto.route_cerulean_transition": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:ambience/kanto/route_cerulean_transition", "stream": true }]
-  },
-  "ambience.kanto.cave_mt_moon": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:ambience/kanto/cave_mt_moon", "stream": true }]
-  },
-  "ambience.kanto.coastal_to_bill": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:ambience/kanto/coastal_to_bill", "stream": true }]
-  },
-  "ambience.kanto.ocean_the_sea": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:ambience/kanto/ocean_the_sea", "stream": true }]
-  },
-  "ambience.kanto.volcanic_cinnabar": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:ambience/kanto/volcanic_cinnabar", "stream": true }]
-  },
-  "ambience.kanto.deep_dark_lavender_town": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:ambience/kanto/deep_dark_lavender_town", "stream": true }]
-  },
-  "ambience.kanto.deep_dark_pokemon_mansion": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:ambience/kanto/deep_dark_pokemon_mansion", "stream": true }]
-  },
-  "ambience.kanto.pokemon_tower": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:ambience/kanto/pokemon_tower", "stream": true }]
-  },
-  "ambience.kanto.nether_rocket_hideout": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:ambience/kanto/nether_rocket_hideout", "stream": true }]
-  },
-  "battle.kanto.wild": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/kanto/wild", "stream": true }]
-  },
-  "battle.kanto.trainer": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/kanto/trainer", "stream": true }]
-  },
-  "battle.kanto.gym_leader": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/kanto/gym_leader", "stream": true }]
-  },
-  "battle.kanto.champion_rival": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/kanto/champion_rival", "stream": true }]
-  },
-  "battle.kanto.legendary_default": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/kanto/legendary_default", "stream": true }]
-  },
-  "battle.kanto.legendary_mewtwo": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/kanto/legendary_mewtwo", "stream": true }]
-  },
-  "battle.kanto.legendary_deoxys": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/kanto/legendary_deoxys", "stream": true }]
-  },
-  "ambience.johto.plains_route_29": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:ambience/johto/plains_route_29", "stream": true }]
-  },
-  "ambience.johto.plains_route_30": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:ambience/johto/plains_route_30", "stream": true }]
-  },
-  "ambience.johto.plains_new_bark_town": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:ambience/johto/plains_new_bark_town", "stream": true }]
-  },
-  "ambience.johto.route_26_open": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:ambience/johto/route_26_open", "stream": true }]
-  },
-  "ambience.johto.forest_national_park": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:ambience/johto/forest_national_park", "stream": true }]
-  },
-  "ambience.johto.forest_ecruteak": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:ambience/johto/forest_ecruteak", "stream": true }]
-  },
-  "ambience.johto.cave_union_cave": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:ambience/johto/cave_union_cave", "stream": true }]
-  },
-  "ambience.johto.cave_ruins_of_alph": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:ambience/johto/cave_ruins_of_alph", "stream": true }]
-  },
-  "ambience.johto.cave_ice_path": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:ambience/johto/cave_ice_path", "stream": true }]
-  },
-  "ambience.johto.cave_dragons_den": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:ambience/johto/cave_dragons_den", "stream": true }]
-  },
-  "ambience.johto.cave_deep_dark_pokegear_unown": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:ambience/johto/cave_deep_dark_pokegear_unown", "stream": true }]
-  },
-  "ambience.johto.route_38_coastal": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:ambience/johto/route_38_coastal", "stream": true }]
-  },
-  "ambience.johto.route_42_mountain": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:ambience/johto/route_42_mountain", "stream": true }]
-  },
-  "ambience.johto.route_47_harsh_mountain": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:ambience/johto/route_47_harsh_mountain", "stream": true }]
-  },
-  "ambience.johto.ocean_surf": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:ambience/johto/ocean_surf", "stream": true }]
-  },
-  "ambience.johto.end_sinjoh_ruins": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:ambience/johto/end_sinjoh_ruins", "stream": true }]
-  },
-  "ambience.johto.stronghold_ruins_of_alph": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:ambience/johto/stronghold_ruins_of_alph", "stream": true }]
-  },
-  "battle.johto.wild": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/johto/wild", "stream": true }]
-  },
-  "battle.johto.trainer": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/johto/trainer", "stream": true }]
-  },
-  "battle.johto.gym_leader": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/johto/gym_leader", "stream": true }]
-  },
-  "battle.johto.champion": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/johto/champion", "stream": true }]
-  },
-  "battle.johto.rival_pvp": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/johto/rival_pvp", "stream": true }]
-  },
-  "battle.johto.legendary_default": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/johto/legendary_default", "stream": true }]
-  },
-  "battle.johto.legendary_raikou": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/johto/legendary_raikou", "stream": true }]
-  },
-  "battle.johto.legendary_entei": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/johto/legendary_entei", "stream": true }]
-  },
-  "battle.johto.legendary_suicune": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/johto/legendary_suicune", "stream": true }]
-  },
-  "battle.johto.legendary_lugia": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/johto/legendary_lugia", "stream": true }]
-  },
-  "battle.johto.legendary_ho_oh": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/johto/legendary_ho_oh", "stream": true }]
-  },
-  "battle.johto.team_rocket": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/johto/team_rocket", "stream": true }]
-  },
-  "ambience.hoenn.plains_route_101": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:ambience/hoenn/plains_route_101", "stream": true }]
-  },
-  "ambience.hoenn.plains_route_104": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:ambience/hoenn/plains_route_104", "stream": true }]
-  },
-  "ambience.hoenn.plains_route_110": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:ambience/hoenn/plains_route_110", "stream": true }]
-  },
-  "ambience.hoenn.plains_route_120": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:ambience/hoenn/plains_route_120", "stream": true }]
-  },
-  "ambience.hoenn.plains_littleroot_town": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:ambience/hoenn/plains_littleroot_town", "stream": true }]
-  },
-  "ambience.hoenn.plains_oldale_town": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:ambience/hoenn/plains_oldale_town", "stream": true }]
-  },
-  "ambience.hoenn.forest_petalburg_woods": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:ambience/hoenn/forest_petalburg_woods", "stream": true }]
-  },
-  "ambience.hoenn.forest_safari_zone": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:ambience/hoenn/forest_safari_zone", "stream": true }]
-  },
-  "ambience.hoenn.jungle_route_119": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:ambience/hoenn/jungle_route_119", "stream": true }]
-  },
-  "ambience.hoenn.heavy_rain": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:ambience/hoenn/heavy_rain", "stream": true }]
-  },
-  "ambience.hoenn.desert_route_111": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:ambience/hoenn/desert_route_111", "stream": true }]
-  },
-  "ambience.hoenn.desert_drought": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:ambience/hoenn/desert_drought", "stream": true }]
-  },
-  "ambience.hoenn.volcanic_mt_chimney": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:ambience/hoenn/volcanic_mt_chimney", "stream": true }]
-  },
-  "ambience.hoenn.volcanic_route_113": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:ambience/hoenn/volcanic_route_113", "stream": true }]
-  },
-  "ambience.hoenn.mt_pyre": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:ambience/hoenn/mt_pyre", "stream": true }]
-  },
-  "ambience.hoenn.mountain_mt_pyre_exterior": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:ambience/hoenn/mountain_mt_pyre_exterior", "stream": true }]
-  },
-  "ambience.hoenn.ocean_crossing_the_sea": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:ambience/hoenn/ocean_crossing_the_sea", "stream": true }]
-  },
-  "ambience.hoenn.ocean_surf": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:ambience/hoenn/ocean_surf", "stream": true }]
-  },
-  "ambience.hoenn.ocean_oceanic_museum": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:ambience/hoenn/ocean_oceanic_museum", "stream": true }]
-  },
-  "ambience.hoenn.deep_ocean_dive": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:ambience/hoenn/deep_ocean_dive", "stream": true }]
-  },
-  "ambience.hoenn.cave_of_origin": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:ambience/hoenn/cave_of_origin", "stream": true }]
-  },
-  "ambience.hoenn.nether_hideout": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:ambience/hoenn/nether_hideout", "stream": true }]
-  },
-  "battle.hoenn.wild": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/hoenn/wild", "stream": true }]
-  },
-  "battle.hoenn.trainer": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/hoenn/trainer", "stream": true }]
-  },
-  "battle.hoenn.gym_leader": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/hoenn/gym_leader", "stream": true }]
-  },
-  "battle.hoenn.elite_four": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/hoenn/elite_four", "stream": true }]
-  },
-  "battle.hoenn.champion_wallace": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/hoenn/champion_wallace", "stream": true }]
-  },
-  "battle.hoenn.rival_pvp": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/hoenn/rival_pvp", "stream": true }]
-  },
-  "battle.hoenn.legendary_regis": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/hoenn/legendary_regis", "stream": true }]
-  },
-  "battle.hoenn.legendary_super_ancient": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/hoenn/legendary_super_ancient", "stream": true }]
-  },
-  "battle.hoenn.legendary_mew": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/hoenn/legendary_mew", "stream": true }]
-  },
-  "battle.hoenn.team_aqua_magma_grunt": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/hoenn/team_aqua_magma_grunt", "stream": true }]
-  },
-  "battle.hoenn.team_aqua_magma_leaders": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/hoenn/team_aqua_magma_leaders", "stream": true }]
-  },
-  "ambience.sinnoh.plains_route_201": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:ambience/sinnoh/plains_route_201", "stream": true }]
-  },
-  "ambience.sinnoh.plains_route_203": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:ambience/sinnoh/plains_route_203", "stream": true }]
-  },
-  "ambience.sinnoh.plains_route_209": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:ambience/sinnoh/plains_route_209", "stream": true }]
-  },
-  "ambience.sinnoh.plains_route_210": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:ambience/sinnoh/plains_route_210", "stream": true }]
-  },
-  "ambience.sinnoh.plains_route_205": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:ambience/sinnoh/plains_route_205", "stream": true }]
-  },
-  "ambience.sinnoh.plains_twinleaf_town": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:ambience/sinnoh/plains_twinleaf_town", "stream": true }]
-  },
-  "ambience.sinnoh.plains_sandgem_town": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:ambience/sinnoh/plains_sandgem_town", "stream": true }]
-  },
-  "ambience.sinnoh.forest_eterna_forest": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:ambience/sinnoh/forest_eterna_forest", "stream": true }]
-  },
-  "ambience.sinnoh.forest_floaroma_town": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:ambience/sinnoh/forest_floaroma_town", "stream": true }]
-  },
-  "ambience.sinnoh.snowy_route_216": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:ambience/sinnoh/snowy_route_216", "stream": true }]
-  },
-  "ambience.sinnoh.mountain_mt_coronet": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:ambience/sinnoh/mountain_mt_coronet", "stream": true }]
-  },
-  "ambience.sinnoh.cave_lake_caverns": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:ambience/sinnoh/cave_lake_caverns", "stream": true }]
-  },
-  "ambience.sinnoh.cave_oreburgh_mine": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:ambience/sinnoh/cave_oreburgh_mine", "stream": true }]
-  },
-  "ambience.sinnoh.ocean_lake": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:ambience/sinnoh/ocean_lake", "stream": true }]
-  },
-  "ambience.sinnoh.end_distortion_world": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:ambience/sinnoh/end_distortion_world", "stream": true }]
-  },
-  "battle.sinnoh.wild": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/sinnoh/wild", "stream": true }]
-  },
-  "battle.sinnoh.trainer": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/sinnoh/trainer", "stream": true }]
-  },
-  "battle.sinnoh.gym_leader": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/sinnoh/gym_leader", "stream": true }]
-  },
-  "battle.sinnoh.elite_four": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/sinnoh/elite_four", "stream": true }]
-  },
-  "battle.sinnoh.champion": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/sinnoh/champion", "stream": true }]
-  },
-  "battle.sinnoh.rival_pvp": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/sinnoh/rival_pvp", "stream": true }]
-  },
-  "battle.sinnoh.legendary_default": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/sinnoh/legendary_default", "stream": true }]
-  },
-  "battle.sinnoh.legendary_dialga_palkia": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/sinnoh/legendary_dialga_palkia", "stream": true }]
-  },
-  "battle.sinnoh.legendary_giratina": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/sinnoh/legendary_giratina", "stream": true }]
-  },
-  "battle.sinnoh.legendary_lake_trio": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/sinnoh/legendary_lake_trio", "stream": true }]
-  },
-  "battle.sinnoh.team_galactic_grunt": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/sinnoh/team_galactic_grunt", "stream": true }]
-  },
-  "battle.sinnoh.team_galactic_commander": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/sinnoh/team_galactic_commander", "stream": true }]
-  },
-  "battle.sinnoh.team_galactic_boss": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/sinnoh/team_galactic_boss", "stream": true }]
-  },
-  "battle.sinnoh.frontier_brain": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/sinnoh/frontier_brain", "stream": true }]
-  },"ambience.unova.plains_route_19_summer": {
-  "category": "music",
-  "sounds": [{ "name": "cobbletunes:ambience/unova/plains_route_19_summer", "stream": true }]
-},
-  "ambience.unova.plains_aspertia_city": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:ambience/unova/plains_aspertia_city", "stream": true }]
-  },
-  "ambience.unova.cave_underground_ruins": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:ambience/unova/cave_underground_ruins", "stream": true }]
-  },
-  "ambience.unova.snowy_frozen_city": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:ambience/unova/snowy_frozen_city", "stream": true }]
-  },
-  "ambience.unova.stronghold_underground_ruins": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:ambience/unova/stronghold_underground_ruins", "stream": true }]
-  },
-  "ambience.sinnoh.snowy_snowpoint_city": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:ambience/sinnoh/snowy_snowpoint_city", "stream": true }]
-  },
-  "battle.sinnoh.legendary_alt": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/sinnoh/legendary_alt", "stream": true }]
-  },
-  "battle.unova.wild": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/unova/wild", "stream": true }]
-  },
-  "battle.unova.trainer": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/unova/trainer", "stream": true }]
-  },
-  "battle.unova.gym_leader": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/unova/gym_leader", "stream": true }]
-  },
-  "battle.unova.champion_iris": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/unova/champion_iris", "stream": true }]
-  },
-  "battle.unova.rival_hugh": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/unova/rival_hugh", "stream": true }]
-  },
-  "battle.unova.champion_kanto_pwt": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/unova/champion_kanto_pwt", "stream": true }]
-  },
-  "battle.unova.champion_johto_pwt": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/unova/champion_johto_pwt", "stream": true }]
-  },
-  "battle.unova.champion_hoenn_pwt": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/unova/champion_hoenn_pwt", "stream": true }]
-  },
-  "battle.unova.champion_sinnoh_pwt": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/unova/champion_sinnoh_pwt", "stream": true }]
-  },
-  "battle.unova.legendary_black_white_kyurem": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/unova/legendary_black_white_kyurem", "stream": true }]
-  },
-  "battle.unova.team_plasma_grunt": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/unova/team_plasma_grunt", "stream": true }]
-  },
-  "battle.unova.team_plasma_n": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/unova/team_plasma_n", "stream": true }]
-  },
-  "battle.unova.team_plasma_colress": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/unova/team_plasma_colress", "stream": true }]
-  },
-  "battle.alola.wild": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/alola/wild", "stream": true }]
-  },
-  "battle.alola.trainer": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/alola/trainer", "stream": true }]
-  },
-  "battle.alola.island_kahuna": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/alola/island_kahuna", "stream": true }]
-  },
-  "battle.alola.elite_four": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/alola/elite_four", "stream": true }]
-  },
-  "battle.alola.champion_summit": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/alola/champion_summit", "stream": true }]
-  },
-  "battle.alola.legendary_ultra_beast": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/alola/legendary_ultra_beast", "stream": true }]
-  },
-  "battle.alola.legendary_tapu": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/alola/legendary_tapu", "stream": true }]
-  },
-  "battle.alola.legendary_solgaleo_lunala_necrozma": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/alola/legendary_solgaleo_lunala_necrozma", "stream": true }]
-  },
-  "battle.alola.legendary_necrozma_fused": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/alola/legendary_necrozma_fused", "stream": true }]
-  },
-  "battle.alola.team_skull_guzma": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/alola/team_skull_guzma", "stream": true }]
-  },
-  "battle.alola.aether_foundation": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/alola/aether_foundation", "stream": true }]
-  },
-  "battle.alola.aether_president_lusamine": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/alola/aether_president_lusamine", "stream": true }]
-  },
-  "battle.alola.ultra_recon_squad": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/alola/ultra_recon_squad", "stream": true }]
-  },
-  "battle.galar.wild": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/galar/wild", "stream": true }]
-  },
-  "battle.galar.trainer": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/galar/trainer", "stream": true }]
-  },
-  "battle.galar.gym_leader": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/galar/gym_leader", "stream": true }]
-  },
-  "battle.galar.league_tournament": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/galar/league_tournament", "stream": true }]
-  },
-  "battle.galar.champion_leon": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/galar/champion_leon", "stream": true }]
-  },
-  "battle.galar.legendary_mysterious_being": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/galar/legendary_mysterious_being", "stream": true }]
-  },
-  "battle.galar.legendary_eternatus": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/galar/legendary_eternatus", "stream": true }]
-  },
-  "battle.galar.legendary_glastrier_spectrier": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/galar/legendary_glastrier_spectrier", "stream": true }]
-  },
-  "battle.galar.battle_tower": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/galar/battle_tower", "stream": true }]
-  },
-  "battle.hisui.wild": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/hisui/wild", "stream": true }]
-  },
-  "battle.hisui.legendary_arceus": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/hisui/legendary_arceus", "stream": true }]
-  },
-  "battle.kalos.wild": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/kalos/wild", "stream": true }]
-  },
-  "battle.kalos.trainer": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/kalos/trainer", "stream": true }]
-  },
-  "battle.kalos.gym_leader": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/kalos/gym_leader", "stream": true }]
-  },
-  "battle.kalos.elite_four": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/kalos/elite_four", "stream": true }]
-  },
-  "battle.kalos.champion": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/kalos/champion", "stream": true }]
-  },
-  "battle.kalos.rival_friend": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/kalos/rival_friend", "stream": true }]
-  },
-  "battle.kalos.legendary_trio": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/kalos/legendary_trio", "stream": true }]
-  },
-  "battle.kalos.team_flare_grunt": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/kalos/team_flare_grunt", "stream": true }]
-  },
-  "battle.kalos.team_flare_lysandre": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/kalos/team_flare_lysandre", "stream": true }]
-  },
-  "battle.paldea.wild": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/paldea/wild", "stream": true }]
-  },
-  "battle.paldea.trainer": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/paldea/trainer", "stream": true }]
-  },
-  "battle.paldea.gym_leader": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/paldea/gym_leader", "stream": true }]
-  },
-  "battle.paldea.elite_four": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/paldea/elite_four", "stream": true }]
-  },
-  "battle.paldea.champion_top": {
-    "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/paldea/champion_top", "stream": true }]
+  "battle.sinnoh.platinum_legendary_arceus": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/sinnoh/platinum_legendary_arceus",
+        "stream": true
+      }
+    ]
+  },
+  "battle.paldea.sv_mythical_pecharunt": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/paldea/sv_mythical_pecharunt",
+        "stream": true
+      }
+    ]
+  },
+  "battle.paldea.sv_legendary_terapagos_stellar": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/paldea/sv_legendary_terapagos_stellar",
+        "stream": true
+      }
+    ]
+  },
+  "battle.paldea.sv_legendary_terapagos": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/paldea/sv_legendary_terapagos",
+        "stream": true
+      }
+    ]
+  },
+  "battle.paldea.sv_legendary_ogerpon": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/paldea/sv_legendary_ogerpon",
+        "stream": true
+      }
+    ]
+  },
+  "battle.paldea.sv_legendary_loyal_three": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/paldea/sv_legendary_loyal_three",
+        "stream": true
+      }
+    ]
+  },
+  "battle.paldea.sv_legendary_koraidon_miraidon": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/paldea/sv_legendary_koraidon_miraidon",
+        "stream": true
+      }
+    ]
+  },
+  "battle.paldea.sv_legendary_calamity": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/paldea/sv_legendary_calamity",
+        "stream": true
+      }
+    ]
+  },
+  "battle.kalos.xy_legendary_mewtwo": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/kalos/xy_legendary_mewtwo",
+        "stream": true
+      }
+    ]
+  },
+  "battle.johto.hgss_legendary_super_ancient": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/johto/hgss_legendary_super_ancient",
+        "stream": true
+      }
+    ]
+  },
+  "battle.galar.swsh_legendary_zacian_zamazenta": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/galar/swsh_legendary_zacian_zamazenta",
+        "stream": true
+      }
+    ]
+  },
+  "battle.galar.swsh_legendary_giants": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/galar/swsh_legendary_giants",
+        "stream": true
+      }
+    ]
+  },
+  "battle.galar.swsh_legendary_eternatus_final": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/galar/swsh_legendary_eternatus_final",
+        "stream": true
+      }
+    ]
+  },
+  "battle.galar.swsh_legendary_calyrex_fused": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/galar/swsh_legendary_calyrex_fused",
+        "stream": true
+      }
+    ]
+  },
+  "battle.galar.swsh_legendary_calyrex": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/galar/swsh_legendary_calyrex",
+        "stream": true
+      }
+    ]
+  },
+  "battle.galar.swsh_legendary_birds": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/galar/swsh_legendary_birds",
+        "stream": true
+      }
+    ]
+  },
+  "battle.alola.usum_legendary_ultra_necrozma": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/alola/usum_legendary_ultra_necrozma",
+        "stream": true
+      }
+    ]
+  },
+  "victory.xy_victory_wild": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:victory/xy_victory_wild",
+        "stream": true
+      }
+    ]
+  },
+  "victory.xy_victory_trainer": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:victory/xy_victory_trainer",
+        "stream": true
+      }
+    ]
+  },
+  "victory.xy_victory_gymleader": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:victory/xy_victory_gymleader",
+        "stream": true
+      }
+    ]
+  },
+  "victory.swsh_victory_wild": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:victory/swsh_victory_wild",
+        "stream": true
+      }
+    ]
+  },
+  "victory.swsh_victory_trainer": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:victory/swsh_victory_trainer",
+        "stream": true
+      }
+    ]
+  },
+  "victory.sv_victory_wild": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:victory/sv_victory_wild",
+        "stream": true
+      }
+    ]
+  },
+  "victory.sv_victory_trainer": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:victory/sv_victory_trainer",
+        "stream": true
+      }
+    ]
+  },
+  "victory.sm_victory_wild": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:victory/sm_victory_wild",
+        "stream": true
+      }
+    ]
+  },
+  "victory.sm_victory_trainer": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:victory/sm_victory_trainer",
+        "stream": true
+      }
+    ]
+  },
+  "victory.platinum_victory_trainer": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:victory/platinum_victory_trainer",
+        "stream": true
+      }
+    ]
+  },
+  "victory.platinum_victory_teamgalactic": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:victory/platinum_victory_teamgalactic",
+        "stream": true
+      }
+    ]
+  },
+  "victory.platinum_victory_gymleader": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:victory/platinum_victory_gymleader",
+        "stream": true
+      }
+    ]
+  },
+  "victory.platinum_victory_elitefour": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:victory/platinum_victory_elitefour",
+        "stream": true
+      }
+    ]
+  },
+  "victory.platinum_victory_champion": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:victory/platinum_victory_champion",
+        "stream": true
+      }
+    ]
+  },
+  "victory.platinum_victory": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:victory/platinum_victory",
+        "stream": true
+      }
+    ]
+  },
+  "victory.hgss_victory_trainer": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:victory/hgss_victory_trainer",
+        "stream": true
+      }
+    ]
+  },
+  "victory.hgss_victory_gymleader": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:victory/hgss_victory_gymleader",
+        "stream": true
+      }
+    ]
+  },
+  "victory.hgss_victory": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:victory/hgss_victory",
+        "stream": true
+      }
+    ]
+  },
+  "victory.frlg_victory_trainer": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:victory/frlg_victory_trainer",
+        "stream": true
+      }
+    ]
+  },
+  "victory.frlg_victory_gymleader": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:victory/frlg_victory_gymleader",
+        "stream": true
+      }
+    ]
+  },
+  "victory.frlg_victory": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:victory/frlg_victory",
+        "stream": true
+      }
+    ]
+  },
+  "victory.emerald_victory_wild": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:victory/emerald_victory_wild",
+        "stream": true
+      }
+    ]
+  },
+  "victory.emerald_victory_trainer": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:victory/emerald_victory_trainer",
+        "stream": true
+      }
+    ]
+  },
+  "victory.emerald_victory_gym": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:victory/emerald_victory_gym",
+        "stream": true
+      }
+    ]
+  },
+  "victory.emerald_victory_champion": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:victory/emerald_victory_champion",
+        "stream": true
+      }
+    ]
+  },
+  "victory.emerald_victory_aquamagma": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:victory/emerald_victory_aquamagma",
+        "stream": true
+      }
+    ]
+  },
+  "victory.bw_victory_trainer": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:victory/bw_victory_trainer",
+        "stream": true
+      }
+    ]
+  },
+  "victory.bw_victory_teamplasma": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:victory/bw_victory_teamplasma",
+        "stream": true
+      }
+    ]
+  },
+  "victory.bw_victory_gymleader": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:victory/bw_victory_gymleader",
+        "stream": true
+      }
+    ]
+  },
+  "victory.bw_victory_champion": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:victory/bw_victory_champion",
+        "stream": true
+      }
+    ]
+  },
+  "victory.bw_victory": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:victory/bw_victory",
+        "stream": true
+      }
+    ]
+  },
+  "tower.platinum_battle_tower": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:tower/platinum_battle_tower",
+        "stream": true
+      }
+    ]
+  },
+  "tower.platinum_battle_hall": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:tower/platinum_battle_hall",
+        "stream": true
+      }
+    ]
+  },
+  "tower.platinum_battle_frontier": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:tower/platinum_battle_frontier",
+        "stream": true
+      }
+    ]
+  },
+  "tower.platinum_battle_factory": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:tower/platinum_battle_factory",
+        "stream": true
+      }
+    ]
+  },
+  "tower.platinum_battle_castle": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:tower/platinum_battle_castle",
+        "stream": true
+      }
+    ]
+  },
+  "tower.platinum_battle_arcade": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:tower/platinum_battle_arcade",
+        "stream": true
+      }
+    ]
+  },
+  "tower.hgss_battle_tower_reception": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:tower/hgss_battle_tower_reception",
+        "stream": true
+      }
+    ]
+  },
+  "tower.hgss_battle_tower": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:tower/hgss_battle_tower",
+        "stream": true
+      }
+    ]
+  },
+  "tower.hgss_battle_hall": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:tower/hgss_battle_hall",
+        "stream": true
+      }
+    ]
+  },
+  "tower.hgss_battle_factory": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:tower/hgss_battle_factory",
+        "stream": true
+      }
+    ]
+  },
+  "tower.hgss_battle_castle": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:tower/hgss_battle_castle",
+        "stream": true
+      }
+    ]
+  },
+  "tower.hgss_battle_arcade": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:tower/hgss_battle_arcade",
+        "stream": true
+      }
+    ]
+  },
+  "tower.emerald_battle_tower": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:tower/emerald_battle_tower",
+        "stream": true
+      }
+    ]
+  },
+  "tower.emerald_battle_pyramid_summit": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:tower/emerald_battle_pyramid_summit",
+        "stream": true
+      }
+    ]
+  },
+  "tower.emerald_battle_pyramid": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:tower/emerald_battle_pyramid",
+        "stream": true
+      }
+    ]
+  },
+  "tower.emerald_battle_pike": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:tower/emerald_battle_pike",
+        "stream": true
+      }
+    ]
+  },
+  "tower.emerald_battle_palace": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:tower/emerald_battle_palace",
+        "stream": true
+      }
+    ]
+  },
+  "tower.emerald_battle_frontier": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:tower/emerald_battle_frontier",
+        "stream": true
+      }
+    ]
+  },
+  "tower.emerald_battle_factory": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:tower/emerald_battle_factory",
+        "stream": true
+      }
+    ]
+  },
+  "tower.emerald_battle_dome": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:tower/emerald_battle_dome",
+        "stream": true
+      }
+    ]
+  },
+  "tower.emerald_battle_arena": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:tower/emerald_battle_arena",
+        "stream": true
+      }
+    ]
+  },
+  "tower.b2w2_pwt_final": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:tower/b2w2_pwt_final",
+        "stream": true
+      }
+    ]
+  },
+  "tower.b2w2_pwt_arena": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:tower/b2w2_pwt_arena",
+        "stream": true
+      }
+    ]
+  },
+  "tower.b2w2_pwt": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:tower/b2w2_pwt",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.village_taiga.fortree_city": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/village_taiga/fortree_city",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.village_taiga.eterna_city": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/village_taiga/eterna_city",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.village_taiga.celestic_town": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/village_taiga/celestic_town",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.village_taiga.canalave_city": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/village_taiga/canalave_city",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.village_snowy.snowpoint_city": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/village_snowy/snowpoint_city",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.village_snowy.mahogany_town": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/village_snowy/mahogany_town",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.village_snowy.icirrus_city": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/village_snowy/icirrus_city",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.village_savanna.verdantuf_town": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/village_savanna/verdantuf_town",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.village_savanna.goldenrod_town": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/village_savanna/goldenrod_town",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.village_savanna.floccesy_town": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/village_savanna/floccesy_town",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.village_savanna.azalea_town": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/village_savanna/azalea_town",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.village_plains.twinleaf_town": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/village_plains/twinleaf_town",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.village_plains.rustboro_city": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/village_plains/rustboro_city",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.village_plains.pewter_city": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/village_plains/pewter_city",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.village_plains.pallet_town": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/village_plains/pallet_town",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.village_plains.nuvema_town": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/village_plains/nuvema_town",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.village_plains.newbark_town": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/village_plains/newbark_town",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.village_plains.littleroot_town": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/village_plains/littleroot_town",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.village_plains.cherrygrove_city": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/village_plains/cherrygrove_city",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.village_desert.rustboro_city": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/village_desert/rustboro_city",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.village_desert.route_111": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/village_desert/route_111",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.village_desert.lentimas_town": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/village_desert/lentimas_town",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.village_desert.fallarbor_town": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/village_desert/fallarbor_town",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.trial_chambers.victory_road": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/trial_chambers/victory_road",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.trial_chambers.team_galactic": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/trial_chambers/team_galactic",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.trial_chambers.teamplasma_hq": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/trial_chambers/teamplasma_hq",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.trial_chambers.silph_co": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/trial_chambers/silph_co",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.trail_ruins.solaceon_ruins": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/trail_ruins/solaceon_ruins",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.trail_ruins.sevault_canyon": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/trail_ruins/sevault_canyon",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.trail_ruins.ruins_of_alph": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/trail_ruins/ruins_of_alph",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.trail_ruins.abyssal_ruins": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/trail_ruins/abyssal_ruins",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.swamp_hut.losrtlorn_forest": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/swamp_hut/losrtlorn_forest",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.swamp_hut.great_marsh": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/swamp_hut/great_marsh",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.swamp_hut.ecruteak_city": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/swamp_hut/ecruteak_city",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.stronghold.spear_pillar": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/stronghold/spear_pillar",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.stronghold.mt_coronet": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/stronghold/mt_coronet",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.stronghold.dragonpsiral": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/stronghold/dragonpsiral",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.shipwreck.ss_aqua": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/shipwreck/ss_aqua",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.shipwreck.plasma_frigate": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/shipwreck/plasma_frigate",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.shipwreck.abandoned_ship": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/shipwreck/abandoned_ship",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.ruined_portal.radio_signal": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/ruined_portal/radio_signal",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.ruined_portal.distorn_world": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/ruined_portal/distorn_world",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.pillager_outpost.team_aqua_magma_hideout": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/pillager_outpost/team_aqua_magma_hideout",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.pillager_outpost.rocket_hideout": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/pillager_outpost/rocket_hideout",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.pillager_outpost.radio_tower_takeover": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/pillager_outpost/radio_tower_takeover",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.ocean_ruin.underwater": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/ocean_ruin/underwater",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.ocean_ruin.marine_tube": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/ocean_ruin/marine_tube",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.ocean_ruin.dive_theme": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/ocean_ruin/dive_theme",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.nether_fossil.strange_house": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/nether_fossil/strange_house",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.nether_fossil.poke_tower": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/nether_fossil/poke_tower",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.nether_fossil.mt_pyre": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/nether_fossil/mt_pyre",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.nether_fossil.lavender_town": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/nether_fossil/lavender_town",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.monument.whirl_islands": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/monument/whirl_islands",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.monument.cave_origin": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/monument/cave_origin",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.mineshaft_mesa.stark_mountain": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/mineshaft_mesa/stark_mountain",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.mineshaft_mesa.reversal_mountain": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/mineshaft_mesa/reversal_mountain",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.mineshaft_mesa.chargestone_cave": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/mineshaft_mesa/chargestone_cave",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.mineshaft.union_cave": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/mineshaft/union_cave",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.mineshaft.oreburgh_mine": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/mineshaft/oreburgh_mine",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.mineshaft.mt_moon": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/mineshaft/mt_moon",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.mansion.strange_house": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/mansion/strange_house",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.mansion.poke_mansion": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/mansion/poke_mansion",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.mansion.old_chateau": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/mansion/old_chateau",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.jungle_pyramid.safari_zone": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/jungle_pyramid/safari_zone",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.jungle_pyramid.pinwheel_forest": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/jungle_pyramid/pinwheel_forest",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.jungle_pyramid.island_cave": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/jungle_pyramid/island_cave",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.jungle_pyramid.ilex_forest": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/jungle_pyramid/ilex_forest",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.igloo.shoal_cave": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/igloo/shoal_cave",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.igloo.ice_path": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/igloo/ice_path",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.igloo.cold_storage": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/igloo/cold_storage",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.fortress.stark_mountain": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/fortress/stark_mountain",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.fortress.rocket_hq": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/fortress/rocket_hq",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.fortress.mt_ember": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/fortress/mt_ember",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.fortress.hideout": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/fortress/hideout",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.end_city.spear_pillar": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/end_city/spear_pillar",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.end_city.n_castle": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/end_city/n_castle",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.end_city.mt_chimney": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/end_city/mt_chimney",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.end_city.hall_of_origin": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/end_city/hall_of_origin",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.desert_pyramid.relic_castle": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/desert_pyramid/relic_castle",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.desert_pyramid.mirage_tower": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/desert_pyramid/mirage_tower",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.desert_pyramid.desert_ruins": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/desert_pyramid/desert_ruins",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.buried_treasure.undella_town": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/buried_treasure/undella_town",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.buried_treasure.route109": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/buried_treasure/route109",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.buried_treasure.lacunosa_town": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/buried_treasure/lacunosa_town",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.bca_village_large.violet": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/bca_village_large/violet",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.bca_village_mid.violet": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/bca_village_mid/violet",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.bca_village_small.violet": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/bca_village_small/violet",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.bca_village_large.verdanturf": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/bca_village_large/verdanturf",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.bca_village_mid.verdanturf": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/bca_village_mid/verdanturf",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.bca_village_small.verdanturf": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/bca_village_small/verdanturf",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.bca_village_large.rustboro": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/bca_village_large/rustboro",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.bca_village_mid.rustboro": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/bca_village_mid/rustboro",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.bca_village_small.rustboro": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/bca_village_small/rustboro",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.bca_village_large.fallarbor": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/bca_village_large/fallarbor",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.bca_village_mid.fallarbor": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/bca_village_mid/fallarbor",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.bca_village_small.fallarbor": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/bca_village_small/fallarbor",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.bca_village_large.cinnabar": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/bca_village_large/cinnabar",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.bca_village_mid.cinnabar": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/bca_village_mid/cinnabar",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.bca_village_small.cinnabar": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/bca_village_small/cinnabar",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.bca_village_large.cerulean_city": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/bca_village_large/cerulean_city",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.bca_village_mid.cerulean_city": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/bca_village_mid/cerulean_city",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.bca_village_small.cerulean_city": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/bca_village_small/cerulean_city",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.bca_village_large.celadon_city": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/bca_village_large/celadon_city",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.bca_village_mid.celadon_city": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/bca_village_mid/celadon_city",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.bca_village_small.celadon_city": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/bca_village_small/celadon_city",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.bastion_remnant.reversal_mountain": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/bastion_remnant/reversal_mountain",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.bastion_remnant.hideout": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/bastion_remnant/hideout",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.ancient_city.pokemon_mansion": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/ancient_city/pokemon_mansion",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.ancient_city.mt_silver": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/ancient_city/mt_silver",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.ancient_city.dragonspiral_tower": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/ancient_city/dragonspiral_tower",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.ancient_city.distortion_world": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/ancient_city/distortion_world",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.vanilla.ancient_city.cerulean_cave": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/vanilla/ancient_city/cerulean_cave",
+        "stream": true
+      }
+    ]
+  },
+  "effect.lowhp": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:effect/lowhp",
+        "stream": true
+      }
+    ]
+  },
+  "menu.hgss": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:menu/hgss",
+        "stream": true
+      }
+    ]
+  },
+  "menu.frlg": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:menu/frlg",
+        "stream": true
+      }
+    ]
+  },
+  "menu.emerald": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:menu/emerald",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.structure.wild_plant": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/structure/wild_plant",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.structure.split_decision_temple": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/structure/split_decision_temple",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.structure.spear_pillar": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/structure/spear_pillar",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.structure.snowpoint_temple": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/structure/snowpoint_temple",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.structure.route210": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/structure/route210",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.structure.manaphy": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/structure/manaphy",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.structure.eterna_building": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/structure/eterna_building",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.structure.crescent_isle": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/structure/crescent_isle",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.structure.fullmoon_island": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/structure/fullmoon_island",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.structure.zapdos": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/structure/zapdos",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.structure.moltres": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/structure/moltres",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.structure.mew": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/structure/mew",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.structure.crown_cemetery": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/structure/crown_cemetery",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.structure.ash": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/structure/ash",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.structure.articuno": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/structure/articuno",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.structure.whirl_island": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/structure/whirl_island",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.structure.celebi_shrine": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/structure/celebi_shrine",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.structure.burned_tower": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/structure/burned_tower",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.structure.bell_tower": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/structure/bell_tower",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.structure.sky_pillar": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/structure/sky_pillar",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.structure.secret_garden": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/structure/secret_garden",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.structure.registeel": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/structure/registeel",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.structure.regirock": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/structure/regirock",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.structure.regice": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/structure/regice",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.structure.kyogre": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/structure/kyogre",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.structure.jirachi": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/structure/jirachi",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.structure.groudon": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/structure/groudon",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.structure.dyna_tree": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/structure/dyna_tree",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.structure.deoxys": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/structure/deoxys",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.pokemart.mart3": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/pokemart/mart3",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.pokemart.mart2": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/pokemart/mart2",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.pokemart.mart1": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/pokemart/mart1",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.pokecenter.kanto_center": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/pokecenter/kanto_center",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.pokecenter.hoenn_center": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/pokecenter/hoenn_center",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.pokecenter.unova_center": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/pokecenter/unova_center",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.pokecenter.sinnoh_center": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/pokecenter/sinnoh_center",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.pokecenter.johto_center": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/pokecenter/johto_center",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.gym.hoenn_gym": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/gym/hoenn_gym",
+        "stream": true
+      }
+    ]
+  },
+  "tower.frlg_trainer_tower": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:tower/frlg_trainer_tower",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.gym.kanto_gym": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/gym/kanto_gym",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.gym.unova_gym": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/gym/unova_gym",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.gym.johto_gym": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/gym/johto_gym",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.gym.sinnoh_gym": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/gym/sinnoh_gym",
+        "stream": true
+      }
+    ]
   },
   "battle.paldea.legendary_solgaleo_lunala_dlc": {
     "category": "music",
-    "sounds": [{ "name": "cobbletunes:battle/paldea/legendary_solgaleo_lunala_dlc", "stream": true }]
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/paldea/legendary_solgaleo_lunala_dlc",
+        "stream": true
+      }
+    ]
   },
-  "ambience.gym.kanto_gym": { "sounds": [{ "name": "cobbletunes:ambience/gym/kanto_gym", "stream": true }] },
-  "ambience.gym.johto_gym": { "sounds": [{ "name": "cobbletunes:ambience/gym/johto_gym", "stream": true }] },
-  "ambience.gym.hoenn_gym": { "sounds": [{ "name": "cobbletunes:ambience/gym/hoenn_gym", "stream": true }] },
-  "ambience.gym.sinnoh_gym": { "sounds": [{ "name": "cobbletunes:ambience/gym/sinnoh_gym", "stream": true }] },
-  "ambience.gym.unova_gym": { "sounds": [{ "name": "cobbletunes:ambience/gym/unova_gym", "stream": true }] },
-
-  "ambience.pokecenter.kanto_center": { "sounds": [{ "name": "cobbletunes:ambience/pokecenter/kanto_center", "stream": true }] },
-  "ambience.pokecenter.johto_center": { "sounds": [{ "name": "cobbletunes:ambience/pokecenter/johto_center", "stream": true }] },
-  "ambience.pokecenter.hoenn_center": { "sounds": [{ "name": "cobbletunes:ambience/pokecenter/hoenn_center", "stream": true }] },
-  "ambience.pokecenter.sinnoh_center": { "sounds": [{ "name": "cobbletunes:ambience/pokecenter/sinnoh_center", "stream": true }] },
-  "ambience.pokecenter.unova_center": { "sounds": [{ "name": "cobbletunes:ambience/pokecenter/unova_center", "stream": true }] },
-
-  "ambience.pokemart.mart1": { "sounds": [{ "name": "cobbletunes:ambience/pokemart/mart1", "stream": true }] },
-  "ambience.pokemart.mart2": { "sounds": [{ "name": "cobbletunes:ambience/pokemart/mart2", "stream": true }] },
-  "ambience.pokemart.mart3": { "sounds": [{ "name": "cobbletunes:ambience/pokemart/mart3", "stream": true }] },
-  "ambience.structure.ash":                   { "sounds": [{ "name": "cobbletunes:ambience/structure/ash", "stream": true }] },
-  "ambience.structure.crown_cemetery":        { "sounds": [{ "name": "cobbletunes:ambience/structure/crown_cemetery", "stream": true }] },
-  "ambience.structure.articuno":              { "sounds": [{ "name": "cobbletunes:ambience/structure/articuno", "stream": true }] },
-  "ambience.structure.zapdos":               { "sounds": [{ "name": "cobbletunes:ambience/structure/zapdos", "stream": true }] },
-  "ambience.structure.moltres":              { "sounds": [{ "name": "cobbletunes:ambience/structure/moltres", "stream": true }] },
-  "ambience.structure.mew":                  { "sounds": [{ "name": "cobbletunes:ambience/structure/mew", "stream": true }] },
-  "ambience.structure.bell_tower":           { "sounds": [{ "name": "cobbletunes:ambience/structure/bell_tower", "stream": true }] },
-  "ambience.structure.burned_tower":         { "sounds": [{ "name": "cobbletunes:ambience/structure/burned_tower", "stream": true }] },
-  "ambience.structure.celebi_shrine":        { "sounds": [{ "name": "cobbletunes:ambience/structure/celebi_shrine", "stream": true }] },
-  "ambience.structure.whirl_island":         { "sounds": [{ "name": "cobbletunes:ambience/structure/whirl_island", "stream": true }] },
-  "ambience.structure.groudon":              { "sounds": [{ "name": "cobbletunes:ambience/structure/groudon", "stream": true }] },
-  "ambience.structure.kyogre":               { "sounds": [{ "name": "cobbletunes:ambience/structure/kyogre", "stream": true }] },
-  "ambience.structure.regirock":             { "sounds": [{ "name": "cobbletunes:ambience/structure/regirock", "stream": true }] },
-  "ambience.structure.regice":               { "sounds": [{ "name": "cobbletunes:ambience/structure/regice", "stream": true }] },
-  "ambience.structure.registeel":            { "sounds": [{ "name": "cobbletunes:ambience/structure/registeel", "stream": true }] },
-  "ambience.structure.deoxys":               { "sounds": [{ "name": "cobbletunes:ambience/structure/deoxys", "stream": true }] },
-  "ambience.structure.jirachi":              { "sounds": [{ "name": "cobbletunes:ambience/structure/jirachi", "stream": true }] },
-  "ambience.structure.secret_garden":        { "sounds": [{ "name": "cobbletunes:ambience/structure/secret_garden", "stream": true }] },
-  "ambience.structure.sky_pillar":           { "sounds": [{ "name": "cobbletunes:ambience/structure/sky_pillar", "stream": true }] },
-  "ambience.structure.dyna_tree":            { "sounds": [{ "name": "cobbletunes:ambience/structure/dyna_tree", "stream": true }] },
-  "ambience.structure.spear_pillar":         { "sounds": [{ "name": "cobbletunes:ambience/structure/spear_pillar", "stream": true }] },
-  "ambience.structure.snowpoint_temple":     { "sounds": [{ "name": "cobbletunes:ambience/structure/snowpoint_temple", "stream": true }] },
-  "ambience.structure.split_decision_temple": { "sounds": [{ "name": "cobbletunes:ambience/structure/split_decision_temple", "stream": true }] },
-  "ambience.structure.route210":             { "sounds": [{ "name": "cobbletunes:ambience/structure/route210", "stream": true }] },
-  "ambience.structure.fullmoon_island":      { "sounds": [{ "name": "cobbletunes:ambience/structure/fullmoon_island", "stream": true }] },
-  "ambience.structure.crescent_isle":        { "sounds": [{ "name": "cobbletunes:ambience/structure/crescent_isle", "stream": true }] },
-  "ambience.structure.eterna_building":      { "sounds": [{ "name": "cobbletunes:ambience/structure/eterna_building", "stream": true }] },
-  "ambience.structure.wild_plant":           { "sounds": [{ "name": "cobbletunes:ambience/structure/wild_plant", "stream": true }] },
-  "ambience.structure.manaphy":              { "sounds": [{ "name": "cobbletunes:ambience/structure/manaphy", "stream": true }] },
-  "menu.emerald": { "category": "music", "sounds": [{ "name": "cobbletunes:menu/emerald", "stream": true }] },
-  "menu.frlg":    { "category": "music", "sounds": [{ "name": "cobbletunes:menu/frlg", "stream": true }] },
-  "menu.hgss":    { "category": "music", "sounds": [{ "name": "cobbletunes:menu/hgss", "stream": true }] },
-  "effect.lowhp": { "sounds": [{ "name": "cobbletunes:effect/lowhp" }] },
-  "ambience.vanilla.ancient_city.cerulean_cave": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/ancient_city/cerulean_cave", "stream": true }] },
-  "ambience.vanilla.ancient_city.distortion_world": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/ancient_city/distortion_world", "stream": true }] },
-  "ambience.vanilla.ancient_city.dragonspiral_tower": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/ancient_city/dragonspiral_tower", "stream": true }] },
-  "ambience.vanilla.ancient_city.mt_silver": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/ancient_city/mt_silver", "stream": true }] },
-  "ambience.vanilla.ancient_city.pokemon_mansion": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/ancient_city/pokemon_mansion", "stream": true }] },
-  "ambience.vanilla.bastion_remnant.hideout": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/bastion_remnant/hideout", "stream": true }] },
-  "ambience.vanilla.bastion_remnant.reversal_mountain": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/bastion_remnant/reversal_mountain", "stream": true }] },
-  "ambience.vanilla.bca_village_large.celadon_city": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/bca_village_large/celadon_city", "stream": true }] },
-  "ambience.vanilla.bca_village_large.cerulean_city": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/bca_village_large/cerulean_city", "stream": true }] },
-  "ambience.vanilla.bca_village_large.cinnabar": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/bca_village_large/cinnabar", "stream": true }] },
-  "ambience.vanilla.bca_village_large.fallarbor": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/bca_village_large/fallarbor", "stream": true }] },
-  "ambience.vanilla.bca_village_large.rustboro": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/bca_village_large/rustboro", "stream": true }] },
-  "ambience.vanilla.bca_village_large.verdanturf": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/bca_village_large/verdanturf", "stream": true }] },
-  "ambience.vanilla.bca_village_large.violet": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/bca_village_large/violet", "stream": true }] },
-  "ambience.vanilla.bca_village_mid.cerulean_city": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/bca_village_mid/cerulean_city", "stream": true }] },
-  "ambience.vanilla.bca_village_mid.cinnabar": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/bca_village_mid/cinnabar", "stream": true }] },
-  "ambience.vanilla.bca_village_mid.fallarbor": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/bca_village_mid/fallarbor", "stream": true }] },
-  "ambience.vanilla.bca_village_mid.rustboro": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/bca_village_mid/rustboro", "stream": true }] },
-  "ambience.vanilla.bca_village_mid.verdanturf": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/bca_village_mid/verdanturf", "stream": true }] },
-  "ambience.vanilla.bca_village_mid.violet": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/bca_village_mid/violet", "stream": true }] },
-  "ambience.vanilla.bca_village_mid.celadon_city": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/bca_village_mid/celadon_city", "stream": true }] },
-  "ambience.vanilla.bca_village_small.rustboro": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/bca_village_small/rustboro", "stream": true }] },
-  "ambience.vanilla.bca_village_small.verdanturf": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/bca_village_small/verdanturf", "stream": true }] },
-  "ambience.vanilla.bca_village_small.violet": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/bca_village_small/violet", "stream": true }] },
-  "ambience.vanilla.bca_village_small.celadon_city": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/bca_village_small/celadon_city", "stream": true }] },
-  "ambience.vanilla.bca_village_small.cerulean_city": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/bca_village_small/cerulean_city", "stream": true }] },
-  "ambience.vanilla.bca_village_small.cinnabar": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/bca_village_small/cinnabar", "stream": true }] },
-  "ambience.vanilla.bca_village_small.fallarbor": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/bca_village_small/fallarbor", "stream": true }] },
-  "ambience.vanilla.buried_treasure.undella_town": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/buried_treasure/undella_town", "stream": true }] },
-  "ambience.vanilla.buried_treasure.lacunosa_town": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/buried_treasure/lacunosa_town", "stream": true }] },
-  "ambience.vanilla.buried_treasure.route109": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/buried_treasure/route109", "stream": true }] },
-  "ambience.vanilla.desert_pyramid.relic_castle": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/desert_pyramid/relic_castle", "stream": true }] },
-  "ambience.vanilla.desert_pyramid.desert_ruins": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/desert_pyramid/desert_ruins", "stream": true }] },
-  "ambience.vanilla.desert_pyramid.mirage_tower": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/desert_pyramid/mirage_tower", "stream": true }] },
-  "ambience.vanilla.end_city.hall_of_origin": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/end_city/hall_of_origin", "stream": true }] },
-  "ambience.vanilla.end_city.mt_chimney": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/end_city/mt_chimney", "stream": true }] },
-  "ambience.vanilla.end_city.n_castle": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/end_city/n_castle", "stream": true }] },
-  "ambience.vanilla.end_city.spear_pillar": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/end_city/spear_pillar", "stream": true }] },
-  "ambience.vanilla.fortress.rocket_hq": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/fortress/rocket_hq", "stream": true }] },
-  "ambience.vanilla.fortress.stark_mountain": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/fortress/stark_mountain", "stream": true }] },
-  "ambience.vanilla.fortress.hideout": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/fortress/hideout", "stream": true }] },
-  "ambience.vanilla.fortress.mt_ember": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/fortress/mt_ember", "stream": true }] },
-  "ambience.vanilla.igloo.shoal_cave": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/igloo/shoal_cave", "stream": true }] },
-  "ambience.vanilla.igloo.cold_storage": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/igloo/cold_storage", "stream": true }] },
-  "ambience.vanilla.igloo.ice_path": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/igloo/ice_path", "stream": true }] },
-  "ambience.vanilla.jungle_pyramid.ilex_forest": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/jungle_pyramid/ilex_forest", "stream": true }] },
-  "ambience.vanilla.jungle_pyramid.island_cave": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/jungle_pyramid/island_cave", "stream": true }] },
-  "ambience.vanilla.jungle_pyramid.pinwheel_forest": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/jungle_pyramid/pinwheel_forest", "stream": true }] },
-  "ambience.vanilla.jungle_pyramid.safari_zone": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/jungle_pyramid/safari_zone", "stream": true }] },
-  "ambience.vanilla.mansion.poke_mansion": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/mansion/poke_mansion", "stream": true }] },
-  "ambience.vanilla.mansion.strange_house": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/mansion/strange_house", "stream": true }] },
-  "ambience.vanilla.mansion.old_chateau": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/mansion/old_chateau", "stream": true }] },
-  "ambience.vanilla.mineshaft.mt_moon": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/mineshaft/mt_moon", "stream": true }] },
-  "ambience.vanilla.mineshaft.oreburgh_mine": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/mineshaft/oreburgh_mine", "stream": true }] },
-  "ambience.vanilla.mineshaft.union_cave": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/mineshaft/union_cave", "stream": true }] },
-  "ambience.vanilla.mineshaft_mesa.chargestone_cave": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/mineshaft_mesa/chargestone_cave", "stream": true }] },
-  "ambience.vanilla.mineshaft_mesa.reversal_mountain": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/mineshaft_mesa/reversal_mountain", "stream": true }] },
-  "ambience.vanilla.mineshaft_mesa.stark_mountain": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/mineshaft_mesa/stark_mountain", "stream": true }] },
-  "ambience.vanilla.monument.cave_origin": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/monument/cave_origin", "stream": true }] },
-  "ambience.vanilla.monument.whirl_islands": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/monument/whirl_islands", "stream": true }] },
-  "ambience.vanilla.nether_fossil.lavender_town": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/nether_fossil/lavender_town", "stream": true }] },
-  "ambience.vanilla.nether_fossil.mt_pyre": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/nether_fossil/mt_pyre", "stream": true }] },
-  "ambience.vanilla.nether_fossil.poke_tower": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/nether_fossil/poke_tower", "stream": true }] },
-  "ambience.vanilla.nether_fossil.strange_house": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/nether_fossil/strange_house", "stream": true }] },
-  "ambience.vanilla.ocean_ruin.dive_theme": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/ocean_ruin/dive_theme", "stream": true }] },
-  "ambience.vanilla.ocean_ruin.marine_tube": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/ocean_ruin/marine_tube", "stream": true }] },
-  "ambience.vanilla.ocean_ruin.underwater": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/ocean_ruin/underwater", "stream": true }] },
-  "ambience.vanilla.pillager_outpost.radio_tower_takeover": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/pillager_outpost/radio_tower_takeover", "stream": true }] },
-  "ambience.vanilla.pillager_outpost.rocket_hideout": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/pillager_outpost/rocket_hideout", "stream": true }] },
-  "ambience.vanilla.pillager_outpost.team_aqua_magma_hideout": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/pillager_outpost/team_aqua_magma_hideout", "stream": true }] },
-  "ambience.vanilla.ruined_portal.distorn_world": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/ruined_portal/distorn_world", "stream": true }] },
-  "ambience.vanilla.ruined_portal.radio_signal": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/ruined_portal/radio_signal", "stream": true }] },
-  "ambience.vanilla.shipwreck.plasma_frigate": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/shipwreck/plasma_frigate", "stream": true }] },
-  "ambience.vanilla.shipwreck.ss_aqua": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/shipwreck/ss_aqua", "stream": true }] },
-  "ambience.vanilla.shipwreck.abandoned_ship": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/shipwreck/abandoned_ship", "stream": true }] },
-  "ambience.vanilla.stronghold.spear_pillar": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/stronghold/spear_pillar", "stream": true }] },
-  "ambience.vanilla.stronghold.dragonpsiral": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/stronghold/dragonpsiral", "stream": true }] },
-  "ambience.vanilla.stronghold.mt_coronet": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/stronghold/mt_coronet", "stream": true }] },
-  "ambience.vanilla.swamp_hut.losrtlorn_forest": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/swamp_hut/losrtlorn_forest", "stream": true }] },
-  "ambience.vanilla.swamp_hut.ecruteak_city": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/swamp_hut/ecruteak_city", "stream": true }] },
-  "ambience.vanilla.swamp_hut.great_marsh": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/swamp_hut/great_marsh", "stream": true }] },
-  "ambience.vanilla.trail_ruins.sevault_canyon": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/trail_ruins/sevault_canyon", "stream": true }] },
-  "ambience.vanilla.trail_ruins.solaceon_ruins": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/trail_ruins/solaceon_ruins", "stream": true }] },
-  "ambience.vanilla.trail_ruins.abyssal_ruins": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/trail_ruins/abyssal_ruins", "stream": true }] },
-  "ambience.vanilla.trail_ruins.ruins_of_alph": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/trail_ruins/ruins_of_alph", "stream": true }] },
-  "ambience.vanilla.trial_chambers.teamplasma_hq": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/trial_chambers/teamplasma_hq", "stream": true }] },
-  "ambience.vanilla.trial_chambers.victory_road": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/trial_chambers/victory_road", "stream": true }] },
-  "ambience.vanilla.trial_chambers.silph_co": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/trial_chambers/silph_co", "stream": true }] },
-  "ambience.vanilla.trial_chambers.team_galactic": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/trial_chambers/team_galactic", "stream": true }] },
-  "ambience.vanilla.village_desert.rustboro_city": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/village_desert/rustboro_city", "stream": true }] },
-  "ambience.vanilla.village_desert.fallarbor_town": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/village_desert/fallarbor_town", "stream": true }] },
-  "ambience.vanilla.village_desert.lentimas_town": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/village_desert/lentimas_town", "stream": true }] },
-  "ambience.vanilla.village_desert.route_111": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/village_desert/route_111", "stream": true }] },
-  "ambience.vanilla.village_plains.pewter_city": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/village_plains/pewter_city", "stream": true }] },
-  "ambience.vanilla.village_plains.rustboro_city": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/village_plains/rustboro_city", "stream": true }] },
-  "ambience.vanilla.village_plains.twinleaf_town": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/village_plains/twinleaf_town", "stream": true }] },
-  "ambience.vanilla.village_plains.cherrygrove_city": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/village_plains/cherrygrove_city", "stream": true }] },
-  "ambience.vanilla.village_plains.littleroot_town": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/village_plains/littleroot_town", "stream": true }] },
-  "ambience.vanilla.village_plains.newbark_town": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/village_plains/newbark_town", "stream": true }] },
-  "ambience.vanilla.village_plains.nuvema_town": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/village_plains/nuvema_town", "stream": true }] },
-  "ambience.vanilla.village_plains.pallet_town": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/village_plains/pallet_town", "stream": true }] },
-  "ambience.vanilla.village_savanna.verdantuf_town": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/village_savanna/verdantuf_town", "stream": true }] },
-  "ambience.vanilla.village_savanna.azalea_town": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/village_savanna/azalea_town", "stream": true }] },
-  "ambience.vanilla.village_savanna.floccesy_town": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/village_savanna/floccesy_town", "stream": true }] },
-  "ambience.vanilla.village_savanna.goldenrod_town": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/village_savanna/goldenrod_town", "stream": true }] },
-  "ambience.vanilla.village_snowy.snowpoint_city": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/village_snowy/snowpoint_city", "stream": true }] },
-  "ambience.vanilla.village_snowy.icirrus_city": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/village_snowy/icirrus_city", "stream": true }] },
-  "ambience.vanilla.village_snowy.mahogany_town": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/village_snowy/mahogany_town", "stream": true }] },
-  "ambience.vanilla.village_taiga.fortree_city": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/village_taiga/fortree_city", "stream": true }] },
-  "ambience.vanilla.village_taiga.canalave_city": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/village_taiga/canalave_city", "stream": true }] },
-  "ambience.vanilla.village_taiga.celestic_town": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/village_taiga/celestic_town", "stream": true }] },
-  "ambience.vanilla.village_taiga.eterna_city": { "category": "music", "sounds": [{ "name": "cobbletunes:ambience/vanilla/village_taiga/eterna_city", "stream": true }] }
+  "battle.paldea.champion_top": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/paldea/champion_top",
+        "stream": true
+      }
+    ]
+  },
+  "battle.paldea.elite_four": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/paldea/elite_four",
+        "stream": true
+      }
+    ]
+  },
+  "battle.paldea.gym_leader": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/paldea/gym_leader",
+        "stream": true
+      }
+    ]
+  },
+  "battle.paldea.trainer": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/paldea/trainer",
+        "stream": true
+      }
+    ]
+  },
+  "battle.paldea.wild": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/paldea/wild",
+        "stream": true
+      }
+    ]
+  },
+  "battle.kalos.champion": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/kalos/champion",
+        "stream": true
+      }
+    ]
+  },
+  "battle.kalos.elite_four": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/kalos/elite_four",
+        "stream": true
+      }
+    ]
+  },
+  "battle.kalos.team_flare_lysandre": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/kalos/team_flare_lysandre",
+        "stream": true
+      }
+    ]
+  },
+  "battle.kalos.legendary_trio": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/kalos/legendary_trio",
+        "stream": true
+      }
+    ]
+  },
+  "battle.kalos.team_flare_grunt": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/kalos/team_flare_grunt",
+        "stream": true
+      }
+    ]
+  },
+  "battle.kalos.gym_leader": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/kalos/gym_leader",
+        "stream": true
+      }
+    ]
+  },
+  "battle.kalos.trainer": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/kalos/trainer",
+        "stream": true
+      }
+    ]
+  },
+  "battle.kalos.wild": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/kalos/wild",
+        "stream": true
+      }
+    ]
+  },
+  "battle.kalos.rival_friend": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/kalos/rival_friend",
+        "stream": true
+      }
+    ]
+  },
+  "battle.hisui.wild": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/hisui/wild",
+        "stream": true
+      }
+    ]
+  },
+  "battle.hisui.legendary_arceus": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/hisui/legendary_arceus",
+        "stream": true
+      }
+    ]
+  },
+  "battle.galar.league_tournament": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/galar/league_tournament",
+        "stream": true
+      }
+    ]
+  },
+  "battle.galar.gym_leader": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/galar/gym_leader",
+        "stream": true
+      }
+    ]
+  },
+  "battle.galar.trainer": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/galar/trainer",
+        "stream": true
+      }
+    ]
+  },
+  "battle.galar.legendary_mysterious_being": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/galar/legendary_mysterious_being",
+        "stream": true
+      }
+    ]
+  },
+  "battle.galar.battle_tower": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/galar/battle_tower",
+        "stream": true
+      }
+    ]
+  },
+  "battle.galar.champion_leon": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/galar/champion_leon",
+        "stream": true
+      }
+    ]
+  },
+  "battle.galar.legendary_eternatus": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/galar/legendary_eternatus",
+        "stream": true
+      }
+    ]
+  },
+  "battle.galar.wild": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/galar/wild",
+        "stream": true
+      }
+    ]
+  },
+  "battle.galar.legendary_glastrier_spectrier": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/galar/legendary_glastrier_spectrier",
+        "stream": true
+      }
+    ]
+  },
+  "battle.alola.legendary_ultra_beast": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/alola/legendary_ultra_beast",
+        "stream": true
+      }
+    ]
+  },
+  "battle.alola.legendary_tapu": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/alola/legendary_tapu",
+        "stream": true
+      }
+    ]
+  },
+  "battle.alola.champion_summit": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/alola/champion_summit",
+        "stream": true
+      }
+    ]
+  },
+  "battle.alola.elite_four": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/alola/elite_four",
+        "stream": true
+      }
+    ]
+  },
+  "battle.alola.legendary_solgaleo_lunala_necrozma": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/alola/legendary_solgaleo_lunala_necrozma",
+        "stream": true
+      }
+    ]
+  },
+  "battle.alola.island_kahuna": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/alola/island_kahuna",
+        "stream": true
+      }
+    ]
+  },
+  "battle.alola.legendary_necrozma_fused": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/alola/legendary_necrozma_fused",
+        "stream": true
+      }
+    ]
+  },
+  "battle.alola.aether_president_lusamine": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/alola/aether_president_lusamine",
+        "stream": true
+      }
+    ]
+  },
+  "battle.alola.ultra_recon_squad": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/alola/ultra_recon_squad",
+        "stream": true
+      }
+    ]
+  },
+  "battle.alola.aether_foundation": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/alola/aether_foundation",
+        "stream": true
+      }
+    ]
+  },
+  "battle.alola.team_skull_guzma": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/alola/team_skull_guzma",
+        "stream": true
+      }
+    ]
+  },
+  "battle.alola.trainer": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/alola/trainer",
+        "stream": true
+      }
+    ]
+  },
+  "battle.alola.wild": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/alola/wild",
+        "stream": true
+      }
+    ]
+  },
+  "battle.unova.champion_iris": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/unova/champion_iris",
+        "stream": true
+      }
+    ]
+  },
+  "battle.unova.legendary_black_white_kyurem": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/unova/legendary_black_white_kyurem",
+        "stream": true
+      }
+    ]
+  },
+  "battle.sinnoh.legendary_alt": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/sinnoh/legendary_alt",
+        "stream": true
+      }
+    ]
+  },
+  "battle.unova.champion_sinnoh_pwt": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/unova/champion_sinnoh_pwt",
+        "stream": true
+      }
+    ]
+  },
+  "battle.unova.champion_hoenn_pwt": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/unova/champion_hoenn_pwt",
+        "stream": true
+      }
+    ]
+  },
+  "battle.unova.champion_johto_pwt": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/unova/champion_johto_pwt",
+        "stream": true
+      }
+    ]
+  },
+  "battle.unova.champion_kanto_pwt": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/unova/champion_kanto_pwt",
+        "stream": true
+      }
+    ]
+  },
+  "battle.unova.gym_leader": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/unova/gym_leader",
+        "stream": true
+      }
+    ]
+  },
+  "battle.unova.trainer": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/unova/trainer",
+        "stream": true
+      }
+    ]
+  },
+  "battle.unova.rival_hugh": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/unova/rival_hugh",
+        "stream": true
+      }
+    ]
+  },
+  "battle.unova.wild": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/unova/wild",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.unova.snowy_frozen_city": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/unova/snowy_frozen_city",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.unova.cave_underground_ruins": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/unova/cave_underground_ruins",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.unova.stronghold_underground_ruins": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/unova/stronghold_underground_ruins",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.unova.plains_route_19_summer": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/unova/plains_route_19_summer",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.unova.plains_aspertia_city": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/unova/plains_aspertia_city",
+        "stream": true
+      }
+    ]
+  },
+  "battle.sinnoh.legendary_giratina": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/sinnoh/legendary_giratina",
+        "stream": true
+      }
+    ]
+  },
+  "battle.sinnoh.legendary_dialga_palkia": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/sinnoh/legendary_dialga_palkia",
+        "stream": true
+      }
+    ]
+  },
+  "battle.sinnoh.team_galactic_boss": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/sinnoh/team_galactic_boss",
+        "stream": true
+      }
+    ]
+  },
+  "battle.sinnoh.team_galactic_commander": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/sinnoh/team_galactic_commander",
+        "stream": true
+      }
+    ]
+  },
+  "battle.sinnoh.team_galactic_grunt": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/sinnoh/team_galactic_grunt",
+        "stream": true
+      }
+    ]
+  },
+  "battle.sinnoh.gym_leader": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/sinnoh/gym_leader",
+        "stream": true
+      }
+    ]
+  },
+  "battle.sinnoh.rival_pvp": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/sinnoh/rival_pvp",
+        "stream": true
+      }
+    ]
+  },
+  "battle.sinnoh.trainer": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/sinnoh/trainer",
+        "stream": true
+      }
+    ]
+  },
+  "battle.sinnoh.frontier_brain": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/sinnoh/frontier_brain",
+        "stream": true
+      }
+    ]
+  },
+  "battle.sinnoh.champion": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/sinnoh/champion",
+        "stream": true
+      }
+    ]
+  },
+  "battle.sinnoh.elite_four": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/sinnoh/elite_four",
+        "stream": true
+      }
+    ]
+  },
+  "battle.sinnoh.legendary_default": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/sinnoh/legendary_default",
+        "stream": true
+      }
+    ]
+  },
+  "battle.sinnoh.wild": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/sinnoh/wild",
+        "stream": true
+      }
+    ]
+  },
+  "battle.sinnoh.legendary_lake_trio": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/sinnoh/legendary_lake_trio",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.sinnoh.end_distortion_world": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/sinnoh/end_distortion_world",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.sinnoh.mountain_mt_coronet": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/sinnoh/mountain_mt_coronet",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.sinnoh.snowy_snowpoint_city": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/sinnoh/snowy_snowpoint_city",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.sinnoh.snowy_route_216": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/sinnoh/snowy_route_216",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.sinnoh.plains_route_210": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/sinnoh/plains_route_210",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.sinnoh.plains_route_209": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/sinnoh/plains_route_209",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.sinnoh.forest_eterna_forest": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/sinnoh/forest_eterna_forest",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.sinnoh.plains_route_205": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/sinnoh/plains_route_205",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.sinnoh.forest_floaroma_town": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/sinnoh/forest_floaroma_town",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.sinnoh.cave_oreburgh_mine": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/sinnoh/cave_oreburgh_mine",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.sinnoh.plains_route_203": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/sinnoh/plains_route_203",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.sinnoh.plains_sandgem_town": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/sinnoh/plains_sandgem_town",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.sinnoh.cave_lake_caverns": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/sinnoh/cave_lake_caverns",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.sinnoh.ocean_lake": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/sinnoh/ocean_lake",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.sinnoh.plains_route_201": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/sinnoh/plains_route_201",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.sinnoh.plains_twinleaf_town": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/sinnoh/plains_twinleaf_town",
+        "stream": true
+      }
+    ]
+  },
+  "battle.hoenn.champion_wallace": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/hoenn/champion_wallace",
+        "stream": true
+      }
+    ]
+  },
+  "battle.hoenn.elite_four": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/hoenn/elite_four",
+        "stream": true
+      }
+    ]
+  },
+  "battle.hoenn.legendary_regis": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/hoenn/legendary_regis",
+        "stream": true
+      }
+    ]
+  },
+  "battle.hoenn.legendary_super_ancient": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/hoenn/legendary_super_ancient",
+        "stream": true
+      }
+    ]
+  },
+  "battle.hoenn.team_aqua_magma_leaders": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/hoenn/team_aqua_magma_leaders",
+        "stream": true
+      }
+    ]
+  },
+  "battle.hoenn.rival_pvp": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/hoenn/rival_pvp",
+        "stream": true
+      }
+    ]
+  },
+  "battle.hoenn.gym_leader": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/hoenn/gym_leader",
+        "stream": true
+      }
+    ]
+  },
+  "battle.hoenn.team_aqua_magma_grunt": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/hoenn/team_aqua_magma_grunt",
+        "stream": true
+      }
+    ]
+  },
+  "battle.hoenn.trainer": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/hoenn/trainer",
+        "stream": true
+      }
+    ]
+  },
+  "battle.hoenn.legendary_mew": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/hoenn/legendary_mew",
+        "stream": true
+      }
+    ]
+  },
+  "battle.hoenn.wild": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/hoenn/wild",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.hoenn.cave_of_origin": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/hoenn/cave_of_origin",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.hoenn.deep_ocean_dive": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/hoenn/deep_ocean_dive",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.hoenn.heavy_rain": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/hoenn/heavy_rain",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.hoenn.desert_drought": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/hoenn/desert_drought",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.hoenn.nether_hideout": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/hoenn/nether_hideout",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.hoenn.mountain_mt_pyre_exterior": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/hoenn/mountain_mt_pyre_exterior",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.hoenn.mt_pyre": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/hoenn/mt_pyre",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.hoenn.forest_safari_zone": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/hoenn/forest_safari_zone",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.hoenn.plains_route_120": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/hoenn/plains_route_120",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.hoenn.jungle_route_119": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/hoenn/jungle_route_119",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.hoenn.ocean_surf": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/hoenn/ocean_surf",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.hoenn.desert_route_111": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/hoenn/desert_route_111",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.hoenn.volcanic_mt_chimney": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/hoenn/volcanic_mt_chimney",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.hoenn.volcanic_route_113": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/hoenn/volcanic_route_113",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.hoenn.plains_route_110": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/hoenn/plains_route_110",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.hoenn.ocean_oceanic_museum": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/hoenn/ocean_oceanic_museum",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.hoenn.ocean_crossing_the_sea": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/hoenn/ocean_crossing_the_sea",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.hoenn.forest_petalburg_woods": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/hoenn/forest_petalburg_woods",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.hoenn.plains_route_104": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/hoenn/plains_route_104",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.hoenn.plains_oldale_town": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/hoenn/plains_oldale_town",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.hoenn.plains_route_101": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/hoenn/plains_route_101",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.hoenn.plains_littleroot_town": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/hoenn/plains_littleroot_town",
+        "stream": true
+      }
+    ]
+  },
+  "battle.johto.legendary_raikou": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/johto/legendary_raikou",
+        "stream": true
+      }
+    ]
+  },
+  "battle.johto.gym_leader": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/johto/gym_leader",
+        "stream": true
+      }
+    ]
+  },
+  "battle.johto.rival_pvp": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/johto/rival_pvp",
+        "stream": true
+      }
+    ]
+  },
+  "battle.johto.team_rocket": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/johto/team_rocket",
+        "stream": true
+      }
+    ]
+  },
+  "battle.johto.trainer": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/johto/trainer",
+        "stream": true
+      }
+    ]
+  },
+  "battle.johto.legendary_default": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/johto/legendary_default",
+        "stream": true
+      }
+    ]
+  },
+  "battle.johto.champion": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/johto/champion",
+        "stream": true
+      }
+    ]
+  },
+  "battle.johto.legendary_suicune": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/johto/legendary_suicune",
+        "stream": true
+      }
+    ]
+  },
+  "battle.johto.legendary_lugia": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/johto/legendary_lugia",
+        "stream": true
+      }
+    ]
+  },
+  "battle.johto.legendary_ho_oh": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/johto/legendary_ho_oh",
+        "stream": true
+      }
+    ]
+  },
+  "battle.johto.legendary_entei": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/johto/legendary_entei",
+        "stream": true
+      }
+    ]
+  },
+  "battle.johto.wild": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/johto/wild",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.johto.route_42_mountain": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/johto/route_42_mountain",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.johto.ocean_surf": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/johto/ocean_surf",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.johto.route_38_coastal": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/johto/route_38_coastal",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.johto.forest_ecruteak": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/johto/forest_ecruteak",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.johto.forest_national_park": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/johto/forest_national_park",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.johto.cave_deep_dark_pokegear_unown": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/johto/cave_deep_dark_pokegear_unown",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.johto.cave_ruins_of_alph": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/johto/cave_ruins_of_alph",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.johto.stronghold_ruins_of_alph": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/johto/stronghold_ruins_of_alph",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.johto.cave_union_cave": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/johto/cave_union_cave",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.johto.plains_route_30": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/johto/plains_route_30",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.johto.end_sinjoh_ruins": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/johto/end_sinjoh_ruins",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.johto.route_47_harsh_mountain": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/johto/route_47_harsh_mountain",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.johto.route_26_open": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/johto/route_26_open",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.johto.cave_dragons_den": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/johto/cave_dragons_den",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.johto.cave_ice_path": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/johto/cave_ice_path",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.johto.plains_route_29": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/johto/plains_route_29",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.johto.plains_new_bark_town": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/johto/plains_new_bark_town",
+        "stream": true
+      }
+    ]
+  },
+  "battle.kanto.champion_rival": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/kanto/champion_rival",
+        "stream": true
+      }
+    ]
+  },
+  "battle.kanto.legendary_mewtwo": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/kanto/legendary_mewtwo",
+        "stream": true
+      }
+    ]
+  },
+  "battle.kanto.legendary_deoxys": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/kanto/legendary_deoxys",
+        "stream": true
+      }
+    ]
+  },
+  "battle.kanto.legendary_default": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/kanto/legendary_default",
+        "stream": true
+      }
+    ]
+  },
+  "battle.kanto.gym_leader": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/kanto/gym_leader",
+        "stream": true
+      }
+    ]
+  },
+  "battle.kanto.wild": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/kanto/wild",
+        "stream": true
+      }
+    ]
+  },
+  "battle.kanto.trainer": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/kanto/trainer",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.kanto.deep_dark_pokemon_mansion": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/kanto/deep_dark_pokemon_mansion",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.kanto.volcanic_cinnabar": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/kanto/volcanic_cinnabar",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.kanto.ocean_the_sea": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/kanto/ocean_the_sea",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.kanto.nether_rocket_hideout": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/kanto/nether_rocket_hideout",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.kanto.pokemon_tower": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/kanto/pokemon_tower",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.kanto.deep_dark_lavender_town": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/kanto/deep_dark_lavender_town",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.kanto.route_lavender_somber": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/kanto/route_lavender_somber",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.kanto.coastal_to_bill": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/kanto/coastal_to_bill",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.kanto.cave_mt_moon": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/kanto/cave_mt_moon",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.kanto.route_cerulean_transition": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/kanto/route_cerulean_transition",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.kanto.forest_viridian": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/kanto/forest_viridian",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.kanto.plains_road_to_viridian": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/kanto/plains_road_to_viridian",
+        "stream": true
+      }
+    ]
+  },
+  "ambience.kanto.plains_pallet_town": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:ambience/kanto/plains_pallet_town",
+        "stream": true
+      }
+    ]
+  },
+  "battle.unova.team_plasma_n": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/unova/team_plasma_n",
+        "stream": true
+      }
+    ]
+  },
+  "battle.unova.team_plasma_grunt": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/unova/team_plasma_grunt",
+        "stream": true
+      }
+    ]
+  },
+  "battle.unova.team_plasma_colress": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/unova/team_plasma_colress",
+        "stream": true
+      }
+    ]
+  },
+  "battle.unova.bw_legendary_reshiramzekrom": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/unova/bw_legendary_reshiramzekrom",
+        "stream": true
+      }
+    ]
+  },
+  "battle.unova.bw_legendary_kyurem": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/unova/bw_legendary_kyurem",
+        "stream": true
+      }
+    ]
+  },
+  "battle.unova.bw_legendary_default": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:battle/unova/bw_legendary_default",
+        "stream": true
+      }
+    ]
+  }
 }

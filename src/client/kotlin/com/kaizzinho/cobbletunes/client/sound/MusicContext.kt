@@ -9,14 +9,15 @@ enum class MusicContext {
     CHAMPION_BATTLE,
     PVP_BATTLE,
     FACTION_BATTLE,
+    FRONTIER_BRAIN_BATTLE,
+    BATTLE_TOWER_BATTLE,
     LEGENDARY_BATTLE,
+    VICTORY,
     GYM_AMBIENCE,
     POKECENTER,
     POKEMART,
-    // one fixed track per named cobbleverse structure
+    BATTLE_TOWER,
     SPECIAL_STRUCTURE,
-    // title/menu pool, totally separate from world state
     MENU,
-    // vanilla/bca structures pick from a pool per category
     VANILLA_STRUCTURE
 }
