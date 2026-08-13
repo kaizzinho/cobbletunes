@@ -26,6 +26,145 @@ The current source audit resolves all 419 `sounds.json` keys from code. A resour
 - Repurposed Structures `7.5.21+1.21.1` is detected as a soft integration. All 107 worldgen structure IDs in that JAR reuse existing vanilla/BCA structure pools, so it adds no new audio files.
 - `cobbletunes:game_corner` and `cobbletunes:casino` are manual `MusicTriggerBlock` zones. Entering either zone starts a shuffled Game Corner playlist. Tracks do not loop individually; each file plays once, then another track is selected from the remaining shuffled pool. After all 15 tracks play, the pool reshuffles and avoids an immediate repeat across the cycle boundary.
 
+## MusicTriggerBlock setup tutorial
+
+`MusicTriggerBlock` is the manual zone system used for Poké Centers, Poké Marts, Battle Tower floors, Game Corners, casinos, and any other hand-built area that needs an explicit CobbleTunes zone.
+
+The block stores a `ZoneId` in its block-entity NBT. The server checks nearby trigger blocks every 10 ticks. Manual trigger zones have priority over automatic worldgen structure detection, and when more than one trigger is in range the nearest one wins.
+
+The trigger scan covers up to 12 blocks on the X, Y, and Z axes around the player. For a large building, place more than one trigger block with the same `ZoneId` so the whole interior stays covered.
+
+### Basic placement
+
+Pick the coordinates where the trigger should sit. It can be hidden under the floor or inside a wall as long as players stay within its detection range.
+
+Place the block:
+
+```mcfunction
+/setblock <x> <y> <z> cobbletunes:music_trigger
+```
+
+Then assign the zone:
+
+```mcfunction
+/data merge block <x> <y> <z> {ZoneId:"cobbletunes:pokecenter"}
+```
+
+Check the saved zone at any time with:
+
+```mcfunction
+/data get block <x> <y> <z> ZoneId
+```
+
+Remove a trigger with:
+
+```mcfunction
+/setblock <x> <y> <z> air
+```
+
+Only the `ZoneId` changes between the examples below.
+
+### Poké Center
+
+Use:
+
+```text
+cobbletunes:pokecenter
+```
+
+Example:
+
+```mcfunction
+/setblock 100 64 100 cobbletunes:music_trigger
+/data merge block 100 64 100 {ZoneId:"cobbletunes:pokecenter"}
+```
+
+The client randomly selects one of the five Poké Center themes when the zone becomes active. The selected track loops while the player stays inside the zone. Battle and Victory music can temporarily take priority, then the active zone music returns afterward.
+
+### Poké Mart
+
+Use:
+
+```text
+cobbletunes:pokemart
+```
+
+Example:
+
+```mcfunction
+/setblock 120 64 100 cobbletunes:music_trigger
+/data merge block 120 64 100 {ZoneId:"cobbletunes:pokemart"}
+```
+
+The client randomly selects one of the three Poké Mart themes when the zone becomes active and loops that track while the player remains inside the zone.
+
+### Battle Tower floors
+
+For a ten-floor Battle Tower, use one floor-specific zone ID per floor:
+
+| Floor | Zone ID | Music pool |
+|---:|---|---|
+| 1 | `cobbletunes:battle_tower_floor_1` | low |
+| 2 | `cobbletunes:battle_tower_floor_2` | low |
+| 3 | `cobbletunes:battle_tower_floor_3` | low |
+| 4 | `cobbletunes:battle_tower_floor_4` | mid |
+| 5 | `cobbletunes:battle_tower_floor_5` | mid |
+| 6 | `cobbletunes:battle_tower_floor_6` | mid |
+| 7 | `cobbletunes:battle_tower_floor_7` | mid |
+| 8 | `cobbletunes:battle_tower_floor_8` | high |
+| 9 | `cobbletunes:battle_tower_floor_9` | high |
+| 10 | `cobbletunes:battle_tower_floor_10` | final |
+
+Example for floor 4:
+
+```mcfunction
+/setblock 200 90 200 cobbletunes:music_trigger
+/data merge block 200 90 200 {ZoneId:"cobbletunes:battle_tower_floor_4"}
+```
+
+The nearest trigger wins, which is important for vertically stacked floors. Put each trigger near the center of its floor and avoid placing different floor triggers at nearly the same vertical position.
+
+The grouped IDs below are also valid when a build does not need numbered floors:
+
+```text
+cobbletunes:battle_tower_low
+cobbletunes:battle_tower_mid
+cobbletunes:battle_tower_high
+cobbletunes:battle_tower_final
+```
+
+Battle Tower zone tracks loop while the floor owns the audio slot. A trainer battle started inside a Battle Tower zone uses the dedicated Galar Battle Tower battle theme. When the battle or Victory sequence ends, CobbleTunes restores the latest active floor zone.
+
+### Game Corner and casino
+
+Use either of these IDs:
+
+```text
+cobbletunes:game_corner
+cobbletunes:casino
+```
+
+Example:
+
+```mcfunction
+/setblock 300 64 300 cobbletunes:music_trigger
+/data merge block 300 64 300 {ZoneId:"cobbletunes:game_corner"}
+```
+
+Both IDs use the same 15-track Game Corner pool. The first track is random. Individual tracks do not loop. When one finishes, CobbleTunes advances to another track from the shuffled no-repeat queue. After all 15 tracks have played, the pool is reshuffled and the previous track is prevented from immediately repeating across the cycle boundary.
+
+Leaving the Game Corner clears the current shuffle queue. Re-entering starts a fresh randomized order. Battle and Victory music can interrupt the zone without changing the Game Corner trigger itself.
+
+### Placement tips
+
+- hide trigger blocks under floors or inside walls when they should not be visible
+- keep players within 12 blocks on each axis of at least one trigger
+- use several triggers with the same `ZoneId` for large rooms or long hallways
+- if different trigger zones overlap the nearest trigger wins
+- manual trigger blocks override nearby automatic structure music while they are in range
+- leaving every manual trigger lets the current automatic structure or biome ambience take over again
+- use floor-specific Battle Tower IDs for stacked floors so nearest-first detection can resolve them correctly
+
 ## Battle music
 
 ### Kanto
