@@ -11,6 +11,7 @@ import net.minecraft.server.network.ServerPlayerEntity
 import net.minecraft.server.world.ServerWorld
 import net.minecraft.util.Identifier
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
+import net.fabricmc.loader.api.FabricLoader
 
 object StructureZoneDetector {
 
@@ -151,6 +152,43 @@ object StructureZoneDetector {
         Identifier.of("bca", "village/large") to "cobbletunes:vanilla_structure:bca_village_large",
     )
 
+    private val repurposedStructuresAvailable by lazy { FabricLoader.getInstance().isModLoaded("repurposed_structures") }
+
+    private val REPURPOSED_STRUCTURES: Map<Identifier, String> = buildMap {
+        fun rs(category: String, vararg names: String) {
+            val zone = "cobbletunes:vanilla_structure:$category"
+            names.forEach { name ->
+                put(Identifier.of("repurposed_structures", name), zone)
+            }
+        }
+
+        rs("ancient_city", "ancient_city_end", "ancient_city_nether", "ancient_city_ocean")
+        rs("bastion_remnant", "bastion_underground")
+        rs("bca_village_large", "city_overworld")
+        rs("fortress", "city_nether", "fortress_jungle")
+        rs("fortress", "temple_nether_basalt", "temple_nether_crimson", "temple_nether_soul", "temple_nether_warped", "temple_nether_wasteland")
+
+        rs("igloo", "igloo_grassy", "igloo_mangrove", "igloo_mushroom", "igloo_stone", "pyramid_icy", "pyramid_snowy")
+        rs("mansion", "mansion_birch", "mansion_desert", "mansion_jungle", "mansion_mangrove", "mansion_oak", "mansion_savanna", "mansion_snowy", "mansion_taiga")
+        rs("mineshaft", "mineshaft_basalt", "mineshaft_birch", "mineshaft_crimson", "mineshaft_dark_forest", "mineshaft_desert", "mineshaft_end", "mineshaft_icy", "mineshaft_jungle", "mineshaft_nether", "mineshaft_ocean", "mineshaft_savanna", "mineshaft_soul", "mineshaft_stone", "mineshaft_swamp", "mineshaft_taiga", "mineshaft_warped")
+        rs("monument", "monument_desert", "monument_icy", "monument_jungle", "monument_nether", "pyramid_ocean", "temple_ocean")
+        rs("pillager_outpost", "outpost_badlands", "outpost_basalt", "outpost_birch", "outpost_crimson", "outpost_desert", "outpost_end", "outpost_giant_tree_taiga", "outpost_icy", "outpost_jungle", "outpost_mangrove", "outpost_nether_brick", "outpost_oak", "outpost_ocean", "outpost_savanna", "outpost_snowy", "outpost_soul", "outpost_taiga", "outpost_warped")
+
+        rs("desert_pyramid", "pyramid_badlands", "pyramid_end", "pyramid_nether")
+        rs("jungle_pyramid", "pyramid_dark_forest", "pyramid_flower_forest", "pyramid_giant_tree_taiga", "pyramid_jungle", "pyramid_mushroom", "temple_taiga")
+        rs("ruined_portal", "ruined_portal_end", "ruins_nether")
+        rs("trail_ruins", "ruins_land_cold", "ruins_land_hot", "ruins_land_icy", "ruins_land_warm")
+        rs("shipwreck", "shipwreck_crimson", "shipwreck_end", "shipwreck_nether_bricks", "shipwreck_warped")
+        rs("stronghold", "stronghold_end", "stronghold_nether")
+
+        rs("village_desert", "village_badlands")
+        rs("village_plains", "village_birch", "village_cherry", "village_mushroom", "village_oak", "village_ocean")
+        rs("village_savanna", "village_bamboo", "village_crimson", "village_jungle")
+        rs("village_taiga", "village_dark_forest", "village_giant_taiga", "village_mountains", "village_swamp", "village_warped")
+        rs("swamp_hut", "witch_hut_birch", "witch_hut_dark_forest", "witch_hut_giant_tree_taiga", "witch_hut_mangrove", "witch_hut_oak", "witch_hut_taiga")
+    }
+
+
     // only send real zone changes
     private val playerZoneCache: MutableMap<java.util.UUID, String> = mutableMapOf()
     private var tickCounter = 0
@@ -183,7 +221,7 @@ object StructureZoneDetector {
         if (triggerZone != null) return triggerZone
 
         // worldgen zones come next
-        return locateNearbyGym(player, world) ?: ""
+        return locateNearbyStructure(player, world) ?: ""
     }
 
 
@@ -204,7 +242,7 @@ object StructureZoneDetector {
         return null
     }
 
-    private fun locateNearbyGym(player: ServerPlayerEntity, world: ServerWorld): String? {
+    private fun locateNearbyStructure(player: ServerPlayerEntity, world: ServerWorld): String? {
         val structureRegistry = world.registryManager.get(RegistryKeys.STRUCTURE)
 
         // reverse map keeps chunk lookups cheap
@@ -216,6 +254,12 @@ object StructureZoneDetector {
         for ((structureId, zoneId) in VANILLA_AND_BCA_STRUCTURES) {
             val structure = structureRegistry.get(structureId) ?: continue
             structureToZone[structure] = zoneId
+        }
+        if (repurposedStructuresAvailable) {
+            for ((structureId, zoneId) in REPURPOSED_STRUCTURES) {
+                val structure = structureRegistry.get(structureId) ?: continue
+                structureToZone[structure] = zoneId
+            }
         }
         if (structureToZone.isEmpty()) return null
 

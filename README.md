@@ -16,11 +16,11 @@
 
 ### Overview
 
-**CobbleTunes** is a dynamic music framework for Cobblemon on Fabric. It replaces Minecraft music with context-aware battle themes, regional ambience, structure music, Victory themes, Battle Tower music, title-screen tracks, and low-HP cues.
+**CobbleTunes** is a dynamic music framework for Cobblemon on Fabric. It replaces Minecraft music with context-aware battle themes, regional ambience, structure music, Victory themes, Battle Tower music, Game Corner zones, title-screen tracks, and low-HP cues.
 
 The mod ships the routing and playback system only. It does **not** include, download, or generate Pokémon OST files. Music is supplied by a normal Minecraft resource pack under `assets/cobbletunes/sounds/`.
 
-The current source defines **404 sound events** across battle, Victory, Battle Tower, ambience, menu, and effects. The complete list is in [`SOUND_MANIFEST.md`](./SOUND_MANIFEST.md).
+The current source defines **419 sound events** across battle, Victory, Battle Tower, Game Corner, ambience, menu, and effects. The complete list is in [`SOUND_MANIFEST.md`](./SOUND_MANIFEST.md).
 
 ### What it does
 
@@ -64,8 +64,9 @@ Lower-priority world detection keeps running while battle or Victory music owns 
 - [x] **Battle Tower floor pools** with low, mid, high, and final tiers plus dedicated Battle Tower battle music.
 - [x] **Biome ambience memory and rotation** with silence windows and biome-transition debounce.
 - [x] **Underground ambience detection** using sky light and player height.
-- [x] **Cobbleverse exact structures**, **vanilla structures**, and **BCA village pools**.
-- [x] **Hand-placed music zones** for Poké Centers, Poké Marts, Gyms, special locations, and Battle Tower floors.
+- [x] **Cobbleverse exact structures**, **vanilla structures**, **BCA village pools**, and **Repurposed Structures** reuse mappings.
+- [x] **Hand-placed music zones** for Poké Centers, Poké Marts, Gyms, Game Corners/Casinos, special locations, and Battle Tower floors.
+- [x] **Game Corner pool** with 15 FRLG, Emerald, HGSS, and Platinum tracks played as a shuffled no-repeat playlist.
 - [x] **Title-screen music** that stays active across submenus and stops when a world loads.
 - [x] **Low-HP cue** for the active battle Pokémon with a boosted effect volume.
 - [x] **Player-death handling** and safe world/zone reset.
@@ -90,8 +91,9 @@ For multiplayer, install CobbleTunes on both the client and server. The server p
 - **WildBosses** — Boss-specific weighted regional battle pools.
 - **Cobblemon Loot Menu** — post-battle Victory music while the loot screen is active.
 - **CobblemonAdditions / BCA structures** — additional village-size structure pools when those structures exist in the world.
+- **Repurposed Structures** — reuses the existing vanilla/BCA music pools for all 107 worldgen structure IDs present in `7.5.21+1.21.1`.
 
-RCT, WildBosses, and Cobblemon Loot Menu are soft integrations. Missing optional mods do not prevent CobbleTunes from loading.
+RCT, WildBosses, Cobblemon Loot Menu, and Repurposed Structures are soft integrations. Missing optional mods do not prevent CobbleTunes from loading.
 
 ### Battle routing
 
@@ -216,6 +218,19 @@ Floor trigger IDs such as `cobbletunes:battle_tower_floor_1` through `cobbletune
 
 A trainer battle that begins while the current zone is `BATTLE_TOWER` is routed to the dedicated Galar Battle Tower battle theme.
 
+### Game Corner and Casino zones
+
+A `MusicTriggerBlock` can turn a custom build into a Game Corner or Casino. Use either of these zone IDs:
+
+```text
+cobbletunes:game_corner
+cobbletunes:casino
+```
+
+Entering the zone starts a shuffled Game Corner playlist. The first track is random, and when it finishes CobbleTunes automatically advances to another track without looping the same file. Every track is played once before the pool reshuffles, and the reshuffle avoids immediately repeating the track that just finished. Battle and Victory music still have priority; when they end, the active Game Corner playlist continues while the zone remains active.
+
+The pool has 15 expected files under `assets/cobbletunes/sounds/gamecorner/`, grouped across FRLG, Emerald, HGSS, and Platinum. The resource pack audio is still supplied separately; the source only registers the events and routing. See [`SOUND_MANIFEST.md`](./SOUND_MANIFEST.md) for the exact filenames and source-theme suggestions.
+
 ### Ambience and structures
 
 Regional biome ambience is currently defined for Kanto, Johto, Hoenn, Sinnoh, and Unova. Tracks are mapped to vanilla and Terralith biome groups such as plains, forests, caves, oceans, mountains, snow, deserts, and volcanic areas.
@@ -228,9 +243,10 @@ Structure music has higher priority than biome ambience. Supported sources inclu
 - exact named Cobbleverse structures and Legendary locations;
 - vanilla structures such as Ancient Cities, Strongholds, Mansions, Trial Chambers, Villages, Shipwrecks, Ruined Portals, and more;
 - BCA small, mid, and large village pools;
+- Repurposed Structures variants mapped back into the closest existing vanilla/BCA pool;
 - hand-placed `MusicTriggerBlock` zones.
 
-Zone music loops until the player leaves the zone. Battle and Victory music temporarily take priority without discarding the current zone state.
+Most fixed zone music loops until the player leaves the zone. Game Corner and Casino zones are the exception and advance through their shuffled 15-track playlist instead. Battle and Victory music temporarily take priority without discarding the current zone state. Repurposed Structures needs no new soundtrack files because its structures alias existing pools such as Ancient City, Fortress, Mansion, Mineshaft, Monument, Outpost, Pyramid, Village, and Witch Hut music.
 
 ### Low HP cue
 
@@ -273,13 +289,13 @@ CobbleTunes does not include soundtrack files. Put your `.ogg` files under:
 assets/cobbletunes/sounds/
 ```
 
-The included `sounds.json` defines all 404 expected sound events. [`SOUND_MANIFEST.md`](./SOUND_MANIFEST.md) mirrors those entries and explains their routing.
+The included `sounds.json` defines all 419 expected sound events. [`SOUND_MANIFEST.md`](./SOUND_MANIFEST.md) mirrors those entries and explains their routing.
 
-Missing audio is handled as silence instead of crashing the music system.
+Missing audio is handled as silence instead of crashing the music system. The new `gamecorner/` entries are intentionally empty slots until the matching OGG files are added to the resource pack.
 
 ### Project layout
 
-- **`src/main/kotlin`** — common/server entrypoint, battle events, RCT classification, WildBosses bridge, structure detection, trigger blocks, configs, and networking.
+- **`src/main/kotlin`** — common/server entrypoint, battle events, RCT classification, WildBosses bridge, structure detection including Repurposed Structures aliases, trigger blocks, configs, and networking.
 - **`src/client/kotlin`** — packet routing, region selection, Victory/Loot Menu bridge, ambience watching, music state, fades, menu music, and low-HP handling.
 - **`src/main/resources/assets/cobbletunes/sounds.json`** — all sound keys and resource-pack paths.
 
@@ -313,11 +329,11 @@ CobbleTunes source code is available under the MIT license.
 
 ### Visão geral
 
-**CobbleTunes** é um framework de música dinâmica para Cobblemon em Fabric. Ele substitui a música do Minecraft por temas de batalha, ambientação regional, músicas de estruturas, temas de vitória, Battle Tower, menu e alerta de HP baixo de acordo com o contexto atual.
+**CobbleTunes** é um framework de música dinâmica para Cobblemon em Fabric. Ele substitui a música do Minecraft por temas de batalha, ambientação regional, músicas de estruturas, temas de vitória, Battle Tower, Game Corner, menu e alerta de HP baixo de acordo com o contexto atual.
 
 O mod contém apenas a lógica de roteamento e reprodução. Ele **não** inclui, baixa ou gera arquivos de OST de Pokémon. As músicas são fornecidas por um resource pack normal dentro de `assets/cobbletunes/sounds/`.
 
-O código atual define **404 eventos de som** entre batalhas, vitória, Battle Tower, ambientação, menu e efeitos. A lista completa está em [`SOUND_MANIFEST.md`](./SOUND_MANIFEST.md).
+O código atual define **419 eventos de som** entre batalhas, vitória, Battle Tower, Game Corner, ambientação, menu e efeitos. A lista completa está em [`SOUND_MANIFEST.md`](./SOUND_MANIFEST.md).
 
 ### O que ele faz
 
@@ -361,8 +377,9 @@ As detecções de prioridade menor continuam atualizando em segundo plano enquan
 - [x] **Pools de Battle Tower** para andares baixos, médios, altos e finais com tema de batalha dedicado.
 - [x] **Memória e rotação de ambientação por bioma** com intervalos de silêncio e debounce.
 - [x] **Detecção subterrânea** usando luz do céu e altura do jogador.
-- [x] **Estruturas exatas do Cobbleverse**, **estruturas vanilla** e **pools de vilas BCA**.
-- [x] **Zonas manuais de música** para Centros Pokémon, Poké Marts, Ginásios, locais especiais e andares da Battle Tower.
+- [x] **Estruturas exatas do Cobbleverse**, **estruturas vanilla**, **pools de vilas BCA** e reaproveitamento para **Repurposed Structures**.
+- [x] **Zonas manuais de música** para Centros Pokémon, Poké Marts, Ginásios, Game Corners/Cassinos, locais especiais e andares da Battle Tower.
+- [x] **Pool de Game Corner** com 15 faixas de FRLG, Emerald, HGSS e Platinum tocadas como uma playlist embaralhada sem repetição imediata.
 - [x] **Música de menu** contínua entre os submenus da tela inicial.
 - [x] **Alerta de HP baixo** com volume reforçado.
 - [x] **Tratamento de morte do jogador** e limpeza segura de estado do mundo.
@@ -386,9 +403,10 @@ Em multiplayer, instale o CobbleTunes no cliente e no servidor. O servidor class
 - **Radical Cobblemon Trainers** — melhora a detecção de função, região, facção e progressão.
 - **WildBosses** — ativa pools musicais próprios para Bosses.
 - **Cobblemon Loot Menu** — ativa temas de vitória enquanto a tela de loot está aberta.
+- **Repurposed Structures** — reaproveita os pools vanilla/BCA existentes para todos os 107 IDs de estruturas de worldgen presentes na versão `7.5.21+1.21.1`.
 - **CobblemonAdditions / estruturas BCA** — adiciona pools para tamanhos de vila quando essas estruturas existem no mundo.
 
-RCT, WildBosses e Cobblemon Loot Menu são integrações leves. A ausência desses mods não impede o CobbleTunes de carregar.
+RCT, WildBosses, Cobblemon Loot Menu e Repurposed Structures são integrações leves. A ausência desses mods não impede o CobbleTunes de carregar.
 
 ### Roteamento de batalha
 
@@ -513,6 +531,19 @@ IDs de trigger como `cobbletunes:battle_tower_floor_1` até `cobbletunes:battle_
 
 Uma batalha de treinador iniciada enquanto a zona atual é `BATTLE_TOWER` usa o tema de batalha da Battle Tower de Galar.
 
+### Game Corner e zonas de Cassino
+
+Um `MusicTriggerBlock` pode transformar uma construção própria em Game Corner ou Cassino. Use um destes IDs de zona:
+
+```text
+cobbletunes:game_corner
+cobbletunes:casino
+```
+
+Ao entrar na zona o mod inicia uma playlist embaralhada do Game Corner. A primeira faixa é aleatória e quando ela termina o CobbleTunes avança automaticamente para outra sem manter o mesmo arquivo em loop. Todas as faixas passam uma vez antes do pool ser embaralhado novamente e o novo ciclo evita repetir imediatamente a música que acabou de tocar. Batalha e vitória continuam com prioridade e depois delas a playlist do Game Corner continua enquanto a zona permanecer ativa.
+
+O pool possui 15 arquivos esperados dentro de `assets/cobbletunes/sounds/gamecorner/`, divididos entre FRLG, Emerald, HGSS e Platinum. O áudio continua sendo fornecido separadamente pelo resource pack. Veja [`SOUND_MANIFEST.md`](./SOUND_MANIFEST.md) para os nomes exatos e as sugestões de temas de origem.
+
 ### Ambientação e estruturas
 
 A ambientação regional por bioma está definida para Kanto, Johto, Hoenn, Sinnoh e Unova. As faixas são agrupadas entre biomas vanilla e Terralith como planícies, florestas, cavernas, oceanos, montanhas, neve, desertos e regiões vulcânicas.
@@ -525,9 +556,10 @@ Música de estrutura tem prioridade sobre ambientação de bioma. As fontes supo
 - estruturas exatas e locais lendários do Cobbleverse;
 - estruturas vanilla como Ancient Cities, Strongholds, Mansions, Trial Chambers, Villages, Shipwrecks, Ruined Portals e outras;
 - pools de vilas BCA pequenas, médias e grandes;
+- variantes do Repurposed Structures redirecionadas para o pool vanilla/BCA mais próximo;
 - zonas manuais com `MusicTriggerBlock`.
 
-Músicas de zona ficam em loop até o jogador sair. Batalha e vitória assumem temporariamente o áudio sem apagar o estado atual da zona.
+A maioria das músicas fixas de zona fica em loop até o jogador sair. Game Corner e Cassino são a exceção e avançam pela playlist embaralhada de 15 faixas. Batalha e vitória assumem temporariamente o áudio sem apagar o estado atual da zona. Repurposed Structures não precisa de novas músicas porque suas estruturas reutilizam pools já existentes como Ancient City, Fortress, Mansion, Mineshaft, Monument, Outpost, Pyramid, Village e Witch Hut.
 
 ### Alerta de HP baixo
 
@@ -570,13 +602,13 @@ O CobbleTunes não inclui arquivos de soundtrack. Coloque os `.ogg` dentro de:
 assets/cobbletunes/sounds/
 ```
 
-O `sounds.json` incluído define todos os 404 eventos esperados. [`SOUND_MANIFEST.md`](./SOUND_MANIFEST.md) espelha essas entradas e explica o roteamento.
+O `sounds.json` incluído define todos os 419 eventos esperados. [`SOUND_MANIFEST.md`](./SOUND_MANIFEST.md) espelha essas entradas e explica o roteamento.
 
-Áudio ausente vira silêncio sem derrubar o sistema de música.
+Áudio ausente vira silêncio sem derrubar o sistema de música. As novas entradas de `gamecorner/` ficam como espaços vazios até os OGGs correspondentes serem adicionados ao resource pack.
 
 ### Organização do projeto
 
-- **`src/main/kotlin`** — inicialização comum/servidor, eventos de batalha, classificação do RCT, ponte com WildBosses, estruturas, trigger blocks, configs e rede.
+- **`src/main/kotlin`** — inicialização comum/servidor, eventos de batalha, classificação do RCT, ponte com WildBosses, estruturas incluindo aliases do Repurposed Structures, trigger blocks, configs e rede.
 - **`src/client/kotlin`** — roteamento dos pacotes, região, ponte de Victory/Loot Menu, observação de biomas, estado musical, fades, menu e HP baixo.
 - **`src/main/resources/assets/cobbletunes/sounds.json`** — todas as chaves e caminhos do resource pack.
 

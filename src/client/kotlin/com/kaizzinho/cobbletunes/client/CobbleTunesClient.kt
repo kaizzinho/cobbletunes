@@ -268,6 +268,11 @@ class CobbleTunesClient : ClientModInitializer {
                         if (track != null) musicPlayer.playZoneAmbience(MusicContext.POKEMART, track)
                         return@execute
                     }
+                    "cobbletunes:game_corner",
+                    "cobbletunes:casino" -> {
+                        musicPlayer.enterGameCorner()
+                        return@execute
+                    }
                     "cobbletunes:gym_kanto",
                     "cobbletunes:gym_johto",
                     "cobbletunes:gym_hoenn",
@@ -320,6 +325,7 @@ class CobbleTunesClient : ClientModInitializer {
 
     private fun registerVanillaMusicSuppression() {
         ClientTickEvents.END_CLIENT_TICK.register { client ->
+            musicPlayer.tick()
             if (config.replaceAmbience) {
                 client.musicTracker.stop()
             }

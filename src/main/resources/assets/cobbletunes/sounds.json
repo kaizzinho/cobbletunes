@@ -3634,5 +3634,140 @@
         "stream": true
       }
     ]
+  },
+  "gamecorner.frlg_rocket_game_corner": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:gamecorner/frlg_rocket_game_corner",
+        "stream": true
+      }
+    ]
+  },
+  "gamecorner.frlg_pokemon_jump": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:gamecorner/frlg_pokemon_jump",
+        "stream": true
+      }
+    ]
+  },
+  "gamecorner.frlg_dodrio_berry_picking": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:gamecorner/frlg_dodrio_berry_picking",
+        "stream": true
+      }
+    ]
+  },
+  "gamecorner.frlg_union_room": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:gamecorner/frlg_union_room",
+        "stream": true
+      }
+    ]
+  },
+  "gamecorner.emerald_game_corner": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:gamecorner/emerald_game_corner",
+        "stream": true
+      }
+    ]
+  },
+  "gamecorner.emerald_contest_lobby": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:gamecorner/emerald_contest_lobby",
+        "stream": true
+      }
+    ]
+  },
+  "gamecorner.emerald_pokemon_contest": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:gamecorner/emerald_pokemon_contest",
+        "stream": true
+      }
+    ]
+  },
+  "gamecorner.emerald_trick_house": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:gamecorner/emerald_trick_house",
+        "stream": true
+      }
+    ]
+  },
+  "gamecorner.hgss_goldenrod_game_corner": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:gamecorner/hgss_goldenrod_game_corner",
+        "stream": true
+      }
+    ]
+  },
+  "gamecorner.hgss_bug_catching_contest": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:gamecorner/hgss_bug_catching_contest",
+        "stream": true
+      }
+    ]
+  },
+  "gamecorner.hgss_pokeathlon_event_time": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:gamecorner/hgss_pokeathlon_event_time",
+        "stream": true
+      }
+    ]
+  },
+  "gamecorner.hgss_wifi_plaza_games": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:gamecorner/hgss_wifi_plaza_games",
+        "stream": true
+      }
+    ]
+  },
+  "gamecorner.platinum_game_corner": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:gamecorner/platinum_game_corner",
+        "stream": true
+      }
+    ]
+  },
+  "gamecorner.platinum_contest_hall": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:gamecorner/platinum_contest_hall",
+        "stream": true
+      }
+    ]
+  },
+  "gamecorner.platinum_super_contest": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "cobbletunes:gamecorner/platinum_super_contest",
+        "stream": true
+      }
+    ]
   }
 }

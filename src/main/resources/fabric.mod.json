@@ -39,6 +39,7 @@
   "suggests": {
     "wildbosses": "*",
     "rctmod": "*",
-    "cobblemon_loot_menu": "*"
+    "cobblemon_loot_menu": "*",
+    "repurposed_structures": "*"
   }
 }

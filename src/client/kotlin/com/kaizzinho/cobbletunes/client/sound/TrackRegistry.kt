@@ -565,9 +565,38 @@ object TrackRegistry {
         registerBattleTower()
         registerProximityAmbience()
         registerSpecialStructures()
+        registerGameCornerThemes()
         registerMenuThemes()
         registerVanillaStructures()
     }
+    private fun registerGameCornerThemes() {
+        fun game(id: String) {
+            register(
+                MusicContext.GAME_CORNER,
+                MusicTrack("gamecorner_$id", soundEvent("gamecorner.$id"), loop = false)
+            )
+        }
+
+        game("frlg_rocket_game_corner")
+        game("frlg_pokemon_jump")
+        game("frlg_dodrio_berry_picking")
+        game("frlg_union_room")
+
+        game("emerald_game_corner")
+        game("emerald_contest_lobby")
+        game("emerald_pokemon_contest")
+        game("emerald_trick_house")
+
+        game("hgss_goldenrod_game_corner")
+        game("hgss_bug_catching_contest")
+        game("hgss_pokeathlon_event_time")
+        game("hgss_wifi_plaza_games")
+
+        game("platinum_game_corner")
+        game("platinum_contest_hall")
+        game("platinum_super_contest")
+    }
+
     private fun registerMenuThemes() {
         register(MusicContext.MENU, MusicTrack("menu_emerald", soundEvent("menu.emerald"), loop = true))
         register(MusicContext.MENU, MusicTrack("menu_frlg",    soundEvent("menu.frlg"),    loop = true))

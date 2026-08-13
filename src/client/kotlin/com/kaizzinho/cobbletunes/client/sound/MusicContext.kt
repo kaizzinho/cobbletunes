@@ -16,6 +16,7 @@ enum class MusicContext {
     GYM_AMBIENCE,
     POKECENTER,
     POKEMART,
+    GAME_CORNER,
     BATTLE_TOWER,
     SPECIAL_STRUCTURE,
     MENU,

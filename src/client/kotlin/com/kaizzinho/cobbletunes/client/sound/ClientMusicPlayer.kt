@@ -27,6 +27,9 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
     private var overrideBiomeId: String? = null
     private var overrideBiomeTrack: MusicTrack? = null
 
+    private val gameCornerQueue = ArrayDeque<MusicTrack>()
+    private var lastGameCornerTrackId: String? = null
+
     private val biomeTrackMemory: MutableMap<String, MusicTrack> = mutableMapOf()
     private val trackBudgetStartMillis: MutableMap<String, Long> = mutableMapOf()
     private val trackBudgetDurationMillis: MutableMap<String, Long> = mutableMapOf()
@@ -222,6 +225,8 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
         currentAmbienceTrack = null
         activeZoneContext = null
         activeZoneTrack = null
+        resetGameCornerQueue()
+        lastGameCornerTrackId = null
         overrideBiomeId = null
         overrideBiomeTrack = null
         biomeTrackMemory.clear()
@@ -246,6 +251,7 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
         debounceBiomeId = null; debounceEndsAtMillis = null
         currentBiomeId = null; currentAmbienceTrack = null
         activeZoneContext = null; activeZoneTrack = null
+        resetGameCornerQueue(); lastGameCornerTrackId = null
         overrideBiomeId = null; overrideBiomeTrack = null
         currentContext = MusicContext.AMBIENCE
         debugLog("[World join] Silence for ${config.worldJoinSilenceSeconds}s")
@@ -294,9 +300,67 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
     private var worldJoinReadyTicks = 0
     private val WORLD_JOIN_READY_TICKS = 10
 
+    fun enterGameCorner() {
+        if (!config.replaceAmbience) return
+        if (activeZoneContext == MusicContext.GAME_CORNER) return
+
+        val track = nextGameCornerTrack() ?: run {
+            LOGGER.warn("[$MOD_ID] No Game Corner tracks registered")
+            return
+        }
+        playZoneAmbience(MusicContext.GAME_CORNER, track)
+    }
+
+    fun tick() {
+        if (currentContext != MusicContext.GAME_CORNER) return
+        if (activeZoneContext != MusicContext.GAME_CORNER) return
+
+        val sound = currentSound ?: return
+        if (System.currentTimeMillis() - currentSoundStartedAtMillis < 1_000L) return
+        if (MinecraftClient.getInstance().soundManager.isPlaying(sound)) return
+
+        val next = nextGameCornerTrack() ?: return
+        activeZoneTrack = next
+        debugLog("[Game corner] Track finished; next: ${next.id}")
+        play(
+            context = MusicContext.GAME_CORNER,
+            track = next,
+            force = true,
+            fadeInSeconds = 0.15f,
+            fadeOutSeconds = 0f
+        )
+    }
+
+    private fun nextGameCornerTrack(): MusicTrack? {
+        val pool = TrackRegistry.tracksFor(MusicContext.GAME_CORNER)
+        if (pool.isEmpty()) return null
+
+        if (gameCornerQueue.isEmpty()) {
+            val shuffled = pool.shuffled().toMutableList()
+            if (shuffled.size > 1 && shuffled.first().id == lastGameCornerTrackId) {
+                val swapIndex = shuffled.indexOfFirst { it.id != lastGameCornerTrackId }
+                if (swapIndex > 0) {
+                    val first = shuffled[0]
+                    shuffled[0] = shuffled[swapIndex]
+                    shuffled[swapIndex] = first
+                }
+            }
+            gameCornerQueue.addAll(shuffled)
+        }
+
+        return gameCornerQueue.removeFirst().also { lastGameCornerTrackId = it.id }
+    }
+
+    private fun resetGameCornerQueue() {
+        gameCornerQueue.clear()
+    }
+
     fun playZoneAmbience(context: MusicContext, track: MusicTrack) {
         if (!config.replaceAmbience) return
 
+        if (activeZoneContext == MusicContext.GAME_CORNER && context != MusicContext.GAME_CORNER) {
+            resetGameCornerQueue()
+        }
         activeZoneContext = context
         activeZoneTrack = track
         pendingSilenceEndsAtMillis = null; pendingBiomeId = null; pendingTrack = null
@@ -313,6 +377,7 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
     }
 
     fun clearZone(currentBiomeId: String?) {
+        if (activeZoneContext == MusicContext.GAME_CORNER) resetGameCornerQueue()
         activeZoneContext = null
         activeZoneTrack = null
         if (!config.replaceAmbience) return
@@ -564,6 +629,8 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
         currentContext = MusicContext.AMBIENCE
         activeZoneContext = null
         activeZoneTrack = null
+        resetGameCornerQueue()
+        lastGameCornerTrackId = null
         overrideBiomeId = null
         overrideBiomeTrack = null
         pendingSilenceEndsAtMillis = null

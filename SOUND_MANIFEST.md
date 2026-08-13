@@ -2,17 +2,18 @@
 
 This manifest matches the current final source and `sounds.json`. Every entry below is wired by `TrackRegistry` or the low-HP effect path; there are no reserved-only sound keys in this build.
 
-- **Total sound events:** 404
+- **Total sound events:** 419
 - **Battle:** 117
 - **Victory:** 31
 - **Battle Tower:** 25
+- **Game Corner:** 15
 - **Ambience and structures:** 227
 - **Menu:** 3
 - **Effects:** 1
 - **Base folder:** `assets/cobbletunes/sounds/`
 - **Music files:** streamed through `sounds.json`
 
-The current source audit resolves all 404 `sounds.json` keys from code. A resource pack still needs to provide the matching `.ogg` files.
+The current source audit resolves all 419 `sounds.json` keys from code. A resource pack still needs to provide the matching `.ogg` files.
 
 ## Routing notes
 
@@ -22,6 +23,8 @@ The current source audit resolves all 404 `sounds.json` keys from code. A resour
 - Victory music starts immediately on `BATTLE_VICTORY` when Cobblemon Loot Menu is installed, stays active while the loot screen is open, then restores the latest structure or biome target.
 - Hisui intentionally has no post-battle Victory file in this pack and falls back without creating a fake theme.
 - Battle Tower ambience uses low, mid, high, and final floor pools. Trainer battles started inside a Battle Tower zone use the Galar Battle Tower battle theme.
+- Repurposed Structures `7.5.21+1.21.1` is detected as a soft integration. All 107 worldgen structure IDs in that JAR reuse existing vanilla/BCA structure pools, so it adds no new audio files.
+- `cobbletunes:game_corner` and `cobbletunes:casino` are manual `MusicTriggerBlock` zones. Entering either zone starts a shuffled Game Corner playlist. Tracks do not loop individually; each file plays once, then another track is selected from the remaining shuffled pool. After all 15 tracks play, the pool reshuffles and avoids an immediate repeat across the cycle boundary.
 
 ## Battle music
 
@@ -260,9 +263,35 @@ Victory files are used only by the optional Cobblemon Loot Menu bridge. The them
 | `tower.b2w2_pwt` | `tower/b2w2_pwt.ogg` | low |
 | `tower.frlg_trainer_tower` | `tower/frlg_trainer_tower.ogg` | low |
 
+## Game Corner and Casino music
+
+These tracks are reserved for hand-built Game Corners, casinos, arcades, contest halls, and minigame areas. Put a `MusicTriggerBlock` in the build and use either `cobbletunes:game_corner` or `cobbletunes:casino` as the zone ID. The first track is random. When it ends, CobbleTunes advances through a shuffled no-repeat order until all 15 tracks have played, then reshuffles the pool. Individual Game Corner files use `loop = false`.
+
+The source only registers the sound slots and filenames. No Pokémon soundtrack audio is included.
+
+| Key | File | Suggested source theme | Reference length |
+|---|---|---|---:|
+| `gamecorner.frlg_rocket_game_corner` | `gamecorner/frlg_rocket_game_corner.ogg` | FRLG Rocket Game Corner | 1:33 |
+| `gamecorner.frlg_pokemon_jump` | `gamecorner/frlg_pokemon_jump.ogg` | FRLG Pokémon Jump | 0:58 |
+| `gamecorner.frlg_dodrio_berry_picking` | `gamecorner/frlg_dodrio_berry_picking.ogg` | FRLG Dodrio Berry Picking | 1:03 |
+| `gamecorner.frlg_union_room` | `gamecorner/frlg_union_room.ogg` | FRLG The Union Room | 0:59 |
+| `gamecorner.emerald_game_corner` | `gamecorner/emerald_game_corner.ogg` | Emerald / RSE Game Corner | 1:44 |
+| `gamecorner.emerald_contest_lobby` | `gamecorner/emerald_contest_lobby.ogg` | Emerald / RSE Contest Lobby | 0:56 |
+| `gamecorner.emerald_pokemon_contest` | `gamecorner/emerald_pokemon_contest.ogg` | Emerald / RSE Pokémon Contest | 1:09 |
+| `gamecorner.emerald_trick_house` | `gamecorner/emerald_trick_house.ogg` | Emerald / RSE The Trick House | 1:11 |
+| `gamecorner.hgss_goldenrod_game_corner` | `gamecorner/hgss_goldenrod_game_corner.ogg` | HGSS Goldenrod Game Corner | 1:10 |
+| `gamecorner.hgss_bug_catching_contest` | `gamecorner/hgss_bug_catching_contest.ogg` | HGSS The Bug-Catching Contest | 0:38 |
+| `gamecorner.hgss_pokeathlon_event_time` | `gamecorner/hgss_pokeathlon_event_time.ogg` | HGSS Pokéathlon Event Time | 0:59 |
+| `gamecorner.hgss_wifi_plaza_games` | `gamecorner/hgss_wifi_plaza_games.ogg` | HGSS Wi-Fi Plaza Plaza Games | 0:33 |
+| `gamecorner.platinum_game_corner` | `gamecorner/platinum_game_corner.ogg` | Platinum Game Corner | 1:24 |
+| `gamecorner.platinum_contest_hall` | `gamecorner/platinum_contest_hall.ogg` | Platinum Contest Hall | — |
+| `gamecorner.platinum_super_contest` | `gamecorner/platinum_super_contest.ogg` | Platinum Super Contest | — |
+
+The Ruby/Sapphire soundtrack is used as the naming reference for the shared Hoenn tracks because most of Emerald's music is based on the same soundtrack material. Platinum similarly reuses most Diamond/Pearl music while adding its own exclusive tracks.
+
 ## Ambience and structure music
 
-Regional biome tracks rotate with silence windows. Zone tracks such as Gyms, Poké Centers, Poké Marts, Battle Tower floors, exact Cobbleverse structures, and vanilla/BCA structure pools loop while their zone owns the audio slot.
+Regional biome tracks rotate with silence windows. Fixed zone tracks such as Gyms, Poké Centers, Poké Marts, Battle Tower floors, exact Cobbleverse structures, and vanilla/BCA structure pools loop while their zone owns the audio slot. Game Corner and Casino zones are the exception and advance through their shuffled 15-track playlist instead of looping one track.
 
 ### Kanto ambience
 
@@ -540,6 +569,35 @@ Regional biome tracks rotate with silence windows. Zone tracks such as Gyms, Pok
 | `ambience.vanilla.ancient_city.dragonspiral_tower` | `ambience/vanilla/ancient_city/dragonspiral_tower.ogg` | ancient city structure pool |
 | `ambience.vanilla.ancient_city.distortion_world` | `ambience/vanilla/ancient_city/distortion_world.ogg` | ancient city structure pool |
 | `ambience.vanilla.ancient_city.cerulean_cave` | `ambience/vanilla/ancient_city/cerulean_cave.ogg` | ancient city structure pool |
+
+### Repurposed Structures reuse mappings
+
+Repurposed Structures `7.5.21+1.21.1` adds no CobbleTunes sound keys. The detector maps every worldgen structure ID found in the attached JAR to the closest existing structure pool.
+
+| Repurposed Structures family | Reused CobbleTunes pool |
+|---|---|
+| `ancient_city_*` | `ancient_city` |
+| `bastion_underground` | `bastion_remnant` |
+| `city_overworld` | `bca_village_large` |
+| `city_nether`, `fortress_jungle`, `temple_nether_*` | `fortress` |
+| `igloo_*`, `pyramid_icy`, `pyramid_snowy` | `igloo` |
+| `mansion_*` | `mansion` |
+| `mineshaft_*` | `mineshaft` |
+| `monument_*`, `pyramid_ocean`, `temple_ocean` | `monument` |
+| `outpost_*` | `pillager_outpost` |
+| `pyramid_badlands`, `pyramid_end`, `pyramid_nether` | `desert_pyramid` |
+| `pyramid_dark_forest`, `pyramid_flower_forest`, `pyramid_giant_tree_taiga`, `pyramid_jungle`, `pyramid_mushroom`, `temple_taiga` | `jungle_pyramid` |
+| `ruined_portal_end`, `ruins_nether` | `ruined_portal` |
+| `ruins_land_*` | `trail_ruins` |
+| `shipwreck_*` | `shipwreck` |
+| `stronghold_*` | `stronghold` |
+| `village_badlands` | `village_desert` |
+| `village_birch`, `village_cherry`, `village_mushroom`, `village_oak`, `village_ocean` | `village_plains` |
+| `village_bamboo`, `village_crimson`, `village_jungle` | `village_savanna` |
+| `village_dark_forest`, `village_giant_taiga`, `village_mountains`, `village_swamp`, `village_warped` | `village_taiga` |
+| `witch_hut_*` | `swamp_hut` |
+
+This covers all 107 `data/repurposed_structures/worldgen/structure/*.json` entries present in the inspected JAR. The exact IDs are kept in `StructureZoneDetector.kt` so detection follows the same real bounding-box checks used by vanilla, BCA, and Cobbleverse structures.
 
 ## Menu music
 
