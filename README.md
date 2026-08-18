@@ -1,6 +1,6 @@
 # CobbleTunes — Music Framework 🎵🎮
 
-![Status](https://img.shields.io/badge/status-release%20candidate-yellow)
+![Version](https://img.shields.io/badge/version-1.0-blue)
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-62B47A?logo=minecraft&logoColor=white)
 ![Fabric](https://img.shields.io/badge/Fabric-Loader%200.17.2%2B-DBB69B?logo=minecraft&logoColor=white)
 ![Kotlin](https://img.shields.io/badge/Kotlin-Fabric%20Language%20Kotlin-7F52FF?logo=kotlin&logoColor=white)
@@ -71,6 +71,7 @@ Lower-priority world detection keeps running while battle or Victory music owns 
 - [x] **Low-HP cue** for the active battle Pokémon with a boosted effect volume.
 - [x] **Player-death handling** and safe world/zone reset.
 - [x] **Client and server debug logging**, disabled by default.
+- [x] **Mod Menu integration** with a native CobbleTunes config screen for client music settings.
 
 ### Requirements
 
@@ -87,13 +88,14 @@ For multiplayer, install CobbleTunes on both the client and server. The server p
 
 #### Optional integrations
 
+- **Mod Menu** — opens a native CobbleTunes configuration screen for client music settings.
 - **Radical Cobblemon Trainers** — trainer role, region, faction, and progression-aware battle routing.
 - **WildBosses** — Boss-specific weighted regional battle pools.
 - **Cobblemon Loot Menu** — post-battle Victory music while the loot screen is active.
 - **CobblemonAdditions / BCA structures** — additional village-size structure pools when those structures exist in the world.
 - **Repurposed Structures** — reuses the existing vanilla/BCA music pools for all 107 worldgen structure IDs present in `7.5.21+1.21.1`.
 
-RCT, WildBosses, Cobblemon Loot Menu, and Repurposed Structures are soft integrations. Missing optional mods do not prevent CobbleTunes from loading.
+Mod Menu, RCT, WildBosses, Cobblemon Loot Menu, and Repurposed Structures are soft integrations. Missing optional mods do not prevent CobbleTunes from loading.
 
 ### Battle routing
 
@@ -256,7 +258,7 @@ The effect uses `1.35x` the configured music volume, capped at `1.5`, so it rema
 
 ### Configuration
 
-CobbleTunes creates two JSON files in `config/`.
+CobbleTunes creates two JSON files in `config/`. When Mod Menu is installed, the Configure button opens a native CobbleTunes screen for all client-side options below. The server debug option remains in the server JSON.
 
 #### `cobbletunes-client.json`
 
@@ -296,7 +298,7 @@ Missing audio is handled as silence instead of crashing the music system. The ne
 ### Project layout
 
 - **`src/main/kotlin`** — common/server entrypoint, battle events, RCT classification, WildBosses bridge, structure detection including Repurposed Structures aliases, trigger blocks, configs, and networking.
-- **`src/client/kotlin`** — packet routing, region selection, Victory/Loot Menu bridge, ambience watching, music state, fades, menu music, and low-HP handling.
+- **`src/client/kotlin`** — packet routing, region selection, Victory/Loot Menu bridge, ambience watching, music state, fades, menu music, low-HP handling, and the optional Mod Menu config screen.
 - **`src/main/resources/assets/cobbletunes/sounds.json`** — all sound keys and resource-pack paths.
 
 ### Building
@@ -384,6 +386,7 @@ As detecções de prioridade menor continuam atualizando em segundo plano enquan
 - [x] **Alerta de HP baixo** com volume reforçado.
 - [x] **Tratamento de morte do jogador** e limpeza segura de estado do mundo.
 - [x] **Logs de debug no cliente e servidor**, desligados por padrão.
+- [x] **Integração com Mod Menu** com tela nativa do CobbleTunes para as configurações de música do cliente.
 
 ### Requisitos
 
@@ -400,13 +403,14 @@ Em multiplayer, instale o CobbleTunes no cliente e no servidor. O servidor class
 
 #### Integrações opcionais
 
+- **Mod Menu** — abre uma tela nativa do CobbleTunes para as configurações de música do cliente.
 - **Radical Cobblemon Trainers** — melhora a detecção de função, região, facção e progressão.
 - **WildBosses** — ativa pools musicais próprios para Bosses.
 - **Cobblemon Loot Menu** — ativa temas de vitória enquanto a tela de loot está aberta.
 - **Repurposed Structures** — reaproveita os pools vanilla/BCA existentes para todos os 107 IDs de estruturas de worldgen presentes na versão `7.5.21+1.21.1`.
 - **CobblemonAdditions / estruturas BCA** — adiciona pools para tamanhos de vila quando essas estruturas existem no mundo.
 
-RCT, WildBosses, Cobblemon Loot Menu e Repurposed Structures são integrações leves. A ausência desses mods não impede o CobbleTunes de carregar.
+Mod Menu, RCT, WildBosses, Cobblemon Loot Menu e Repurposed Structures são integrações leves. A ausência desses mods não impede o CobbleTunes de carregar.
 
 ### Roteamento de batalha
 
@@ -569,7 +573,7 @@ O efeito usa `1.35x` o volume configurado para música, limitado a `1.5`, para c
 
 ### Configuração
 
-O CobbleTunes cria dois JSONs dentro de `config/`.
+O CobbleTunes cria dois JSONs dentro de `config/`. Quando o Mod Menu está instalado, o botão Configure abre uma tela nativa do CobbleTunes com todas as opções do cliente abaixo. O debug do servidor continua no JSON do servidor.
 
 #### `cobbletunes-client.json`
 
@@ -609,7 +613,7 @@ O `sounds.json` incluído define todos os 419 eventos esperados. [`SOUND_MANIFES
 ### Organização do projeto
 
 - **`src/main/kotlin`** — inicialização comum/servidor, eventos de batalha, classificação do RCT, ponte com WildBosses, estruturas incluindo aliases do Repurposed Structures, trigger blocks, configs e rede.
-- **`src/client/kotlin`** — roteamento dos pacotes, região, ponte de Victory/Loot Menu, observação de biomas, estado musical, fades, menu e HP baixo.
+- **`src/client/kotlin`** — roteamento dos pacotes, região, ponte de Victory/Loot Menu, observação de biomas, estado musical, fades, menu, HP baixo e a tela opcional de configuração do Mod Menu.
 - **`src/main/resources/assets/cobbletunes/sounds.json`** — todas as chaves e caminhos do resource pack.
 
 ### Compilação

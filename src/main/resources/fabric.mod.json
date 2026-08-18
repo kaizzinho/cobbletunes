@@ -1,14 +1,15 @@
 {
   "schemaVersion": 1,
   "id": "cobbletunes",
-  "version": "0.1.0",
+  "version": "${version}",
   "name": "CobbleTunes - Music Framework",
-  "description": "A framework for replacing Minecraft music with Poké soundtracks — battle themes, ambience, structure/proximity music, and menu themes. Ships without audio; requires a resource pack to actually play music.",
+  "description": "Adds dynamic Pokémon-style music to Cobblemon through resource packs, with regional battle themes, victory music, biome and structure ambience, Battle Tower, Game Corner, menu themes, low-HP cues, and optional integrations.",
   "authors": [
     "kaizzinho"
   ],
   "contact": {
-    "sources": "https://github.com/kaizzinho/cobbletunes"
+    "sources": "https://github.com/kaizzinho/cobbletunes",
+    "issues": "https://github.com/kaizzinho/cobbletunes/issues"
   },
   "license": "MIT",
   "icon": "assets/cobbletunes/icon.png",
@@ -24,6 +25,9 @@
         "adapter": "kotlin",
         "value": "com.kaizzinho.cobbletunes.client.CobbleTunesClient"
       }
+    ],
+    "modmenu": [
+      "com.kaizzinho.cobbletunes.client.compat.modmenu.CobbleTunesModMenuIntegration"
     ]
   },
   "depends": {
@@ -37,6 +41,7 @@
     "cobbletunes:cobbleverse_compatible": true
   },
   "suggests": {
+    "modmenu": ">=11.0.0",
     "wildbosses": "*",
     "rctmod": "*",
     "cobblemon_loot_menu": "*",

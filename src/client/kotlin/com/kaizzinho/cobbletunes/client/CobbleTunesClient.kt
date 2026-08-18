@@ -37,6 +37,12 @@ class CobbleTunesClient : ClientModInitializer {
         private const val AMBIENCE_CHECK_INTERVAL_TICKS = 20
         private const val VICTORY_LOOT_WAIT_MILLIS = 3_000L
 
+        fun applyConfig(updated: CobbleTunesClientConfig): Boolean {
+            if (!updated.save()) return false
+            config.copyFrom(updated)
+            return true
+        }
+
         private val STRUCTURE_TO_REGION: Map<String, RegionOfOrigin> = mapOf(
             "cobbleverse:brock"              to RegionOfOrigin.KANTO,
             "cobbleverse:misty"              to RegionOfOrigin.KANTO,

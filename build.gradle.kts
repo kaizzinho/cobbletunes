@@ -15,6 +15,7 @@ repositories {
     mavenCentral()
     maven("https://artefacts.cobblemon.com/releases/") { name = "Cobblemon" }
     maven("https://api.modrinth.com/maven") { name = "Modrinth" }
+    maven("https://maven.terraformersmc.com/") { name = "Terraformers" }
 }
 
 loom {
@@ -34,6 +35,9 @@ dependencies {
     modImplementation("net.fabricmc:fabric-loader:${project.property("loader_version")}")
     modImplementation("net.fabricmc.fabric-api:fabric-api:${project.property("fabric_version")}")
     modImplementation("net.fabricmc:fabric-language-kotlin:${project.property("fabric_kotlin_version")}")
+
+    // mod menu stays optional
+    modImplementation("com.terraformersmc:modmenu:${project.property("modmenu_version")}")
 
     // Cobblemon — real dependency, needed running for CobblemonEvents/live battle data.
     modImplementation("com.cobblemon:fabric:${project.property("cobblemon_version")}")
@@ -62,13 +66,6 @@ java {
 
 kotlin {
     jvmToolchain(21)
-}
-
-tasks.processResources {
-    inputs.property("version", project.version)
-    filesMatching("fabric.mod.json") {
-        expand(mutableMapOf("version" to project.version))
-    }
 }
 
 tasks.jar {

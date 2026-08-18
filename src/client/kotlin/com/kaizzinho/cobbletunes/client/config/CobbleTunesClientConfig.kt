@@ -45,12 +45,29 @@ data class CobbleTunesClientConfig(
         }
     }
 
-    fun save() {
-        try {
+    fun copyFrom(other: CobbleTunesClientConfig) {
+        replaceAmbience = other.replaceAmbience
+        replaceMenuMusic = other.replaceMenuMusic
+        replaceBattleMusic = other.replaceBattleMusic
+        musicVolume = other.musicVolume
+        crossfadeSeconds = other.crossfadeSeconds
+        shuffleAmbienceTracks = other.shuffleAmbienceTracks
+        worldJoinSilenceSeconds = other.worldJoinSilenceSeconds
+        trackEndSilenceMinSeconds = other.trackEndSilenceMinSeconds
+        trackEndSilenceMaxSeconds = other.trackEndSilenceMaxSeconds
+        biomeTransitionSilenceMinSeconds = other.biomeTransitionSilenceMinSeconds
+        biomeTransitionSilenceMaxSeconds = other.biomeTransitionSilenceMaxSeconds
+        debugLogging = other.debugLogging
+    }
+
+    fun save(): Boolean {
+        return try {
             configFile.parentFile?.mkdirs()
             configFile.writer().use { gson.toJson(this, it) }
+            true
         } catch (e: Exception) {
             LOGGER.warn("[$MOD_ID] Failed to write client config", e)
+            false
         }
     }
 }
