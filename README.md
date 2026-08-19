@@ -58,7 +58,7 @@ Lower-priority world detection keeps running while battle or Victory music owns 
 - [x] **Dynamic RCT classification** with role, region, faction, rank, trainer ID, progression-aware routing, and exact themes for named custom trainers.
 - [x] **Villain faction themes** for Rocket, Aqua, Magma, Galactic, Plasma, Flare, Skull, Aether Foundation, Lusamine, and Ultra Recon Squad routes.
 - [x] **Frontier Brain music** with a dedicated battle context.
-- [x] **WildBosses integration** with tier-weighted regional PvP, generic Legendary, and BW World Tournament pools.
+- [x] **WildBosses and Cobblemon Raid Dens integrations** with tier-weighted regional PvP, generic Legendary, and BW World Tournament pools.
 - [x] **Species-safe Boss pools** that keep unique Legendary encounter themes out of unrelated Boss fights.
 - [x] **Victory + Cobblemon Loot Menu integration** with instant Victory start, fast battle-to-Victory fade, menu confirmation grace, looping while the loot screen is open, and current-zone resume afterward.
 - [x] **Capture Victory themes** for successful Pokémon captures, including captures made outside battle, using the captured Pokémon region and the existing wild Victory pool.
@@ -92,13 +92,14 @@ For multiplayer, install CobbleTunes on both the client and server. The server p
 - **Mod Menu** — opens a native CobbleTunes configuration screen for client music settings.
 - **Radical Cobblemon Trainers** — trainer role, region, faction, progression-aware routing, and exact theme overrides for supported named custom trainers.
 - **WildBosses** — Boss-specific weighted regional battle pools.
+- **Cobblemon Raid Dens** — raid battles reuse the same regional weighted pools, with raid tiers mapped onto the existing Boss tier odds.
 - **Cobblemon Loot Menu** — post-battle Victory music while the loot screen is active.
 - **CobblemonAdditions / BCA structures** — maps the current `4.1.6` dark, default, and fighting village variants into the existing small/mid/large pools, with the BCA Witch Hut reusing the Swamp Hut pool. Legacy generic BCA village IDs remain supported.
 - **Terralith datapack** — maps all 26 structures referenced by the supplied Terralith structure sets into existing vanilla/BCA music pools.
 - **Repurposed Structures** — reuses the existing vanilla/BCA music pools for all 107 worldgen structure IDs present in `7.5.21+1.21.1`.
 - **Legendary Monuments** — reuses existing Sinnoh and structure tracks for Distortion Portal, Giratina Island, Turnback Cave, the three Sinnoh lakes, and Stark Mountain.
 
-Mod Menu, RCT, WildBosses, Cobblemon Loot Menu, CobblemonAdditions, Repurposed Structures, and Legendary Monuments are soft mod integrations. Terralith support is registry-driven and only activates when its datapack structures exist.
+Mod Menu, RCT, WildBosses, Cobblemon Raid Dens, Cobblemon Loot Menu, CobblemonAdditions, Repurposed Structures, and Legendary Monuments are soft mod integrations. Terralith support is registry-driven and only activates when its datapack structures exist.
 
 ### Battle routing
 
@@ -138,7 +139,7 @@ hisuian growlithe → hisui
 paldean wooper → paldea
 ```
 
-The regional variant affects wild themes, trainer roster voting, WildBosses regional pools, Legendary fallback routing, and Victory region selection.
+The regional variant affects wild themes, trainer roster voting, WildBosses and Raid Dens regional pools, Legendary fallback routing, and Victory region selection.
 
 #### RCT trainer roles and factions
 
@@ -191,19 +192,19 @@ Current form-sensitive cases include:
 
 The resource pack also contains dedicated encounter themes for major Legendary/Mythical groups across the supported regions. See the manifest for every mapped file.
 
-### WildBosses integration
+### WildBosses and Cobblemon Raid Dens integration
 
-WildBosses is optional. When a battle is identified as an actual Boss encounter, CobbleTunes uses the Boss species region and tier to build a weighted pool.
+WildBosses and Cobblemon Raid Dens are optional. Actual WildBoss encounters and Raid Dens battles use the same regional weighted music system. Raid Dens is detected through its raid-battle marker by reflection, so it remains a soft dependency.
 
-| Tier | Regional rival/PvP | Generic Legendary | BW World Tournament |
-|---|---:|---:|---:|
-| Uncommon | 80% | 15% | 5% |
-| Rare | 70% | 20% | 10% |
-| Epic | 60% | 30% | 10% |
-| Legendary | 50% | 35% | 15% |
-| Mythic | 45% | 40% | 15% |
+| Music tier | Regional rival/PvP | Generic Legendary | BW World Tournament | Raid Dens tier |
+|---|---:|---:|---:|---|
+| Uncommon | 80% | 15% | 5% | 1 star |
+| Rare | 70% | 20% | 10% | 2 stars |
+| Epic | 60% | 30% | 10% | 3–4 stars |
+| Legendary | 50% | 35% | 15% | 5–6 stars |
+| Mythic | 45% | 40% | 15% | 7 stars |
 
-Species-specific Legendary themes are excluded from generic Boss pools. If another valid option exists, CobbleTunes also avoids immediately repeating the previous Boss track for that region.
+The raid Pokémon roster determines the regional pool in the same way as WildBosses. Species-specific Legendary themes are excluded from the generic Legendary pool, and immediate track repeats are avoided when another valid choice exists.
 
 ### Victory, captures, and Cobblemon Loot Menu
 
@@ -322,7 +323,7 @@ Missing audio is handled as silence instead of crashing the music system. The ne
 
 ### Project layout
 
-- **`src/main/kotlin`** — common/server entrypoint, battle events, RCT classification, WildBosses bridge, structure detection including Cobbleverse compatibility aliases, Terralith, CobblemonAdditions, Repurposed Structures, and Legendary Monuments mappings, trigger blocks, configs, and networking.
+- **`src/main/kotlin`** — common/server entrypoint, battle events, RCT classification, WildBosses and Raid Dens bridges, structure detection including Cobbleverse compatibility aliases, Terralith, CobblemonAdditions, Repurposed Structures, and Legendary Monuments mappings, trigger blocks, configs, and networking.
 - **`src/client/kotlin`** — packet routing, region selection, Victory/Loot Menu bridge, ambience watching, music state, fades, menu music, low-HP handling, and the optional Mod Menu config screen.
 - **`src/main/resources/assets/cobbletunes/sounds.json`** — all sound keys and resource-pack paths.
 
@@ -398,7 +399,7 @@ As detecções de prioridade menor continuam atualizando em segundo plano enquan
 - [x] **Classificação dinâmica do RCT** usando função, região, facção, rank, ID do treinador, progressão e temas exatos para treinadores personalizados nomeados.
 - [x] **Temas de facções** para Rocket, Aqua, Magma, Galactic, Plasma, Flare, Skull, Aether Foundation, Lusamine e Ultra Recon Squad.
 - [x] **Música de Frontier Brain** com contexto próprio.
-- [x] **Integração com WildBosses** usando pools regionais ponderados por tier.
+- [x] **Integrações com WildBosses e Cobblemon Raid Dens** usando pools regionais ponderados por tier.
 - [x] **Pools seguros para Bosses** sem usar temas lendários específicos em encontros aleatórios.
 - [x] **Integração de vitória com Cobblemon Loot Menu** com início imediato, fade rápido, janela de confirmação, loop durante o menu e retorno para a zona atual.
 - [x] **Temas de vitória ao capturar Pokémon** em capturas dentro ou fora de batalha, usando a região do Pokémon capturado e o pool de vitória selvagem já existente.
@@ -432,13 +433,14 @@ Em multiplayer, instale o CobbleTunes no cliente e no servidor. O servidor class
 - **Mod Menu** — abre uma tela nativa do CobbleTunes para as configurações de música do cliente.
 - **Radical Cobblemon Trainers** — melhora a detecção de função, região, facção e progressão e permite temas exatos para treinadores personalizados suportados.
 - **WildBosses** — ativa pools musicais próprios para Bosses.
+- **Cobblemon Raid Dens** — batalhas de raid reutilizam os mesmos pools regionais ponderados, com os tiers da raid convertidos para as odds dos tiers de Boss já existentes.
 - **Cobblemon Loot Menu** — ativa temas de vitória enquanto a tela de loot está aberta.
 - **CobblemonAdditions / estruturas BCA** — mapeia as variantes atuais `4.1.6` dark, default e fighting para os pools pequenos, médios e grandes já existentes, e reutiliza o pool de Swamp Hut para a Witch Hut do BCA. Os IDs genéricos antigos continuam suportados.
 - **Datapack Terralith** — mapeia todas as 26 estruturas referenciadas pelos structure sets fornecidos do Terralith para pools vanilla/BCA já existentes.
 - **Repurposed Structures** — reaproveita os pools vanilla/BCA existentes para todos os 107 IDs de estruturas de worldgen presentes na versão `7.5.21+1.21.1`.
 - **Legendary Monuments** — reutiliza músicas já existentes de Sinnoh e de estruturas para Distortion Portal, Giratina Island, Turnback Cave, os três lagos de Sinnoh e Stark Mountain.
 
-Mod Menu, RCT, WildBosses, Cobblemon Loot Menu, CobblemonAdditions, Repurposed Structures e Legendary Monuments são integrações opcionais de mods. O suporte ao Terralith é baseado no registro e só é ativado quando as estruturas do datapack existem.
+Mod Menu, RCT, WildBosses, Cobblemon Raid Dens, Cobblemon Loot Menu, CobblemonAdditions, Repurposed Structures e Legendary Monuments são integrações opcionais de mods. O suporte ao Terralith é baseado no registro e só é ativado quando as estruturas do datapack existem.
 
 ### Roteamento de batalha
 
@@ -478,7 +480,7 @@ growlithe de hisui → hisui
 wooper de paldea → paldea
 ```
 
-A variante regional afeta temas selvagens, votação da equipe de treinadores, pools do WildBosses, fallback de lendários e seleção da região da vitória.
+A variante regional afeta temas selvagens, votação da equipe de treinadores, pools do WildBosses e Raid Dens, fallback de lendários e seleção da região da vitória.
 
 #### Funções e facções do RCT
 
@@ -531,19 +533,19 @@ Os casos sensíveis à forma incluem:
 
 O resource pack também possui temas dedicados para vários grupos lendários e míticos das regiões suportadas. O manifest contém o mapeamento completo.
 
-### Integração com WildBosses
+### Integração com WildBosses e Cobblemon Raid Dens
 
-O WildBosses é opcional. Quando uma batalha é realmente identificada como Boss, o CobbleTunes usa a região da espécie e o tier para montar um pool ponderado.
+WildBosses e Cobblemon Raid Dens são opcionais. Encontros reais do WildBosses e batalhas de Raid Dens usam o mesmo sistema regional de música ponderada. O Raid Dens é detectado por reflexão através do marcador próprio de batalha de raid, mantendo a integração como dependência leve.
 
-| Tier | Rival/PvP regional | Lendário genérico | BW World Tournament |
-|---|---:|---:|---:|
-| Uncommon | 80% | 15% | 5% |
-| Rare | 70% | 20% | 10% |
-| Epic | 60% | 30% | 10% |
-| Legendary | 50% | 35% | 15% |
-| Mythic | 45% | 40% | 15% |
+| Tier musical | Rival/PvP regional | Lendário genérico | BW World Tournament | Tier do Raid Dens |
+|---|---:|---:|---:|---|
+| Uncommon | 80% | 15% | 5% | 1 estrela |
+| Rare | 70% | 20% | 10% | 2 estrelas |
+| Epic | 60% | 30% | 10% | 3–4 estrelas |
+| Legendary | 50% | 35% | 15% | 5–6 estrelas |
+| Mythic | 45% | 40% | 15% | 7 estrelas |
 
-Temas de encontros lendários específicos ficam fora dos pools genéricos de Boss. Quando existe outra opção válida, o mod também evita repetir imediatamente a última música de Boss usada naquela região.
+A equipe do Pokémon da raid determina o pool regional da mesma forma que no WildBosses. Temas lendários específicos ficam fora do pool genérico de Lendários e o mod evita repetição imediata quando existe outra faixa válida.
 
 ### Vitória, capturas e Cobblemon Loot Menu
 
@@ -662,7 +664,7 @@ O `sounds.json` incluído define todos os 419 eventos esperados. [`SOUND_MANIFES
 
 ### Organização do projeto
 
-- **`src/main/kotlin`** — inicialização comum/servidor, eventos de batalha, classificação do RCT, ponte com WildBosses, detecção de estruturas incluindo aliases de compatibilidade do Cobbleverse e mapeamentos do Terralith, CobblemonAdditions, Repurposed Structures e Legendary Monuments, trigger blocks, configs e rede.
+- **`src/main/kotlin`** — inicialização comum/servidor, eventos de batalha, classificação do RCT, pontes com WildBosses e Raid Dens, detecção de estruturas incluindo aliases de compatibilidade do Cobbleverse e mapeamentos do Terralith, CobblemonAdditions, Repurposed Structures e Legendary Monuments, trigger blocks, configs e rede.
 - **`src/client/kotlin`** — roteamento dos pacotes, região, ponte de Victory/Loot Menu, observação de biomas, estado musical, fades, menu, HP baixo e a tela opcional de configuração do Mod Menu.
 - **`src/main/resources/assets/cobbletunes/sounds.json`** — todas as chaves e caminhos do resource pack.
 

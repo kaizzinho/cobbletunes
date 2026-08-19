@@ -132,6 +132,23 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
         opposingDexNumbers: List<Int>,
         opposingRegionalVariants: List<String> = emptyList()
     ) {
+        playTierWeightedBattle("Boss", tierName, opposingDexNumbers, opposingRegionalVariants)
+    }
+
+    fun playRaidBattle(
+        tierName: String,
+        opposingDexNumbers: List<Int>,
+        opposingRegionalVariants: List<String> = emptyList()
+    ) {
+        playTierWeightedBattle("Raid", tierName, opposingDexNumbers, opposingRegionalVariants)
+    }
+
+    private fun playTierWeightedBattle(
+        label: String,
+        tierName: String,
+        opposingDexNumbers: List<Int>,
+        opposingRegionalVariants: List<String>
+    ) {
         if (!config.replaceBattleMusic) return
 
         val pick = TrackRegistry.bossTrackFor(
@@ -139,12 +156,12 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
             tierName,
             opposingRegionalVariants
         ) ?: run {
-            LOGGER.warn("[$MOD_ID] No regional Boss track available, leaving current music")
+            LOGGER.warn("[$MOD_ID] No regional $label track available, leaving current music")
             return
         }
 
         debugLog(
-            "[Boss battle] tier=${tierName.uppercase()} region=${pick.region?.name ?: "UNKNOWN"} " +
+            "[$label battle] tier=${tierName.uppercase()} region=${pick.region?.name ?: "UNKNOWN"} " +
                 "source=${pick.source} track=${pick.track.id}"
         )
         play(pick.context, pick.track)

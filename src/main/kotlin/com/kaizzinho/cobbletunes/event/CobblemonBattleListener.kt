@@ -68,8 +68,10 @@ object CobblemonBattleListener {
                     )
                 }.orEmpty()
 
-                val bossTier = WildBossesBridge.resolveTier(opposingActors)
+                val raidTier = RaidDensBridge.resolveTier(battle)
+                val bossTier = if (raidTier == null) WildBossesBridge.resolveTier(opposingActors) else null
                 val trainerRoute = when {
+                    raidTier != null -> "raid|${raidTier.lowercase()}"
                     bossTier != null -> "boss|${bossTier.lowercase()}"
                     battle.isPvN -> RctBridge.resolveTrainerRoute(battle, opposingActors)
                     else -> ""
@@ -79,8 +81,9 @@ object CobblemonBattleListener {
                     LOGGER.info(
                         "[$MOD_ID] [Debug] [Battle payload] player=${player.name.string} " +
                             "battle=${battle.battleId} isWild=${battle.isPvW} " +
-                            "isTrainer=${battle.isPvN} bossTier=${bossTier ?: "none"} " +
-                            "route='$trainerRoute' form='${legendaryForm.ifEmpty { "base" }}' " +
+                            "isTrainer=${battle.isPvN} raidTier=${raidTier ?: "none"} " +
+                            "bossTier=${bossTier ?: "none"} route='$trainerRoute' " +
+                            "form='${legendaryForm.ifEmpty { "base" }}' " +
                             "regional='${primaryRegionalVariant.ifEmpty { "standard" }}' " +
                             "opposingDex=$opposingDexNumbers regionalVariants=$opposingRegionalVariants"
                     )

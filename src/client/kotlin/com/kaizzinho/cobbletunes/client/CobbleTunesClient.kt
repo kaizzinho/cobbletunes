@@ -158,16 +158,25 @@ class CobbleTunesClient : ClientModInitializer {
                 clearVictoryState(finishMusic = false)
                 lastBattleVictoryRequest = buildVictoryRequest(payload, routeHead, routeValue)
 
-                if (routeHead == "boss") {
+                if (routeHead == "boss" || routeHead == "raid") {
+                    val isRaid = routeHead == "raid"
                     debugLog(
-                        "[Boss route] raw='${payload.trainerTier}' tier='${routeValue.ifBlank { "unknown" }}' " +
-                            "opposingDex=${payload.opposingDexNumbers}"
+                        "[${if (isRaid) "Raid" else "Boss"} route] raw='${payload.trainerTier}' " +
+                            "tier='${routeValue.ifBlank { "unknown" }}' opposingDex=${payload.opposingDexNumbers}"
                     )
-                    musicPlayer.playBossBattle(
-                        tierName = routeValue,
-                        opposingDexNumbers = payload.opposingDexNumbers,
-                        opposingRegionalVariants = payload.opposingRegionalVariants
-                    )
+                    if (isRaid) {
+                        musicPlayer.playRaidBattle(
+                            tierName = routeValue,
+                            opposingDexNumbers = payload.opposingDexNumbers,
+                            opposingRegionalVariants = payload.opposingRegionalVariants
+                        )
+                    } else {
+                        musicPlayer.playBossBattle(
+                            tierName = routeValue,
+                            opposingDexNumbers = payload.opposingDexNumbers,
+                            opposingRegionalVariants = payload.opposingRegionalVariants
+                        )
+                    }
                     return@execute
                 }
 
