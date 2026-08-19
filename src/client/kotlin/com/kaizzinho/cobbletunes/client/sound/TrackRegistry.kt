@@ -1075,12 +1075,17 @@ object TrackRegistry {
     }
 
     private val structureTracks: MutableMap<String, MusicTrack> = mutableMapOf()
+    private val structureTrackPools: MutableMap<String, List<MusicTrack>> = mutableMapOf()
 
     fun specialStructureTrackFor(structureId: String): MusicTrack? =
-        structureTracks[structureId]
+        structureTrackPools[structureId]?.randomOrNull() ?: structureTracks[structureId]
 
     private fun registerSpecialStructure(structureId: String, track: MusicTrack) {
         structureTracks[structureId] = track
+    }
+
+    private fun registerSpecialStructurePool(structureId: String, tracks: List<MusicTrack>) {
+        structureTrackPools[structureId] = tracks
     }
 
     private val structureCategoryTracks: MutableMap<String, MutableList<MusicTrack>> = mutableMapOf()
@@ -1193,6 +1198,27 @@ object TrackRegistry {
         lm("lake_valor",        "ambience.sinnoh.cave_lake_caverns")
         lm("lake_verity",       "ambience.sinnoh.cave_lake_caverns")
         lm("stark_mountain",    "ambience.vanilla.fortress.stark_mountain")
+
+        registerSpecialStructurePool(
+            "cobbletunes:gimmighoul_tower",
+            listOf(
+                MusicTrack(
+                    "cobblemon_gimmighoul_tower_pokemon_tower",
+                    soundEvent("ambience.kanto.pokemon_tower"),
+                    loop = true
+                ),
+                MusicTrack(
+                    "cobblemon_gimmighoul_tower_lavender_town",
+                    soundEvent("ambience.kanto.deep_dark_lavender_town"),
+                    loop = true
+                ),
+                MusicTrack(
+                    "cobblemon_gimmighoul_tower_unown_radio",
+                    soundEvent("ambience.johto.cave_deep_dark_pokegear_unown"),
+                    loop = true
+                )
+            )
+        )
 
         registerSpecialStructure(
             "cobbletunes:rocket_hideout",

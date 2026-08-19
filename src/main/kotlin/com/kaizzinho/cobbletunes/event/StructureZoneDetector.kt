@@ -17,8 +17,10 @@ object StructureZoneDetector {
 
     private const val ZONE_CHECK_INTERVAL_TICKS = 10
     private const val CHUNK_SCAN_RADIUS = 3
-    // confirm chunk refs with real bounds
-    private const val STRUCTURE_PROXIMITY_MARGIN = 24.0
+    private const val SMALL_STRUCTURE_MAX_SPAN = 16
+    private const val SMALL_STRUCTURE_PADDING = 2
+    private const val STRUCTURE_PADDING = 1
+    private const val STRUCTURE_VERTICAL_PADDING = 2
     private const val TRIGGER_BLOCK_RADIUS = 12
     private val TRIGGER_SCAN_OFFSETS: List<Triple<Int, Int, Int>> by lazy {
         val r = TRIGGER_BLOCK_RADIUS
@@ -121,6 +123,16 @@ object StructureZoneDetector {
         Identifier.of("cobbleverse", "wind_plant")           to "cobbleverse:wind_plant",
         Identifier.of("cobbleverse", "mythical/manaphy")     to "cobbleverse:manaphy",
         Identifier.of("cobbleverse", "manaphy")              to "cobbleverse:manaphy",
+    )
+
+    // core cobblemon structures
+    private val COBBLEMON_STRUCTURES: Map<Identifier, String> = mapOf(
+        Identifier.of("cobblemon", "ruins/deserted_gimmi_tower") to "cobbletunes:gimmighoul_tower",
+        Identifier.of("cobblemon", "ruins/frozen_gimmi_tower") to "cobbletunes:gimmighoul_tower",
+        Identifier.of("cobblemon", "ruins/lush_gimmi_tower") to "cobbletunes:gimmighoul_tower",
+        Identifier.of("cobblemon", "ruins/rooted_gimmi_tower") to "cobbletunes:gimmighoul_tower",
+        Identifier.of("cobblemon", "ruins/sunscorched_gimmi_tower") to "cobbletunes:gimmighoul_tower",
+        Identifier.of("cobblemon", "ruins/temperate_gimmi_tower") to "cobbletunes:gimmighoul_tower"
     )
 
     // vanilla bca structures share music pools
@@ -314,6 +326,10 @@ object StructureZoneDetector {
             val structure = structureRegistry.get(structureId) ?: continue
             structureToZone[structure] = zoneId
         }
+        for ((structureId, zoneId) in COBBLEMON_STRUCTURES) {
+            val structure = structureRegistry.get(structureId) ?: continue
+            structureToZone[structure] = zoneId
+        }
         for ((structureId, zoneId) in VANILLA_AND_BCA_STRUCTURES) {
             val structure = structureRegistry.get(structureId) ?: continue
             structureToZone[structure] = zoneId
@@ -342,6 +358,7 @@ object StructureZoneDetector {
 
         var nearestZoneId: String? = null
         var nearestDistSq = Double.MAX_VALUE
+        val seenStarts = mutableSetOf<net.minecraft.structure.StructureStart>()
 
         for (dx in -CHUNK_SCAN_RADIUS..CHUNK_SCAN_RADIUS) {
             for (dz in -CHUNK_SCAN_RADIUS..CHUNK_SCAN_RADIUS) {
@@ -352,30 +369,43 @@ object StructureZoneDetector {
                     false
                 ) ?: continue
 
-                for ((structure, _) in chunk.structureReferences) {
-                    val zoneId = structureToZone[structure] ?: continue
+                val starts = accessor.getStructureStarts(chunk.pos) { structure ->
+                    structure in structureToZone
+                }
 
-                    // confirm the real box distance
-                    val start = accessor.getStructureAt(playerPos, structure)
-                    if (!start.hasChildren()) continue
-
+                for (start in starts) {
+                    if (!start.hasChildren() || !seenStarts.add(start)) continue
+                    val zoneId = structureToZone[start.structure] ?: continue
                     val box = start.boundingBox
-                    val closestX = playerPos.x.coerceIn(box.minX, box.maxX)
-                    val closestY = playerPos.y.coerceIn(box.minY, box.maxY)
-                    val closestZ = playerPos.z.coerceIn(box.minZ, box.maxZ)
+                    val xPadding = if (box.maxX - box.minX + 1 <= SMALL_STRUCTURE_MAX_SPAN) {
+                        SMALL_STRUCTURE_PADDING
+                    } else {
+                        STRUCTURE_PADDING
+                    }
+                    val zPadding = if (box.maxZ - box.minZ + 1 <= SMALL_STRUCTURE_MAX_SPAN) {
+                        SMALL_STRUCTURE_PADDING
+                    } else {
+                        STRUCTURE_PADDING
+                    }
+
+                    val closestX = playerPos.x.coerceIn(box.minX - xPadding, box.maxX + xPadding)
+                    val closestY = playerPos.y.coerceIn(
+                        box.minY - STRUCTURE_VERTICAL_PADDING,
+                        box.maxY + STRUCTURE_VERTICAL_PADDING
+                    )
+                    val closestZ = playerPos.z.coerceIn(box.minZ - zPadding, box.maxZ + zPadding)
                     val ddx = (playerPos.x - closestX).toDouble()
                     val ddy = (playerPos.y - closestY).toDouble()
                     val ddz = (playerPos.z - closestZ).toDouble()
                     val distSq = ddx * ddx + ddy * ddy + ddz * ddz
 
-                    if (distSq <= STRUCTURE_PROXIMITY_MARGIN * STRUCTURE_PROXIMITY_MARGIN &&
-                        distSq < nearestDistSq) {
+                    if (distSq < nearestDistSq) {
                         nearestDistSq = distSq
                         nearestZoneId = zoneId
                     }
                 }
             }
         }
-        return nearestZoneId
+        return nearestZoneId?.takeIf { nearestDistSq == 0.0 }
     }
 }

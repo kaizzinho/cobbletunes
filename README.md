@@ -58,14 +58,14 @@ Lower-priority world detection keeps running while battle or Victory music owns 
 - [x] **Dynamic RCT classification** with role, region, faction, rank, trainer ID, progression-aware routing, and exact themes for named custom trainers.
 - [x] **Villain faction themes** for Rocket, Aqua, Magma, Galactic, Plasma, Flare, Skull, Aether Foundation, Lusamine, and Ultra Recon Squad routes.
 - [x] **Frontier Brain music** with a dedicated battle context.
-- [x] **WildBosses and Cobblemon Raid Dens integrations** with tier-weighted regional PvP, generic Legendary, and BW World Tournament pools.
+- [x] **WildBosses and Cobblemon Raid Dens integrations** with tier-weighted regional PvP, generic Legendary, and BW World Tournament pools, actor-entity Raid Dens detection, and a dedicated 5-second regional Victory cue when a raid is cleared.
 - [x] **Species-safe Boss pools** that keep unique Legendary encounter themes out of unrelated Boss fights.
 - [x] **Victory + Cobblemon Loot Menu integration** with instant Victory start, fast battle-to-Victory fade, menu confirmation grace, looping while the loot screen is open, and current-zone resume afterward.
 - [x] **Capture Victory themes** for successful Pokémon captures, including captures made outside battle, using the captured Pokémon region and the existing wild Victory pool.
 - [x] **Battle Tower floor pools** with low, mid, high, and final tiers plus dedicated Battle Tower battle music.
 - [x] **Biome ambience memory and rotation** with silence windows and biome-transition debounce.
 - [x] **Underground ambience detection** using sky light and player height.
-- [x] **Cobbleverse exact structures**, **vanilla structures**, **Terralith structures**, **CobblemonAdditions/BCA villages**, **Repurposed Structures**, and selected **Legendary Monuments** mappings using existing music.
+- [x] **Cobbleverse exact structures**, **vanilla structures**, **Terralith structures**, **CobblemonAdditions/BCA villages**, **Repurposed Structures**, selected **Legendary Monuments**, and **Cobblemon Gimmighoul towers** using existing music.
 - [x] **Hand-placed music zones** for Poké Centers, Poké Marts, Gyms, Game Corners/Casinos, special locations, and Battle Tower floors.
 - [x] **Game Corner pool** with 15 FRLG, Emerald, HGSS, and Platinum tracks played as a shuffled no-repeat playlist.
 - [x] **Title-screen music** that stays active across submenus and stops when a world loads.
@@ -92,7 +92,7 @@ For multiplayer, install CobbleTunes on both the client and server. The server p
 - **Mod Menu** — opens a native CobbleTunes configuration screen for client music settings.
 - **Radical Cobblemon Trainers** — trainer role, region, faction, progression-aware routing, and exact theme overrides for supported named custom trainers.
 - **WildBosses** — Boss-specific weighted regional battle pools.
-- **Cobblemon Raid Dens** — raid battles reuse the same regional weighted pools, with raid tiers mapped onto the existing Boss tier odds.
+- **Cobblemon Raid Dens** — raid battles reuse the same regional weighted pools. Detection checks the actor-backed Raid Dens Pokémon metadata first, then falls back through the raid ID/active raid map and finally the battle marker.
 - **Cobblemon Loot Menu** — post-battle Victory music while the loot screen is active.
 - **CobblemonAdditions / BCA structures** — maps the current `4.1.6` dark, default, and fighting village variants into the existing small/mid/large pools, with the BCA Witch Hut reusing the Swamp Hut pool. Legacy generic BCA village IDs remain supported.
 - **Terralith datapack** — maps all 26 structures referenced by the supplied Terralith structure sets into existing vanilla/BCA music pools.
@@ -194,7 +194,7 @@ The resource pack also contains dedicated encounter themes for major Legendary/M
 
 ### WildBosses and Cobblemon Raid Dens integration
 
-WildBosses and Cobblemon Raid Dens are optional. Actual WildBoss encounters and Raid Dens battles use the same regional weighted music system. Raid Dens is detected through its raid-battle marker by reflection, so it remains a soft dependency.
+WildBosses and Cobblemon Raid Dens are optional. Actual WildBoss encounters and Raid Dens battles use the same regional weighted music system. Raid Dens remains reflection-only, but detection checks the server-side actor-backed Pokémon first because its raid metadata is already authoritative when Cobblemon fires the battle-start event. If needed, CobbleTunes resolves the raid through `crd_getRaidId()` and Raid Dens' active raid map before falling back to the battle-level marker. Raid completion is also read from Raid Dens' own `RAID_END` event, because Raid Dens does not follow Cobblemon's normal Victory lifecycle for this encounter type.
 
 | Music tier | Regional rival/PvP | Generic Legendary | BW World Tournament | Raid Dens tier |
 |---|---:|---:|---:|---|
@@ -205,6 +205,8 @@ WildBosses and Cobblemon Raid Dens are optional. Actual WildBoss encounters and 
 | Mythic | 45% | 40% | 15% | 7 stars |
 
 The raid Pokémon roster determines the regional pool in the same way as WildBosses. Species-specific Legendary themes are excluded from the generic Legendary pool, and immediate track repeats are avoided when another valid choice exists.
+
+With server debug logging enabled, Raid Dens probes emit compact `[RaidDensCompat] candidate` and `resolved` lines showing whether the actor entity, active raid map, or battle fallback supplied the tier. A successful `RAID_END` sends the normal regional wild Victory resolver to the client for a fixed **5-second** cue, then CobbleTunes resumes the latest valid world ambience. The cue survives the Raid Dens dimension transition back to the overworld, so world-join silence cannot cut it short. Failed raids stop the battle theme without playing Victory.
 
 ### Victory, captures, and Cobblemon Loot Menu
 
@@ -222,7 +224,7 @@ battle victory
 
 The three-second window does **not** delay the music. Victory is already playing during that time. If the Loot Menu opens, Victory keeps looping until the screen closes. If no loot screen appears, Victory ends and world music resumes.
 
-A successful capture uses the same regional wild Victory resolver and plays briefly for about three seconds. This applies to captures that end a wild battle and to direct overworld captures. Regional forms still override the base National Dex region. Capture Victory never waits for the Loot Menu.
+A successful capture uses the same regional wild Victory resolver and plays briefly for about three seconds. This applies to captures that end a wild battle and to direct overworld captures. Regional forms still override the base National Dex region. Capture Victory never waits for the Loot Menu. Successful Raid Dens clears also reuse the regional wild Victory resolver, but play it for **five seconds** because raids are treated as a more distinct encounter. Raid Victory uses Raid Dens' `RAID_END` event and does not wait for the Loot Menu or for the player to return to the overworld.
 
 Biome and structure detection continue while Victory owns playback. When Victory ends, CobbleTunes restores the **latest** valid structure, Battle Tower floor, or biome instead of returning to stale pre-battle ambience.
 
@@ -270,7 +272,10 @@ Structure music has higher priority than biome ambience. Supported sources inclu
 - CobblemonAdditions `4.1.6` dark, default, and fighting villages mapped into the existing BCA small/mid/large pools, plus its Witch Hut mapped to the Swamp Hut pool;
 - Repurposed Structures variants mapped back into the closest existing vanilla/BCA pool;
 - selected Legendary Monuments structures mapped to existing Sinnoh/structure tracks;
+- all six Cobblemon Gimmighoul tower worldgen structures (`deserted`, `frozen`, `lush`, `rooted`, `sunscorched`, and `temperate`) mapped to a creepy three-track pool built from the existing Pokémon Tower, Lavender Town, and Pokégear Unown themes;
 - hand-placed `MusicTriggerBlock` zones.
+
+Structure detection now resolves the real `StructureStart` from nearby chunk references instead of asking only whether the player is already inside the structure. A small exit buffer is then applied to the real bounding box: structures up to 16 blocks wide/deep receive 2 blocks of horizontal padding on each side, larger structures receive 1 block, and every mapped structure receives 2 blocks of vertical padding. This keeps small structures such as Ruined Portals from rapidly entering and leaving the music zone at their exact edge.
 
 Most fixed zone music loops until the player leaves the zone. Villages are intentionally different: the selected village theme plays once, waits a random **5–60 seconds**, then replays the same theme while the player remains inside. Leaving and re-entering selects another theme when the pool has an alternative. Game Corner and Casino zones also remain non-looping and advance through their shuffled 15-track playlist. Battle and Victory music temporarily take priority without discarding the current zone state. Current Cobbleverse legendary and mythical registry IDs are normalized back to the existing CobbleTunes zone IDs, while the older flattened IDs remain valid as compatibility aliases. Terralith adds no new sound events: villages, huts, rubble, Mage structures, Spire, and underground landmarks reuse existing Village, Igloo, Trail Ruins, Mansion, End City, Stronghold, Jungle Pyramid, Mineshaft, Ocean Ruin, and related pools. Repurposed Structures likewise reuses existing pools. Legendary Monuments adds no new audio: Distortion Portal, Giratina Island, and Turnback Cave reuse the Sinnoh Distortion World theme, Lake Acuity, Lake Valor, and Lake Verity reuse Lake Caverns, and Stark Mountain reuses the existing Stark Mountain structure track.
 
@@ -399,14 +404,14 @@ As detecções de prioridade menor continuam atualizando em segundo plano enquan
 - [x] **Classificação dinâmica do RCT** usando função, região, facção, rank, ID do treinador, progressão e temas exatos para treinadores personalizados nomeados.
 - [x] **Temas de facções** para Rocket, Aqua, Magma, Galactic, Plasma, Flare, Skull, Aether Foundation, Lusamine e Ultra Recon Squad.
 - [x] **Música de Frontier Brain** com contexto próprio.
-- [x] **Integrações com WildBosses e Cobblemon Raid Dens** usando pools regionais ponderados por tier.
+- [x] **Integrações com WildBosses e Cobblemon Raid Dens** usando pools regionais ponderados por tier, detecção pelo Pokémon original do actor e Victory regional dedicado por 5 segundos ao concluir uma raid.
 - [x] **Pools seguros para Bosses** sem usar temas lendários específicos em encontros aleatórios.
 - [x] **Integração de vitória com Cobblemon Loot Menu** com início imediato, fade rápido, janela de confirmação, loop durante o menu e retorno para a zona atual.
 - [x] **Temas de vitória ao capturar Pokémon** em capturas dentro ou fora de batalha, usando a região do Pokémon capturado e o pool de vitória selvagem já existente.
 - [x] **Pools de Battle Tower** para andares baixos, médios, altos e finais com tema de batalha dedicado.
 - [x] **Memória e rotação de ambientação por bioma** com intervalos de silêncio e debounce.
 - [x] **Detecção subterrânea** usando luz do céu e altura do jogador.
-- [x] **Estruturas exatas do Cobbleverse**, **estruturas vanilla**, **estruturas do Terralith**, **vilas do CobblemonAdditions/BCA**, **Repurposed Structures** e estruturas selecionadas do **Legendary Monuments** usando músicas já existentes.
+- [x] **Estruturas exatas do Cobbleverse**, **estruturas vanilla**, **estruturas do Terralith**, **vilas do CobblemonAdditions/BCA**, **Repurposed Structures**, estruturas selecionadas do **Legendary Monuments** e **torres de Gimmighoul do Cobblemon** usando músicas já existentes.
 - [x] **Zonas manuais de música** para Centros Pokémon, Poké Marts, Ginásios, Game Corners/Cassinos, locais especiais e andares da Battle Tower.
 - [x] **Pool de Game Corner** com 15 faixas de FRLG, Emerald, HGSS e Platinum tocadas como uma playlist embaralhada sem repetição imediata.
 - [x] **Música de menu** contínua entre os submenus da tela inicial.
@@ -433,7 +438,7 @@ Em multiplayer, instale o CobbleTunes no cliente e no servidor. O servidor class
 - **Mod Menu** — abre uma tela nativa do CobbleTunes para as configurações de música do cliente.
 - **Radical Cobblemon Trainers** — melhora a detecção de função, região, facção e progressão e permite temas exatos para treinadores personalizados suportados.
 - **WildBosses** — ativa pools musicais próprios para Bosses.
-- **Cobblemon Raid Dens** — batalhas de raid reutilizam os mesmos pools regionais ponderados, com os tiers da raid convertidos para as odds dos tiers de Boss já existentes.
+- **Cobblemon Raid Dens** — batalhas de raid reutilizam os mesmos pools regionais ponderados. A detecção verifica primeiro os metadados do Pokémon original ligado ao actor, depois usa o ID da raid/mapa de raids ativas e por fim o marcador da batalha.
 - **Cobblemon Loot Menu** — ativa temas de vitória enquanto a tela de loot está aberta.
 - **CobblemonAdditions / estruturas BCA** — mapeia as variantes atuais `4.1.6` dark, default e fighting para os pools pequenos, médios e grandes já existentes, e reutiliza o pool de Swamp Hut para a Witch Hut do BCA. Os IDs genéricos antigos continuam suportados.
 - **Datapack Terralith** — mapeia todas as 26 estruturas referenciadas pelos structure sets fornecidos do Terralith para pools vanilla/BCA já existentes.
@@ -535,7 +540,7 @@ O resource pack também possui temas dedicados para vários grupos lendários e 
 
 ### Integração com WildBosses e Cobblemon Raid Dens
 
-WildBosses e Cobblemon Raid Dens são opcionais. Encontros reais do WildBosses e batalhas de Raid Dens usam o mesmo sistema regional de música ponderada. O Raid Dens é detectado por reflexão através do marcador próprio de batalha de raid, mantendo a integração como dependência leve.
+WildBosses e Cobblemon Raid Dens são opcionais. Encontros reais do WildBosses e batalhas de Raid Dens usam o mesmo sistema regional de música ponderada. A integração continua apenas por reflexão e verifica primeiro o Pokémon original ligado ao actor no servidor, onde os metadados da raid já estão disponíveis quando o Cobblemon dispara o início da batalha. Se necessário, o CobbleTunes usa `crd_getRaidId()` e o mapa de raids ativas antes de recorrer ao marcador da própria batalha. O fim da raid também é lido pelo evento `RAID_END` do próprio Raid Dens, pois esse tipo de encontro não segue o ciclo normal de Victory do Cobblemon.
 
 | Tier musical | Rival/PvP regional | Lendário genérico | BW World Tournament | Tier do Raid Dens |
 |---|---:|---:|---:|---|
@@ -546,6 +551,8 @@ WildBosses e Cobblemon Raid Dens são opcionais. Encontros reais do WildBosses e
 | Mythic | 45% | 40% | 15% | 7 estrelas |
 
 A equipe do Pokémon da raid determina o pool regional da mesma forma que no WildBosses. Temas lendários específicos ficam fora do pool genérico de Lendários e o mod evita repetição imediata quando existe outra faixa válida.
+
+Com o debug do servidor ativado, a integração escreve linhas compactas `[RaidDensCompat] candidate` e `resolved` indicando se o tier veio da entidade ligada ao actor, do mapa de raids ativas ou do fallback da batalha. Um `RAID_END` bem-sucedido usa o resolvedor regional de vitória selvagem por **5 segundos** e depois volta para a ambientação válida mais recente. O tema continua durante a transição da dimensão da raid de volta ao overworld, sem ser cortado pelo silêncio de entrada no mundo. Raids perdidas apenas liberam a música de batalha, sem tocar Victory.
 
 ### Vitória, capturas e Cobblemon Loot Menu
 
@@ -563,7 +570,7 @@ vitória da batalha
 
 Os três segundos **não** atrasam a música. O tema de vitória já está tocando durante esse período. Se o Loot Menu abrir, a música continua em loop até a tela fechar. Se nenhuma tela aparecer, o tema termina e a música do mundo volta.
 
-Uma captura bem-sucedida usa o mesmo roteamento regional de vitória selvagem e toca brevemente por cerca de três segundos. Isso vale tanto para capturas que encerram uma batalha selvagem quanto para capturas diretas no mundo. Formas regionais continuam sobrescrevendo a região baseada na National Dex. A vitória de captura nunca espera pelo Loot Menu.
+Uma captura bem-sucedida usa o mesmo roteamento regional de vitória selvagem e toca brevemente por cerca de três segundos. Isso vale tanto para capturas que encerram uma batalha selvagem quanto para capturas diretas no mundo. Formas regionais continuam sobrescrevendo a região baseada na National Dex. A vitória de captura nunca espera pelo Loot Menu. Uma raid concluída com sucesso também usa o tema regional de vitória selvagem, mas por **cinco segundos**. A Victory da raid é disparada pelo `RAID_END` do Raid Dens e não espera pelo Loot Menu nem pelo retorno ao overworld.
 
 A detecção de bioma e estrutura continua funcionando durante a vitória. Quando a vitória termina, o CobbleTunes volta para a **última** estrutura, andar da Battle Tower ou bioma válido em vez de usar uma ambientação antiga salva antes da batalha.
 
@@ -611,7 +618,10 @@ Música de estrutura tem prioridade sobre ambientação de bioma. As fontes supo
 - vilas dark, default e fighting do CobblemonAdditions `4.1.6` redirecionadas para os pools BCA pequenos, médios e grandes, além da Witch Hut reutilizando o pool de Swamp Hut;
 - variantes do Repurposed Structures redirecionadas para o pool vanilla/BCA mais próximo;
 - estruturas selecionadas do Legendary Monuments redirecionadas para músicas de Sinnoh/estruturas já existentes;
+- as seis estruturas worldgen das torres de Gimmighoul do Cobblemon (`deserted`, `frozen`, `lush`, `rooted`, `sunscorched` e `temperate`) redirecionadas para um pool sombrio com Pokémon Tower, Lavender Town e Pokégear Unown já existentes;
 - zonas manuais com `MusicTriggerBlock`.
+
+A detecção de estruturas agora resolve o `StructureStart` real pelas referências dos chunks próximos em vez de depender de o jogador já estar dentro da estrutura. Depois aplica uma pequena margem à bounding box real: estruturas com até 16 blocos de largura/profundidade recebem 2 blocos extras em cada lado horizontal, estruturas maiores recebem 1 bloco, e todas recebem 2 blocos extras na vertical. Isso evita que estruturas pequenas como Ruined Portals entrem e saiam da zona musical repetidamente nas bordas.
 
 A maioria das músicas fixas de zona fica em loop até o jogador sair. Vilas funcionam de forma diferente: o tema escolhido toca uma vez, espera entre **5 e 60 segundos** e repete a mesma faixa enquanto o jogador continuar dentro da vila. Ao sair e entrar novamente o mod escolhe outra faixa quando o pool possui uma alternativa. Game Corner e Cassino também continuam sem loop individual e avançam pela playlist embaralhada de 15 faixas. Batalha e vitória assumem temporariamente o áudio sem apagar o estado atual da zona. Os IDs atuais de lendários e míticos do Cobbleverse são normalizados para os IDs de zona já existentes no CobbleTunes, enquanto os IDs achatados antigos continuam válidos como aliases de compatibilidade. Terralith não adiciona novos eventos de som: vilas, huts, rubble, estruturas Mage, Spire e locais subterrâneos reutilizam pools já existentes de Village, Igloo, Trail Ruins, Mansion, End City, Stronghold, Jungle Pyramid, Mineshaft, Ocean Ruin e outros. Repurposed Structures também reutiliza pools existentes. Legendary Monuments não adiciona novos áudios: Distortion Portal, Giratina Island e Turnback Cave reutilizam o tema Distortion World de Sinnoh, Lake Acuity, Lake Valor e Lake Verity reutilizam Lake Caverns, e Stark Mountain usa a faixa de estrutura Stark Mountain já existente.
 

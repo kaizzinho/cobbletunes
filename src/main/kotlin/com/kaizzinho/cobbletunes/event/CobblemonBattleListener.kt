@@ -25,6 +25,20 @@ import java.util.Locale
 object CobblemonBattleListener {
 
     fun register() {
+        RaidDensBridge.registerRaidEndListener { player, won ->
+            ServerPlayNetworking.send(
+                player,
+                if (won) BattleVictoryPayload else BattleMusicEndPayload
+            )
+
+            if (CobbleTunesServerConfig.current.debugLogging) {
+                LOGGER.info(
+                    "[$MOD_ID] [Debug] [Raid end] player=${player.name.string} win=$won " +
+                        "payload=${if (won) "victory" else "end"}"
+                )
+            }
+        }
+
         CobblemonEvents.BATTLE_STARTED_POST.subscribe { event ->
             val battle = event.battle
 
@@ -68,7 +82,7 @@ object CobblemonBattleListener {
                     )
                 }.orEmpty()
 
-                val raidTier = RaidDensBridge.resolveTier(battle)
+                val raidTier = RaidDensBridge.resolveTier(battle, opposingActors)
                 val bossTier = if (raidTier == null) WildBossesBridge.resolveTier(opposingActors) else null
                 val trainerRoute = when {
                     raidTier != null -> "raid|${raidTier.lowercase()}"
@@ -132,14 +146,23 @@ object CobblemonBattleListener {
         }
 
         CobblemonEvents.BATTLE_VICTORY.subscribe { event ->
-            val winnerActors = event.winners.toSet()
-            for (player in event.battle.players) {
-                val playerActor = event.battle.getActor(player)
-                val actuallyWon = !event.wasWildCapture && playerActor in winnerActors
-                ServerPlayNetworking.send(
-                    player,
-                    if (actuallyWon) BattleVictoryPayload else BattleMusicEndPayload
-                )
+            if (RaidDensBridge.isRaidBattle(event.battle)) {
+                if (CobbleTunesServerConfig.current.debugLogging) {
+                    LOGGER.info(
+                        "[$MOD_ID] [Debug] [Raid end] Ignoring Cobblemon BATTLE_VICTORY " +
+                            "because Raid Dens RAID_END owns completion"
+                    )
+                }
+            } else {
+                val winnerActors = event.winners.toSet()
+                for (player in event.battle.players) {
+                    val playerActor = event.battle.getActor(player)
+                    val actuallyWon = !event.wasWildCapture && playerActor in winnerActors
+                    ServerPlayNetworking.send(
+                        player,
+                        if (actuallyWon) BattleVictoryPayload else BattleMusicEndPayload
+                    )
+                }
             }
         }
 

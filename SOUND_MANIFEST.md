@@ -20,9 +20,9 @@ The current source audit resolves all 419 `sounds.json` keys from code. A resour
 - Battle routing keeps role and region separate, with RCT metadata preferred and opposing-roster voting as fallback.
 - The supplied RCT Tower datapack has exact overrides for its ten named `pokemon_trainer_*` encounters while all 90 `f1_trainer*` through `f9_trainer*` floor trainers remain on the normal Battle Tower route. Barry uses `sinnoh_rival_pvp`, Silver uses `johto_rival_pvp`, Steven uses `hoenn_champion_wallace`, Gold/Kris use `unova_pvp_champion_johto`, Green/Oak/Red use `unova_pvp_champion_kanto`, May uses `unova_pvp_champion_hoenn`, and Morimoto uses `tower_b2w2_pwt_final`. Exact matching also accepts the normalized `rctmod:`-namespaced form.
 - Alolan, Galarian, Hisuian, and Paldean forms override the base National Dex region for wild, trainer-roster, Boss, and Victory routing.
-- WildBosses and Cobblemon Raid Dens share the same tier-weighted regional battle pools. Raid Dens is detected as a soft integration through its raid-battle marker; 1-star raids map to Uncommon odds, 2-star to Rare, 3–4-star to Epic, 5–6-star to Legendary, and 7-star to Mythic. Raid battles reuse the regional rival/PvP, generic Legendary, and BW World Tournament pools with the same 80/15/5, 70/20/10, 60/30/10, 50/35/15, and 45/40/15 weights. Species-specific Legendary encounter tracks remain excluded from the generic pool.
+- WildBosses and Cobblemon Raid Dens share the same tier-weighted regional battle pools. Raid Dens stays reflection-only, but detection checks the server-side `EntityBackedBattleActor` Pokémon first through `IRaidAccessor`, resolves `crd_getRaidBoss()` directly when available, falls back through `crd_getRaidId()` and `RaidHelper.ACTIVE_RAIDS`, and only then tries the battle-level `IRaidBattle` marker. Native `RaidTier.getStars()` drives the mapping: 1-star raids use Uncommon odds, 2-star Rare, 3–4-star Epic, 5–6-star Legendary, and 7-star Mythic. Raid battles reuse the regional rival/PvP, generic Legendary, and BW World Tournament pools with the same 80/15/5, 70/20/10, 60/30/10, 50/35/15, and 45/40/15 weights. Species-specific Legendary encounter tracks remain excluded from the generic pool. Raid completion is read from Raid Dens' reflected `RAID_END` event; a successful clear plays the regional wild Victory theme for 5 seconds, preserves that cue across the Raid Dens-to-overworld dimension transition, and a failed raid only releases the battle-music override.
 - Legendary routing includes species and form overrides for Kyurem, Necrozma, Eternatus, Calyrex, Terapagos, Galarian birds, and other dedicated encounters.
-- Battle Victory music starts immediately on `BATTLE_VICTORY` when Cobblemon Loot Menu is installed, stays active while the loot screen is open, then restores the latest structure or biome target. Successful captures also reuse the regional wild Victory pool for a brief ~3 second cue, including captures outside battle.
+- Standard Battle Victory music starts immediately on `BATTLE_VICTORY` when Cobblemon Loot Menu is installed, stays active while the loot screen is open, then restores the latest structure or biome target. Successful captures reuse the regional wild Victory pool for a brief ~3 second cue, including captures outside battle. Successful Raid Dens clears use Raid Dens' `RAID_END` event instead and play the same regional wild Victory resolver for a fixed 5 seconds before restoring the latest world target.
 - Hisui intentionally has no post-battle Victory file in this pack and falls back without creating a fake theme.
 - Battle Tower ambience uses low, mid, high, and final floor pools. Trainer battles started inside a Battle Tower zone use the Galar Battle Tower battle theme.
 - All 71 registered structures across the supplied Cobbleverse main, Johto, Hoenn, and Sinnoh datapacks are recognized. Current nested IDs such as `cobbleverse:legendary/articuno`, `cobbleverse:legendary/groudon`, and `cobbleverse:mythical/manaphy` normalize to the existing CobbleTunes zone IDs; the older flattened IDs remain compatibility aliases.
@@ -30,6 +30,8 @@ The current source audit resolves all 419 `sounds.json` keys from code. A resour
 - All 26 structures referenced by the supplied Terralith structure sets reuse existing vanilla/BCA pools, so Terralith structure support adds no sound events. The two extra structure definitions not referenced by a Terralith structure set are intentionally ignored.
 - Repurposed Structures `7.5.21+1.21.1` is detected as a soft integration. All 107 worldgen structure IDs in that JAR reuse existing vanilla/BCA structure pools, so it adds no new audio files.
 - Legendary Monuments is detected as a soft integration for seven structures without adding sound events: Distortion Portal, Giratina Island, and Turnback Cave use `ambience.sinnoh.end_distortion_world`; Lake Acuity, Lake Valor, and Lake Verity use `ambience.sinnoh.cave_lake_caverns`; Stark Mountain uses `ambience.vanilla.fortress.stark_mountain`.
+- Structure detection resolves actual `StructureStart` objects from nearby chunk references before measuring the structure bounding box. Structures up to 16 blocks wide/deep receive 2 blocks of horizontal exit padding per side, larger structures receive 1 block, and every mapped structure receives 2 vertical blocks of padding. This prevents very small structures such as Ruined Portals from flickering between structure and biome ambience at their exact edges.
+- All six Cobblemon Gimmighoul tower worldgen structures under `cobblemon:ruins/` map to `cobbletunes:gimmighoul_tower`. The zone randomly reuses `ambience.kanto.pokemon_tower`, `ambience.kanto.deep_dark_lavender_town`, or `ambience.johto.cave_deep_dark_pokegear_unown`; no new sound keys are added.
 - `cobbletunes:game_corner` and `cobbletunes:casino` are manual `MusicTriggerBlock` zones. Entering either zone starts a shuffled Game Corner playlist. Tracks do not loop individually; each file plays once, then another track is selected from the remaining shuffled pool. After all 15 tracks play, the pool reshuffles and avoids an immediate repeat across the cycle boundary.
 
 ## MusicTriggerBlock setup tutorial
@@ -342,7 +344,7 @@ Leaving the Game Corner clears the current shuffle queue. Re-entering starts a f
 
 ## Victory music
 
-Victory files are used by the optional Cobblemon Loot Menu bridge and by successful capture cues. Battle Victory begins at the battle victory event rather than waiting for the GUI, while a successful capture uses the captured Pokémon's regional wild Victory route for about three seconds even when the capture happens outside battle.
+Victory files are used by the optional Cobblemon Loot Menu bridge, successful capture cues, and successful Raid Dens clears. Standard Battle Victory begins at the Cobblemon battle victory event rather than waiting for the GUI. A successful capture uses the captured Pokémon's regional wild Victory route for about three seconds even when the capture happens outside battle. A successful raid uses Raid Dens' own `RAID_END` event and the raid Pokémon's regional wild Victory route for five seconds, independent of the Raid Dens reward screen or dimension exit.
 
 | Key | File | Usage |
 |---|---|---|
@@ -436,7 +438,7 @@ The Ruby/Sapphire soundtrack is used as the naming reference for the shared Hoen
 
 ## Ambience and structure music
 
-Regional biome tracks rotate with silence windows. Fixed zone tracks such as Gyms, Poké Centers, Poké Marts, Battle Tower floors, exact Cobbleverse structures, and non-village vanilla/BCA structure pools loop while their zone owns the audio slot. Village pools are one-shot sessions: the chosen track finishes, waits 5–60 seconds, then replays the same track until the player leaves; entering again prefers a different selection. Game Corner and Casino zones advance through their shuffled 15-track playlist instead of looping one track. Setting either CobbleTunes music volume or Minecraft's Music slider to 0% suspends playback and ambience timers; once both volume controls are above zero again, the latest valid context resumes immediately without carrying over silence or village cooldowns.
+Regional biome tracks rotate with silence windows. Fixed zone tracks such as Gyms, Poké Centers, Poké Marts, Battle Tower floors, exact Cobbleverse structures, Cobblemon Gimmighoul towers, and non-village vanilla/BCA structure pools loop while their zone owns the audio slot. Village pools are one-shot sessions: the chosen track finishes, waits 5–60 seconds, then replays the same track until the player leaves; entering again prefers a different selection. Game Corner and Casino zones advance through their shuffled 15-track playlist instead of looping one track. Setting either CobbleTunes music volume or Minecraft's Music slider to 0% suspends playback and ambience timers; once both volume controls are above zero again, the latest valid context resumes immediately without carrying over silence or village cooldowns.
 
 ### Kanto ambience
 
@@ -563,6 +565,16 @@ Regional biome tracks rotate with silence windows. Fixed zone tracks such as Gym
 | `ambience.pokemart.mart3` | `ambience/pokemart/mart3.ogg` | pokemart zone pool |
 | `ambience.pokemart.mart2` | `ambience/pokemart/mart2.ogg` | pokemart zone pool |
 | `ambience.pokemart.mart1` | `ambience/pokemart/mart1.ogg` | pokemart zone pool |
+
+### Cobblemon Gimmighoul tower reuse
+
+The six registered Cobblemon Gimmighoul tower structures map to one shared zone and reuse three existing ambience events. Supported IDs are `cobblemon:ruins/deserted_gimmi_tower`, `cobblemon:ruins/frozen_gimmi_tower`, `cobblemon:ruins/lush_gimmi_tower`, `cobblemon:ruins/rooted_gimmi_tower`, `cobblemon:ruins/sunscorched_gimmi_tower`, and `cobblemon:ruins/temperate_gimmi_tower`.
+
+| Existing key | Usage |
+|---|---|
+| `ambience.kanto.pokemon_tower` | Gimmighoul tower creepy pool |
+| `ambience.kanto.deep_dark_lavender_town` | Gimmighoul tower creepy pool |
+| `ambience.johto.cave_deep_dark_pokegear_unown` | Gimmighoul tower creepy pool |
 
 ### Exact Cobbleverse structures
 

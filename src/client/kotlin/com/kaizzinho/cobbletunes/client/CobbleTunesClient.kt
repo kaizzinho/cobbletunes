@@ -38,6 +38,7 @@ class CobbleTunesClient : ClientModInitializer {
         private const val AMBIENCE_CHECK_INTERVAL_TICKS = 20
         private const val VICTORY_LOOT_WAIT_MILLIS = 3_000L
         private const val CAPTURE_VICTORY_MILLIS = 3_000L
+        private const val RAID_VICTORY_MILLIS = 5_000L
 
         private val VILLAGE_STRUCTURE_CATEGORIES = setOf(
             "bca_village_large",
@@ -113,11 +114,14 @@ class CobbleTunesClient : ClientModInitializer {
     )
 
     private var lastBattleVictoryRequest: VictoryRequest? = null
+    private var lastBattleWasRaid = false
     private var pendingLootVictory: PendingLootVictory? = null
     private var lootVictoryActive = false
     private var lootMenuWasOpen = false
     private var captureVictoryActive = false
     private var captureVictoryEndsAtMillis: Long? = null
+    private var raidVictoryActive = false
+    private var raidVictoryEndsAtMillis: Long? = null
     private val lastVillageTrackByCategory = mutableMapOf<String, String>()
 
     private var lowHpBeepsRemaining = 0
@@ -142,6 +146,7 @@ class CobbleTunesClient : ClientModInitializer {
         registerMenuMusicWatcher()
         registerLootMenuVictoryWatcher()
         registerCaptureVictoryWatcher()
+        registerRaidVictoryWatcher()
         registerLowHpWatcher()
 
         LOGGER.info("[$MOD_ID] Client init complete.")
@@ -156,6 +161,7 @@ class CobbleTunesClient : ClientModInitializer {
                 val routeValue = routeParts.getOrNull(1).orEmpty()
 
                 clearVictoryState(finishMusic = false)
+                lastBattleWasRaid = routeHead == "raid"
                 lastBattleVictoryRequest = buildVictoryRequest(payload, routeHead, routeValue)
 
                 if (routeHead == "boss" || routeHead == "raid") {
@@ -251,6 +257,10 @@ class CobbleTunesClient : ClientModInitializer {
                     debugLog("[Capture victory] Ignoring battle end while capture theme is active")
                     return@execute
                 }
+                if (raidVictoryActive) {
+                    debugLog("[Raid victory] Ignoring battle end while raid Victory is active")
+                    return@execute
+                }
                 clearVictoryState(finishMusic = false)
                 musicPlayer.playAmbience()
             }
@@ -258,8 +268,19 @@ class CobbleTunesClient : ClientModInitializer {
 
         ClientPlayNetworking.registerGlobalReceiver(BattleVictoryPayload.ID) { _, context ->
             context.client().execute {
+                if (raidVictoryActive) {
+                    debugLog("[Raid victory] Ignoring duplicate victory payload")
+                    return@execute
+                }
+
+                if (lastBattleWasRaid) {
+                    startRaidVictory()
+                    return@execute
+                }
+
                 val request = lastBattleVictoryRequest
                 lastBattleVictoryRequest = null
+                lastBattleWasRaid = false
                 pendingLootVictory = null
                 lootVictoryActive = false
                 lootMenuWasOpen = false
@@ -432,13 +453,20 @@ class CobbleTunesClient : ClientModInitializer {
 
             val world = client.world
             if (world !== lastWorld) {
-                clearVictoryState(finishMusic = false)
+                val keepRaidVictory = raidVictoryActive && lastWorld != null && world != null
+                if (!keepRaidVictory) {
+                    clearVictoryState(finishMusic = false)
+                }
                 lastWorld = world
                 ambienceCheckCounter = 0
                 if (world != null) {
                     // tick order can change
                     pendingMenuTrack = null
-                    musicPlayer.beginWorldJoinSilence()
+                    if (keepRaidVictory) {
+                        debugLog("[Raid victory] Preserving 5s cue across dimension change")
+                    } else {
+                        musicPlayer.beginWorldJoinSilence()
+                    }
                 } else {
                     // menu returns skip startup wait
                     menuReadyTicks = 200
@@ -553,6 +581,47 @@ class CobbleTunesClient : ClientModInitializer {
         }
     }
 
+    private fun startRaidVictory() {
+        val request = lastBattleVictoryRequest
+        lastBattleVictoryRequest = null
+        lastBattleWasRaid = false
+        pendingLootVictory = null
+        lootVictoryActive = false
+        lootMenuWasOpen = false
+
+        if (!config.replaceBattleMusic || request == null) {
+            musicPlayer.playAmbience()
+            return
+        }
+
+        val track = TrackRegistry.victoryTrackFor(request)
+        if (track == null) {
+            debugLog("[Raid victory] No theme for ${request.region}/${request.kind}")
+            musicPlayer.playAmbience()
+            return
+        }
+
+        raidVictoryActive = true
+        raidVictoryEndsAtMillis = System.currentTimeMillis() + RAID_VICTORY_MILLIS
+        musicPlayer.playVictoryTheme(track)
+        debugLog(
+            "[Raid victory] Playing ${track.id} for ${RAID_VICTORY_MILLIS / 1000}s"
+        )
+    }
+
+    private fun registerRaidVictoryWatcher() {
+        ClientTickEvents.END_CLIENT_TICK.register { _ ->
+            if (!raidVictoryActive) return@register
+            val endsAt = raidVictoryEndsAtMillis ?: return@register
+            if (System.currentTimeMillis() < endsAt) return@register
+
+            raidVictoryActive = false
+            raidVictoryEndsAtMillis = null
+            debugLog("[Raid victory] Theme ended resuming current world music")
+            musicPlayer.finishVictoryTheme()
+        }
+    }
+
     private fun pickVillageStructureTrack(category: String): com.kaizzinho.cobbletunes.client.sound.MusicTrack? {
         val pool = TrackRegistry.structureTracksFor(category)
         if (pool.isEmpty()) return null
@@ -626,13 +695,18 @@ class CobbleTunesClient : ClientModInitializer {
         }
 
     private fun clearVictoryState(finishMusic: Boolean) {
-        if (finishMusic && (lootVictoryActive || captureVictoryActive)) musicPlayer.finishVictoryTheme()
+        if (finishMusic && (lootVictoryActive || captureVictoryActive || raidVictoryActive)) {
+            musicPlayer.finishVictoryTheme()
+        }
         lastBattleVictoryRequest = null
+        lastBattleWasRaid = false
         pendingLootVictory = null
         lootVictoryActive = false
         lootMenuWasOpen = false
         captureVictoryActive = false
         captureVictoryEndsAtMillis = null
+        raidVictoryActive = false
+        raidVictoryEndsAtMillis = null
     }
 
     private fun registerDeathScreenWatcher() {
