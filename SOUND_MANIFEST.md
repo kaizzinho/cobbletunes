@@ -797,6 +797,6 @@ This covers all 107 `data/repurposed_structures/worldgen/structure/*.json` entri
 
 - Keep every path lowercase and exact.
 - Keep music entries streamed.
-- `effect.lowhp` is played as a short sound effect and is boosted above the configured music volume in code.
+- `effect.lowhp` is played once per low-HP trigger at `0.80x` the configured CobbleTunes music volume.
 - Missing files stay silent instead of crashing CobbleTunes.
 - `/playsound cobbletunes:<key> music @s` can be used to test music keys directly.

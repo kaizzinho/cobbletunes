@@ -69,7 +69,7 @@ Lower-priority world detection keeps running while battle or Victory music owns 
 - [x] **Hand-placed music zones** for Poké Centers, Poké Marts, Gyms, Game Corners/Casinos, special locations, and Battle Tower floors.
 - [x] **Game Corner pool** with 15 FRLG, Emerald, HGSS, and Platinum tracks played as a shuffled no-repeat playlist.
 - [x] **Title-screen music** that stays active across submenus and stops when a world loads.
-- [x] **Low-HP cue** for the active battle Pokémon with a boosted effect volume.
+- [x] **Low-HP cue** for the active battle Pokémon with a single 80%-volume alert.
 - [x] **Player-death handling** and safe world/zone reset.
 - [x] **Client and server debug logging**, disabled by default.
 - [x] **Mod Menu integration** with a native CobbleTunes config screen for client music settings.
@@ -281,9 +281,9 @@ Most fixed zone music loops until the player leaves the zone. Villages are inten
 
 ### Low HP cue
 
-The active battle Pokémon is checked periodically. When a living active Pokémon reaches 25% HP or lower, CobbleTunes plays a two-beep alert sequence.
+The active battle Pokémon is checked periodically. When a living active Pokémon reaches 25% HP or lower, CobbleTunes plays the low-HP alert once.
 
-The effect uses `1.35x` the configured music volume, capped at `1.5`, so it remains audible over battle music.
+The effect uses `0.80x` the configured music volume, so the low-HP cue plays at 80% of the current CobbleTunes music volume.
 
 ### Configuration
 
@@ -627,9 +627,9 @@ A maioria das músicas fixas de zona fica em loop até o jogador sair. Vilas fun
 
 ### Alerta de HP baixo
 
-O Pokémon ativo é verificado periodicamente durante a batalha. Quando um Pokémon ativo e vivo chega a 25% de HP ou menos, o CobbleTunes toca uma sequência de dois alertas.
+O Pokémon ativo é verificado periodicamente durante a batalha. Quando um Pokémon ativo e vivo chega a 25% de HP ou menos, o CobbleTunes toca o alerta de HP baixo uma única vez.
 
-O efeito usa `1.35x` o volume configurado para música, limitado a `1.5`, para continuar audível durante a batalha.
+O efeito usa `0.80x` o volume configurado para música, fazendo o alerta tocar a 80% do volume atual de música do CobbleTunes.
 
 ### Configuração
 

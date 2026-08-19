@@ -130,7 +130,7 @@ class CobbleTunesClient : ClientModInitializer {
     private var lastLowHpPokemonUuid: java.util.UUID? = null
     private val LOW_HP_BEEP_INTERVAL_TICKS = 20
     private val LOW_HP_CHECK_INTERVAL_TICKS = 10
-    private val LOW_HP_VOLUME_MULTIPLIER = 1.35f
+    private val LOW_HP_VOLUME_MULTIPLIER = 0.80f
 
     override fun onInitializeClient() {
         LOGGER.info("[$MOD_ID] Initializing client music system...")
@@ -748,7 +748,7 @@ class CobbleTunesClient : ClientModInitializer {
                         net.minecraft.client.sound.PositionedSoundInstance.master(
                             soundEvent,
                             1.0f,
-                            (config.musicVolume * LOW_HP_VOLUME_MULTIPLIER).coerceAtMost(1.5f)
+                            (config.musicVolume * LOW_HP_VOLUME_MULTIPLIER)
                         )
                     )
                     lowHpBeepsRemaining--
@@ -794,7 +794,7 @@ class CobbleTunesClient : ClientModInitializer {
             if (lowHpMon.uuid == lastLowHpPokemonUuid) return@register
 
             lastLowHpPokemonUuid = lowHpMon.uuid
-            lowHpBeepsRemaining = 2
+            lowHpBeepsRemaining = 1
             lowHpBeepCooldownTicks = 0
             debugLog("[Low HP] Pokémon ${lowHpMon.uuid} at low HP — beeping $lowHpBeepsRemaining times")
         }
