@@ -18,7 +18,8 @@ object StructureZoneDetector {
     private const val ZONE_CHECK_INTERVAL_TICKS = 10
     private const val CHUNK_SCAN_RADIUS = 3
     private const val SMALL_STRUCTURE_MAX_SPAN = 16
-    private const val SMALL_STRUCTURE_PADDING = 2
+    private const val SMALL_STRUCTURE_PADDING = 4
+    private const val SMALL_STRUCTURE_VERTICAL_PADDING = 4
     private const val STRUCTURE_PADDING = 1
     private const val STRUCTURE_VERTICAL_PADDING = 2
     private const val TRIGGER_BLOCK_RADIUS = 12
@@ -377,23 +378,28 @@ object StructureZoneDetector {
                     if (!start.hasChildren() || !seenStarts.add(start)) continue
                     val zoneId = structureToZone[start.structure] ?: continue
                     val box = start.boundingBox
-                    val xPadding = if (box.maxX - box.minX + 1 <= SMALL_STRUCTURE_MAX_SPAN) {
-                        SMALL_STRUCTURE_PADDING
+                    val width = box.maxX - box.minX + 1
+                    val depth = box.maxZ - box.minZ + 1
+                    val isSmallStructure = width <= SMALL_STRUCTURE_MAX_SPAN && depth <= SMALL_STRUCTURE_MAX_SPAN
+                    val horizontalPadding = if (isSmallStructure) SMALL_STRUCTURE_PADDING else STRUCTURE_PADDING
+                    val verticalPadding = if (isSmallStructure) {
+                        SMALL_STRUCTURE_VERTICAL_PADDING
                     } else {
-                        STRUCTURE_PADDING
-                    }
-                    val zPadding = if (box.maxZ - box.minZ + 1 <= SMALL_STRUCTURE_MAX_SPAN) {
-                        SMALL_STRUCTURE_PADDING
-                    } else {
-                        STRUCTURE_PADDING
+                        STRUCTURE_VERTICAL_PADDING
                     }
 
-                    val closestX = playerPos.x.coerceIn(box.minX - xPadding, box.maxX + xPadding)
-                    val closestY = playerPos.y.coerceIn(
-                        box.minY - STRUCTURE_VERTICAL_PADDING,
-                        box.maxY + STRUCTURE_VERTICAL_PADDING
+                    val closestX = playerPos.x.coerceIn(
+                        box.minX - horizontalPadding,
+                        box.maxX + horizontalPadding
                     )
-                    val closestZ = playerPos.z.coerceIn(box.minZ - zPadding, box.maxZ + zPadding)
+                    val closestY = playerPos.y.coerceIn(
+                        box.minY - verticalPadding,
+                        box.maxY + verticalPadding
+                    )
+                    val closestZ = playerPos.z.coerceIn(
+                        box.minZ - horizontalPadding,
+                        box.maxZ + horizontalPadding
+                    )
                     val ddx = (playerPos.x - closestX).toDouble()
                     val ddy = (playerPos.y - closestY).toDouble()
                     val ddz = (playerPos.z - closestZ).toDouble()
