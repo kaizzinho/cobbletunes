@@ -8,11 +8,14 @@ import com.kaizzinho.cobbletunes.LOGGER
 import com.kaizzinho.cobbletunes.MOD_ID
 import com.kaizzinho.cobbletunes.compat.rct.RawRctTrainer
 import com.kaizzinho.cobbletunes.compat.rct.RctTrainerClassifier
+import com.kaizzinho.cobbletunes.compat.rct.TrainerOverride
+import com.kaizzinho.cobbletunes.compat.rct.TrainerRole
 import com.kaizzinho.cobbletunes.config.CobbleTunesServerConfig
 import com.kaizzinho.cobbletunes.network.BattleMusicEndPayload
 import com.kaizzinho.cobbletunes.network.BattleMusicStartPayload
 import com.kaizzinho.cobbletunes.network.BattleVictoryPayload
 import com.kaizzinho.cobbletunes.network.PlayerDeathPayload
+import com.kaizzinho.cobbletunes.network.PokemonCapturedPayload
 import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
 import net.fabricmc.loader.api.FabricLoader
@@ -100,6 +103,31 @@ object CobblemonBattleListener {
             }
         }
 
+        CobblemonEvents.POKEMON_CAPTURED.subscribe { event ->
+            val pokemon = event.pokemon
+            val dexNumber = pokemon.species.nationalPokedexNumber
+            val regionalVariant = resolveRegionalVariant(
+                dexNumber,
+                pokemon.form.name,
+                pokemon.aspects
+            )
+
+            ServerPlayNetworking.send(
+                event.player,
+                PokemonCapturedPayload(
+                    dexNumber = dexNumber,
+                    regionalVariant = regionalVariant
+                )
+            )
+
+            if (CobbleTunesServerConfig.current.debugLogging) {
+                LOGGER.info(
+                    "[$MOD_ID] [Debug] [Capture victory] player=${event.player.name.string} " +
+                        "dex=$dexNumber regional='${regionalVariant.ifEmpty { "standard" }}'"
+                )
+            }
+        }
+
         CobblemonEvents.BATTLE_VICTORY.subscribe { event ->
             val winnerActors = event.winners.toSet()
             for (player in event.battle.players) {
@@ -157,6 +185,39 @@ object CobblemonBattleListener {
         private const val RCT_MOD_ID = "rctmod"
         private const val RCT_MOD_CLASS = "com.gitlab.srcmc.rctmod.api.RCTMod"
 
+        private val specialTrainerOverrides = mapOf(
+            "pokemon_trainer_barry" to TrainerOverride(
+                TrainerRole.RIVAL, "sinnoh", battleTrackId = "sinnoh_rival_pvp"
+            ),
+            "pokemon_trainer_gold" to TrainerOverride(
+                TrainerRole.NORMAL, "johto", battleTrackId = "unova_pvp_champion_johto"
+            ),
+            "pokemon_trainer_green" to TrainerOverride(
+                TrainerRole.NORMAL, "kanto", battleTrackId = "unova_pvp_champion_kanto"
+            ),
+            "pokemon_trainer_kris" to TrainerOverride(
+                TrainerRole.NORMAL, "johto", battleTrackId = "unova_pvp_champion_johto"
+            ),
+            "pokemon_trainer_may" to TrainerOverride(
+                TrainerRole.NORMAL, "hoenn", battleTrackId = "unova_pvp_champion_hoenn"
+            ),
+            "pokemon_trainer_morimoto" to TrainerOverride(
+                TrainerRole.NORMAL, "unova", battleTrackId = "tower_b2w2_pwt_final"
+            ),
+            "pokemon_trainer_oak" to TrainerOverride(
+                TrainerRole.NORMAL, "kanto", battleTrackId = "unova_pvp_champion_kanto"
+            ),
+            "pokemon_trainer_red" to TrainerOverride(
+                TrainerRole.NORMAL, "kanto", battleTrackId = "unova_pvp_champion_kanto"
+            ),
+            "pokemon_trainer_silver" to TrainerOverride(
+                TrainerRole.RIVAL, "johto", battleTrackId = "johto_rival_pvp"
+            ),
+            "pokemon_trainer_steven" to TrainerOverride(
+                TrainerRole.CHAMPION, "hoenn", battleTrackId = "hoenn_champion_wallace"
+            )
+        )
+
         private val rctAvailable by lazy {
             FabricLoader.getInstance().isModLoaded(RCT_MOD_ID)
         }
@@ -181,7 +242,10 @@ object CobblemonBattleListener {
                     if (trainerId.isBlank()) continue
 
                     val probe = readTrainerData(entity, trainerId)
-                    val result = RctTrainerClassifier.classify(probe.raw)
+                    val result = RctTrainerClassifier.classify(
+                        probe.raw,
+                        exactOverrides = specialTrainerOverrides
+                    )
                     val route = result.route()
 
                     if (CobbleTunesServerConfig.current.debugLogging) {
@@ -195,6 +259,7 @@ object CobblemonBattleListener {
                                 "faction='${result.faction?.id.orEmpty()}' " +
                                 "rank='${result.factionRank?.name?.lowercase(Locale.ROOT).orEmpty()}' " +
                                 "theme='${result.factionTheme.orEmpty()}' " +
+                                "battleTrack='${result.battleTrackId.orEmpty()}' " +
                                 "region='${result.region ?: "unknown"}' source=$source route='$route'"
                         )
                     }

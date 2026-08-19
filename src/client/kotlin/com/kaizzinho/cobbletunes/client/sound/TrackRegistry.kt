@@ -28,6 +28,9 @@ object TrackRegistry {
 
     fun tracksFor(context: MusicContext): List<MusicTrack> = tracks[context].orEmpty()
 
+    fun trackById(trackId: String): MusicTrack? =
+        tracks.values.asSequence().flatten().firstOrNull { it.id == trackId }
+
     fun legendaryTrackFor(
         dexNumber: Int,
         formName: String = "",
@@ -1089,6 +1092,9 @@ object TrackRegistry {
     fun vanillaStructureTrackFor(category: String): MusicTrack? =
         structureCategoryTracks[category]?.randomOrNull()
 
+    fun structureTracksFor(category: String): List<MusicTrack> =
+        structureCategoryTracks[category].orEmpty()
+
     private fun registerProximityAmbience() {
         // zone themes loop until exit
         register(MusicContext.GYM_AMBIENCE, MusicTrack(
@@ -1174,6 +1180,19 @@ object TrackRegistry {
             "cobbleverse:team_galactic_hq",
             MusicTrack("special_team_galactic_hq", soundEvent("ambience.vanilla.trial_chambers.team_galactic"), loop = true)
         )
+
+        fun lm(structureId: String, trackName: String) = registerSpecialStructure(
+            "legendarymonuments:$structureId",
+            MusicTrack("legendarymonuments_$structureId", soundEvent(trackName), loop = true)
+        )
+
+        lm("distortion_portal", "ambience.sinnoh.end_distortion_world")
+        lm("giratina_island",   "ambience.sinnoh.end_distortion_world")
+        lm("turnback_cave",     "ambience.sinnoh.end_distortion_world")
+        lm("lake_acuity",       "ambience.sinnoh.cave_lake_caverns")
+        lm("lake_valor",        "ambience.sinnoh.cave_lake_caverns")
+        lm("lake_verity",       "ambience.sinnoh.cave_lake_caverns")
+        lm("stark_mountain",    "ambience.vanilla.fortress.stark_mountain")
 
         registerSpecialStructure(
             "cobbletunes:rocket_hideout",

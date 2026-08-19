@@ -18,12 +18,17 @@ The current source audit resolves all 419 `sounds.json` keys from code. A resour
 ## Routing notes
 
 - Battle routing keeps role and region separate, with RCT metadata preferred and opposing-roster voting as fallback.
+- The supplied RCT Tower datapack has exact overrides for its ten named `pokemon_trainer_*` encounters while all 90 `f1_trainer*` through `f9_trainer*` floor trainers remain on the normal Battle Tower route. Barry uses `sinnoh_rival_pvp`, Silver uses `johto_rival_pvp`, Steven uses `hoenn_champion_wallace`, Gold/Kris use `unova_pvp_champion_johto`, Green/Oak/Red use `unova_pvp_champion_kanto`, May uses `unova_pvp_champion_hoenn`, and Morimoto uses `tower_b2w2_pwt_final`. Exact matching also accepts the normalized `rctmod:`-namespaced form.
 - Alolan, Galarian, Hisuian, and Paldean forms override the base National Dex region for wild, trainer-roster, Boss, and Victory routing.
 - Legendary routing includes species and form overrides for Kyurem, Necrozma, Eternatus, Calyrex, Terapagos, Galarian birds, and other dedicated encounters.
-- Victory music starts immediately on `BATTLE_VICTORY` when Cobblemon Loot Menu is installed, stays active while the loot screen is open, then restores the latest structure or biome target.
+- Battle Victory music starts immediately on `BATTLE_VICTORY` when Cobblemon Loot Menu is installed, stays active while the loot screen is open, then restores the latest structure or biome target. Successful captures also reuse the regional wild Victory pool for a brief ~3 second cue, including captures outside battle.
 - Hisui intentionally has no post-battle Victory file in this pack and falls back without creating a fake theme.
 - Battle Tower ambience uses low, mid, high, and final floor pools. Trainer battles started inside a Battle Tower zone use the Galar Battle Tower battle theme.
+- All 71 registered structures across the supplied Cobbleverse main, Johto, Hoenn, and Sinnoh datapacks are recognized. Current nested IDs such as `cobbleverse:legendary/articuno`, `cobbleverse:legendary/groudon`, and `cobbleverse:mythical/manaphy` normalize to the existing CobbleTunes zone IDs; the older flattened IDs remain compatibility aliases.
+- CobblemonAdditions `4.1.6` dark, default, and fighting villages reuse the existing BCA small/mid/large pools. `bca:village/witch_hut` reuses the Swamp Hut pool, and the older generic BCA village IDs remain supported. Village tracks play once, wait a random 5–60 seconds, then replay the same selection while the player stays inside; re-entering prefers a different track when possible.
+- All 26 structures referenced by the supplied Terralith structure sets reuse existing vanilla/BCA pools, so Terralith structure support adds no sound events. The two extra structure definitions not referenced by a Terralith structure set are intentionally ignored.
 - Repurposed Structures `7.5.21+1.21.1` is detected as a soft integration. All 107 worldgen structure IDs in that JAR reuse existing vanilla/BCA structure pools, so it adds no new audio files.
+- Legendary Monuments is detected as a soft integration for seven structures without adding sound events: Distortion Portal, Giratina Island, and Turnback Cave use `ambience.sinnoh.end_distortion_world`; Lake Acuity, Lake Valor, and Lake Verity use `ambience.sinnoh.cave_lake_caverns`; Stark Mountain uses `ambience.vanilla.fortress.stark_mountain`.
 - `cobbletunes:game_corner` and `cobbletunes:casino` are manual `MusicTriggerBlock` zones. Entering either zone starts a shuffled Game Corner playlist. Tracks do not loop individually; each file plays once, then another track is selected from the remaining shuffled pool. After all 15 tracks play, the pool reshuffles and avoids an immediate repeat across the cycle boundary.
 
 ## MusicTriggerBlock setup tutorial
@@ -336,7 +341,7 @@ Leaving the Game Corner clears the current shuffle queue. Re-entering starts a f
 
 ## Victory music
 
-Victory files are used only by the optional Cobblemon Loot Menu bridge. The theme begins at the battle victory event rather than waiting for the GUI to appear.
+Victory files are used by the optional Cobblemon Loot Menu bridge and by successful capture cues. Battle Victory begins at the battle victory event rather than waiting for the GUI, while a successful capture uses the captured Pokémon's regional wild Victory route for about three seconds even when the capture happens outside battle.
 
 | Key | File | Usage |
 |---|---|---|
@@ -430,7 +435,7 @@ The Ruby/Sapphire soundtrack is used as the naming reference for the shared Hoen
 
 ## Ambience and structure music
 
-Regional biome tracks rotate with silence windows. Fixed zone tracks such as Gyms, Poké Centers, Poké Marts, Battle Tower floors, exact Cobbleverse structures, and vanilla/BCA structure pools loop while their zone owns the audio slot. Game Corner and Casino zones are the exception and advance through their shuffled 15-track playlist instead of looping one track.
+Regional biome tracks rotate with silence windows. Fixed zone tracks such as Gyms, Poké Centers, Poké Marts, Battle Tower floors, exact Cobbleverse structures, and non-village vanilla/BCA structure pools loop while their zone owns the audio slot. Village pools are one-shot sessions: the chosen track finishes, waits 5–60 seconds, then replays the same track until the player leaves; entering again prefers a different selection. Game Corner and Casino zones advance through their shuffled 15-track playlist instead of looping one track. Setting either CobbleTunes music volume or Minecraft's Music slider to 0% suspends playback and ambience timers; once both volume controls are above zero again, the latest valid context resumes immediately without carrying over silence or village cooldowns.
 
 ### Kanto ambience
 
@@ -559,6 +564,8 @@ Regional biome tracks rotate with silence windows. Fixed zone tracks such as Gym
 | `ambience.pokemart.mart1` | `ambience/pokemart/mart1.ogg` | pokemart zone pool |
 
 ### Exact Cobbleverse structures
+
+The detector recognizes all 71 registered structures in the supplied Cobbleverse main, Johto, Hoenn, and Sinnoh datapacks. Gym and League structures reuse their regional Gym ambience, while the exact structures below use dedicated events where available. Current nested legendary/mythical registry paths are normalized to these existing zone IDs, so no duplicate sound events are required.
 
 | Key | File | Usage |
 |---|---|---|
@@ -708,6 +715,27 @@ Regional biome tracks rotate with silence windows. Fixed zone tracks such as Gym
 | `ambience.vanilla.ancient_city.dragonspiral_tower` | `ambience/vanilla/ancient_city/dragonspiral_tower.ogg` | ancient city structure pool |
 | `ambience.vanilla.ancient_city.distortion_world` | `ambience/vanilla/ancient_city/distortion_world.ogg` | ancient city structure pool |
 | `ambience.vanilla.ancient_city.cerulean_cave` | `ambience/vanilla/ancient_city/cerulean_cave.ogg` | ancient city structure pool |
+
+### Terralith structure reuse mappings
+
+Terralith adds no CobbleTunes sound keys. The detector maps all 26 structures referenced by the supplied Terralith structure sets to existing pools. `terralith:underground/witch_hut` and `terralith:underground_cabin` exist as structure definitions in the datapack but are not referenced by those structure sets, so they are not included in the generated-structure mapping.
+
+| Terralith structure family | Reused CobbleTunes pool |
+|---|---|
+| `desert_outpost` | `pillager_outpost` |
+| `fortified_desert_village` | `village_desert` |
+| `fortified_village` | `bca_village_large` |
+| `glacial_hut`, `igloo` | `igloo` |
+| `mage_complex`, `mage_tower`, `mage_tower_autumn`, `mage_tower_spring`, `mage_tower_summer`, `mage_tower_winter` | `mansion` |
+| `rubble_desert`, `rubble_forest`, `rubble_jungle`, `rubble_mesa`, `rubble_mountain`, `rubble_taiga` | `trail_ruins` |
+| `spire` | `end_city` |
+| `underground/frosted_dungeon` | `stronghold` |
+| `underground/giant_bee_hive` | `jungle_pyramid` |
+| `underground/mining_outpost` | `mineshaft` |
+| `underground/oak_cabin`, `valley_lodge` | `village_taiga` |
+| `underground/old_refinery` | `mineshaft_mesa` |
+| `underground/sunken_tower` | `ocean_ruin` |
+| `witch_hut` | `swamp_hut` |
 
 ### Repurposed Structures reuse mappings
 

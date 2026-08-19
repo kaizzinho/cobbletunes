@@ -4,6 +4,7 @@ import com.kaizzinho.cobbletunes.LOGGER
 import com.kaizzinho.cobbletunes.MOD_ID
 import com.kaizzinho.cobbletunes.client.config.CobbleTunesClientConfig
 import net.minecraft.client.MinecraftClient
+import net.minecraft.sound.SoundCategory
 
 class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
 
@@ -15,6 +16,7 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
 
     private var currentContext: MusicContext = MusicContext.AMBIENCE
     private var currentTrackId: String? = null
+    private var currentTrack: MusicTrack? = null
     private var currentSound: FadingSoundInstance? = null
     private var currentAmbienceTrack: MusicTrack? = null
     private var currentBiomeId: String? = null
@@ -22,6 +24,9 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
     // zone state stays separate from playback
     private var activeZoneContext: MusicContext? = null
     private var activeZoneTrack: MusicTrack? = null
+    private var villageCooldownEndsAtMillis: Long? = null
+
+    private var volumeSuspended = false
 
     // latest biome target survives battle and victory
     private var overrideBiomeId: String? = null
@@ -41,6 +46,9 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
 
     private var debounceBiomeId: String? = null
     private var debounceEndsAtMillis: Long? = null
+
+    private val VILLAGE_COOLDOWN_MIN_SECONDS = 5f
+    private val VILLAGE_COOLDOWN_MAX_SECONDS = 60f
 
 
     fun playBattleContext(
@@ -113,6 +121,12 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
         play(routedContext, track)
     }
 
+    fun playExactTrainerBattle(track: MusicTrack) {
+        if (!config.replaceBattleMusic) return
+        debugLog("[Special trainer] Playing exact track: ${track.id}")
+        play(MusicContext.TRAINER_BATTLE, track)
+    }
+
     fun playBossBattle(
         tierName: String,
         opposingDexNumbers: List<Int>,
@@ -166,6 +180,9 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
         if (zoneContext != null && zoneTrack != null) {
             overrideBiomeId = null
             overrideBiomeTrack = null
+            if (zoneContext == MusicContext.VILLAGE_STRUCTURE) {
+                villageCooldownEndsAtMillis = null
+            }
             debugLog("[Battle end resume] Restoring active zone: ${zoneTrack.id} ($zoneContext)")
             play(zoneContext, zoneTrack, force = true)
             return
@@ -216,7 +233,10 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
     }
 
     fun handlePlayerDeath() {
-        debugLog("[Death] Stopping battle music, 30s silence before biome re-detect")
+        debugLog(
+            if (isMusicMutedNow()) "[Death] Music muted so respawn silence is skipped"
+            else "[Death] Stopping battle music 30s silence before biome re-detect"
+        )
         stopCurrent()
         currentContext = MusicContext.AMBIENCE
 
@@ -225,6 +245,7 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
         currentAmbienceTrack = null
         activeZoneContext = null
         activeZoneTrack = null
+        villageCooldownEndsAtMillis = null
         resetGameCornerQueue()
         lastGameCornerTrackId = null
         overrideBiomeId = null
@@ -237,13 +258,37 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
 
         pendingBiomeId = null
         pendingTrack = null
-        pendingSilenceEndsAtMillis = System.currentTimeMillis() + 30_000L
+        pendingSilenceEndsAtMillis = if (isMusicMutedNow()) {
+            null
+        } else {
+            System.currentTimeMillis() + 30_000L
+        }
     }
 
     fun beginWorldJoinSilence() {
         stopCurrent()
         ambienceSegmentStartedAtMillis = null
         worldJoinReadyTicks = 0
+
+        if (isMusicMutedNow()) {
+            pendingSilenceEndsAtMillis = null
+            pendingBiomeId = null
+            pendingTrack = null
+            debounceBiomeId = null
+            debounceEndsAtMillis = null
+            currentBiomeId = null
+            currentAmbienceTrack = null
+            activeZoneContext = null
+            activeZoneTrack = null
+            villageCooldownEndsAtMillis = null
+            resetGameCornerQueue()
+            lastGameCornerTrackId = null
+            overrideBiomeId = null
+            overrideBiomeTrack = null
+            currentContext = MusicContext.AMBIENCE
+            debugLog("[World join] Music muted so startup silence is skipped")
+            return
+        }
 
         pendingSilenceEndsAtMillis = System.currentTimeMillis() +
                 (config.worldJoinSilenceSeconds * 1000).toLong()
@@ -259,6 +304,21 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
 
     fun updateAmbienceBiome(biomeId: String) {
         if (!config.replaceAmbience) return
+
+        if (isMusicMutedNow() && !isWorldOverrideContext(currentContext) && activeZoneContext == null) {
+            val track = resolveTrackForBiome(biomeId) ?: return
+            currentBiomeId = biomeId
+            currentAmbienceTrack = track
+            pendingSilenceEndsAtMillis = null
+            pendingBiomeId = null
+            pendingTrack = null
+            debounceBiomeId = null
+            debounceEndsAtMillis = null
+            currentContext = MusicContext.AMBIENCE
+            currentTrack = track
+            currentTrackId = track.id
+            return
+        }
 
         // battle victory blocks playback not detection
         if (isWorldOverrideContext(currentContext)) {
@@ -312,7 +372,17 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
     }
 
     fun tick() {
-        if (currentContext != MusicContext.GAME_CORNER) return
+        syncVolumeSuspension()
+        if (volumeSuspended) return
+
+        when (currentContext) {
+            MusicContext.GAME_CORNER -> tickGameCorner()
+            MusicContext.VILLAGE_STRUCTURE -> tickVillageStructure()
+            else -> Unit
+        }
+    }
+
+    private fun tickGameCorner() {
         if (activeZoneContext != MusicContext.GAME_CORNER) return
 
         val sound = currentSound ?: return
@@ -329,6 +399,36 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
             fadeInSeconds = 0.15f,
             fadeOutSeconds = 0f
         )
+    }
+
+    private fun tickVillageStructure() {
+        if (activeZoneContext != MusicContext.VILLAGE_STRUCTURE) return
+        val track = activeZoneTrack ?: return
+        val now = System.currentTimeMillis()
+
+        val cooldownEnds = villageCooldownEndsAtMillis
+        if (cooldownEnds != null) {
+            if (now < cooldownEnds) return
+            villageCooldownEndsAtMillis = null
+            debugLog("[Village] Cooldown ended replaying ${track.id}")
+            play(
+                context = MusicContext.VILLAGE_STRUCTURE,
+                track = track,
+                force = true,
+                fadeInSeconds = 0.15f,
+                fadeOutSeconds = 0f
+            )
+            return
+        }
+
+        if (now - currentSoundStartedAtMillis < 1_000L) return
+        val sound = currentSound
+        if (sound != null && MinecraftClient.getInstance().soundManager.isPlaying(sound)) return
+
+        stopPhysicalSound(0f)
+        val seconds = randomSecondsInRange(VILLAGE_COOLDOWN_MIN_SECONDS, VILLAGE_COOLDOWN_MAX_SECONDS)
+        villageCooldownEndsAtMillis = now + (seconds * 1000).toLong()
+        debugLog("[Village] Track finished waiting ${seconds.toInt()}s before replay")
     }
 
     private fun nextGameCornerTrack(): MusicTrack? {
@@ -361,6 +461,7 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
         if (activeZoneContext == MusicContext.GAME_CORNER && context != MusicContext.GAME_CORNER) {
             resetGameCornerQueue()
         }
+        villageCooldownEndsAtMillis = null
         activeZoneContext = context
         activeZoneTrack = track
         pendingSilenceEndsAtMillis = null; pendingBiomeId = null; pendingTrack = null
@@ -376,10 +477,31 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
         play(context, track)
     }
 
+    fun playVillageAmbience(track: MusicTrack) {
+        if (!config.replaceAmbience) return
+
+        if (activeZoneContext == MusicContext.GAME_CORNER) resetGameCornerQueue()
+        val oneShotTrack = track.copy(loop = false)
+        activeZoneContext = MusicContext.VILLAGE_STRUCTURE
+        activeZoneTrack = oneShotTrack
+        villageCooldownEndsAtMillis = null
+        pendingSilenceEndsAtMillis = null; pendingBiomeId = null; pendingTrack = null
+        debounceBiomeId = null; debounceEndsAtMillis = null
+
+        if (isWorldOverrideContext(currentContext)) {
+            debugLog("[Village update during override] Remembering: ${oneShotTrack.id}")
+            return
+        }
+
+        debugLog("[Village enter] Playing once: ${oneShotTrack.id}")
+        play(MusicContext.VILLAGE_STRUCTURE, oneShotTrack)
+    }
+
     fun clearZone(currentBiomeId: String?) {
         if (activeZoneContext == MusicContext.GAME_CORNER) resetGameCornerQueue()
         activeZoneContext = null
         activeZoneTrack = null
+        villageCooldownEndsAtMillis = null
         if (!config.replaceAmbience) return
 
         // zone exits survive battle and victory
@@ -387,6 +509,23 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
             debugLog("[Zone exit during override] Cleared active zone; override music continues")
             return
         }
+
+        if (isMusicMutedNow()) {
+            stopCurrent(0f)
+            currentContext = MusicContext.AMBIENCE
+            pendingSilenceEndsAtMillis = null
+            pendingTrack = null
+            pendingBiomeId = null
+            debounceBiomeId = null
+            debounceEndsAtMillis = null
+            this.currentBiomeId = currentBiomeId
+            this.currentAmbienceTrack = currentBiomeId?.let(::resolveTrackForBiome)
+            currentTrack = currentAmbienceTrack
+            currentTrackId = currentAmbienceTrack?.id
+            debugLog("[Zone exit] Music muted so biome resume is armed without debounce")
+            return
+        }
+
         // stop current is needed on zone exit
         stopCurrent()
         currentContext = MusicContext.AMBIENCE
@@ -575,6 +714,86 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
     private fun isWorldOverrideContext(context: MusicContext): Boolean =
         isBattleContext(context) || context == MusicContext.VICTORY
 
+    fun isVolumeSuspended(): Boolean = isMusicMutedNow()
+
+    private fun isMusicMutedNow(): Boolean {
+        val minecraftMusicVolume = MinecraftClient.getInstance()
+            .options
+            .getSoundVolumeOption(SoundCategory.MUSIC)
+            .value
+            .toFloat()
+        return config.musicVolume <= 0.0001f || minecraftMusicVolume <= 0.0001f
+    }
+
+    private fun syncVolumeSuspension() {
+        val muted = isMusicMutedNow()
+        if (muted == volumeSuspended) return
+        volumeSuspended = muted
+
+        if (muted) {
+            stopPhysicalSound(0f)
+            pendingSilenceEndsAtMillis = null
+            pendingBiomeId = null
+            pendingTrack = null
+            debounceBiomeId = null
+            debounceEndsAtMillis = null
+            villageCooldownEndsAtMillis = null
+            trackBudgetStartMillis.clear()
+            trackBudgetDurationMillis.clear()
+            debugLog("[Volume] Music suspended at zero volume")
+            return
+        }
+
+        debugLog("[Volume] Music restored resuming current context immediately")
+        resumeImmediatelyAfterVolume()
+    }
+
+    private fun resumeImmediatelyAfterVolume() {
+        if (MinecraftClient.getInstance().world == null) {
+            if (currentContext == MusicContext.MENU && config.replaceMenuMusic) {
+                currentTrack?.let {
+                    play(MusicContext.MENU, it, force = true, fadeInSeconds = 0.15f, fadeOutSeconds = 0f)
+                }
+            }
+            return
+        }
+
+        if (isWorldOverrideContext(currentContext)) {
+            val track = currentTrack
+            if (track != null) {
+                play(currentContext, track, force = true, fadeInSeconds = 0.15f, fadeOutSeconds = 0f)
+                return
+            }
+        }
+
+        val zoneContext = activeZoneContext
+        val zoneTrack = activeZoneTrack
+        if (config.replaceAmbience && zoneContext != null && zoneTrack != null) {
+            villageCooldownEndsAtMillis = null
+            play(zoneContext, zoneTrack, force = true, fadeInSeconds = 0.15f, fadeOutSeconds = 0f)
+            return
+        }
+
+        if (config.replaceAmbience) {
+            val track = currentAmbienceTrack ?: overrideBiomeTrack
+            if (track != null) {
+                overrideBiomeId = null
+                overrideBiomeTrack = null
+                pendingSilenceEndsAtMillis = null
+                pendingBiomeId = null
+                pendingTrack = null
+                debounceBiomeId = null
+                debounceEndsAtMillis = null
+                val budgetMillis = randomRotationBudgetMillis()
+                trackBudgetStartMillis[track.id] = System.currentTimeMillis()
+                trackBudgetDurationMillis[track.id] = budgetMillis
+                play(MusicContext.AMBIENCE, track, force = true, fadeInSeconds = 0.15f, fadeOutSeconds = 0f)
+                return
+            }
+        }
+
+    }
+
     private fun pickFrom(candidates: List<MusicTrack>): MusicTrack? =
         if (config.shuffleAmbienceTracks) candidates.randomOrNull() else candidates.firstOrNull()
 
@@ -585,19 +804,27 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
         fadeInSeconds: Float = config.crossfadeSeconds,
         fadeOutSeconds: Float = config.crossfadeSeconds
     ) {
-        if (!force && context == currentContext && track.id == currentTrackId) return
+        val mc = MinecraftClient.getInstance()
+        val sameTrackAudible = currentSound?.let(mc.soundManager::isPlaying) == true
+        if (!force && context == currentContext && track.id == currentTrackId && sameTrackAudible) return
 
         if (currentContext == MusicContext.AMBIENCE) ambienceSegmentStartedAtMillis = null
 
-        stopCurrent(fadeOutSeconds)
-        val instance = FadingSoundInstance(
-            soundEvent = track.soundEvent,
-            targetVolume = config.musicVolume,
-            fadeInSeconds = fadeInSeconds,
-            looping = track.loop
-        )
+        stopPhysicalSound(fadeOutSeconds)
+        currentContext = context
+        currentTrack = track
+        currentTrackId = track.id
+        currentSoundStartedAtMillis = System.currentTimeMillis()
+
+        if (context == MusicContext.AMBIENCE) {
+            ambienceSegmentStartedAtMillis = System.currentTimeMillis()
+        }
+
+        if (isMusicMutedNow()) {
+            return
+        }
+
         // missing oggs stay silent
-        val mc = MinecraftClient.getInstance()
         if (mc.soundManager.getKeys().none {
                 it.toString() == track.soundEvent.id.toString()
             }) {
@@ -605,22 +832,25 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
             return
         }
 
-
-        MinecraftClient.getInstance().soundManager.play(instance)
+        val instance = FadingSoundInstance(
+            soundEvent = track.soundEvent,
+            targetVolume = config.musicVolume,
+            fadeInSeconds = fadeInSeconds,
+            looping = track.loop
+        )
+        mc.soundManager.play(instance)
         currentSound = instance
-        currentTrackId = track.id
-        currentContext = context
-        currentSoundStartedAtMillis = System.currentTimeMillis()
-
-        if (context == MusicContext.AMBIENCE) {
-            ambienceSegmentStartedAtMillis = System.currentTimeMillis()
-        }
     }
 
-    private fun stopCurrent(fadeOutSeconds: Float = config.crossfadeSeconds) {
+    private fun stopPhysicalSound(fadeOutSeconds: Float = config.crossfadeSeconds) {
         val sound = currentSound ?: return
         sound.beginFadeOut(fadeOutSeconds)
         currentSound = null
+    }
+
+    private fun stopCurrent(fadeOutSeconds: Float = config.crossfadeSeconds) {
+        stopPhysicalSound(fadeOutSeconds)
+        currentTrack = null
         currentTrackId = null
     }
 
@@ -629,6 +859,7 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
         currentContext = MusicContext.AMBIENCE
         activeZoneContext = null
         activeZoneTrack = null
+        villageCooldownEndsAtMillis = null
         resetGameCornerQueue()
         lastGameCornerTrackId = null
         overrideBiomeId = null

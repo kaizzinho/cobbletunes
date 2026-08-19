@@ -14,6 +14,7 @@ import com.kaizzinho.cobbletunes.network.BattleMusicEndPayload
 import com.kaizzinho.cobbletunes.network.BattleMusicStartPayload
 import com.kaizzinho.cobbletunes.network.BattleVictoryPayload
 import com.kaizzinho.cobbletunes.network.PlayerDeathPayload
+import com.kaizzinho.cobbletunes.network.PokemonCapturedPayload
 import com.kaizzinho.cobbletunes.network.StructureZonePayload
 import net.fabricmc.api.ClientModInitializer
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents
@@ -36,6 +37,18 @@ class CobbleTunesClient : ClientModInitializer {
 
         private const val AMBIENCE_CHECK_INTERVAL_TICKS = 20
         private const val VICTORY_LOOT_WAIT_MILLIS = 3_000L
+        private const val CAPTURE_VICTORY_MILLIS = 3_000L
+
+        private val VILLAGE_STRUCTURE_CATEGORIES = setOf(
+            "bca_village_large",
+            "bca_village_mid",
+            "bca_village_small",
+            "village_desert",
+            "village_plains",
+            "village_savanna",
+            "village_snowy",
+            "village_taiga"
+        )
 
         fun applyConfig(updated: CobbleTunesClientConfig): Boolean {
             if (!updated.save()) return false
@@ -103,6 +116,9 @@ class CobbleTunesClient : ClientModInitializer {
     private var pendingLootVictory: PendingLootVictory? = null
     private var lootVictoryActive = false
     private var lootMenuWasOpen = false
+    private var captureVictoryActive = false
+    private var captureVictoryEndsAtMillis: Long? = null
+    private val lastVillageTrackByCategory = mutableMapOf<String, String>()
 
     private var lowHpBeepsRemaining = 0
     private var lowHpBeepCooldownTicks = 0
@@ -125,6 +141,7 @@ class CobbleTunesClient : ClientModInitializer {
         registerDeathScreenWatcher()
         registerMenuMusicWatcher()
         registerLootMenuVictoryWatcher()
+        registerCaptureVictoryWatcher()
         registerLowHpWatcher()
 
         LOGGER.info("[$MOD_ID] Client init complete.")
@@ -152,6 +169,23 @@ class CobbleTunesClient : ClientModInitializer {
                         opposingRegionalVariants = payload.opposingRegionalVariants
                     )
                     return@execute
+                }
+
+                val specialRoute = parseSpecialTrainerRoute(routeHead)
+                if (specialRoute != null) {
+                    val track = TrackRegistry.trackById(specialRoute.trackId)
+                    if (track != null) {
+                        debugLog(
+                            "[Special trainer route] raw='${payload.trainerTier}' " +
+                                "track='${specialRoute.trackId}' role='${specialRoute.roleId}' " +
+                                "region='${routeValue.ifBlank { "unknown" }}'"
+                        )
+                        musicPlayer.playExactTrainerBattle(track)
+                        return@execute
+                    }
+                    debugLog(
+                        "[Special trainer route] Missing track '${specialRoute.trackId}' using normal trainer fallback"
+                    )
                 }
 
                 val factionTheme = routeHead
@@ -204,6 +238,10 @@ class CobbleTunesClient : ClientModInitializer {
 
         ClientPlayNetworking.registerGlobalReceiver(BattleMusicEndPayload.ID) { _, context ->
             context.client().execute {
+                if (captureVictoryActive) {
+                    debugLog("[Capture victory] Ignoring battle end while capture theme is active")
+                    return@execute
+                }
                 clearVictoryState(finishMusic = false)
                 musicPlayer.playAmbience()
             }
@@ -241,6 +279,38 @@ class CobbleTunesClient : ClientModInitializer {
                 if (!lootVictoryActive) {
                     musicPlayer.playAmbience()
                 }
+            }
+        }
+
+        ClientPlayNetworking.registerGlobalReceiver(PokemonCapturedPayload.ID) { payload, context ->
+            context.client().execute {
+                clearVictoryState(finishMusic = false)
+
+                if (!config.replaceBattleMusic) {
+                    musicPlayer.playAmbience()
+                    return@execute
+                }
+
+                val region = RegionOfOrigin.fromRegionalVariant(payload.regionalVariant)
+                    ?: RegionOfOrigin.fromDexNumber(payload.dexNumber)
+                val request = region?.let { VictoryRequest(it, VictoryKind.WILD) }
+                val track = request?.let(TrackRegistry::victoryTrackFor)
+
+                if (track == null) {
+                    debugLog(
+                        "[Capture victory] No theme for dex=${payload.dexNumber} " +
+                            "regional='${payload.regionalVariant.ifEmpty { "standard" }}'"
+                    )
+                    musicPlayer.playAmbience()
+                    return@execute
+                }
+
+                captureVictoryActive = true
+                captureVictoryEndsAtMillis = System.currentTimeMillis() + CAPTURE_VICTORY_MILLIS
+                musicPlayer.playVictoryTheme(track)
+                debugLog(
+                    "[Capture victory] Playing ${track.id} for ${CAPTURE_VICTORY_MILLIS / 1000}s"
+                )
             }
         }
 
@@ -315,9 +385,17 @@ class CobbleTunesClient : ClientModInitializer {
                 // vanilla bca structures use pools
                 if (payload.zoneId.startsWith("cobbletunes:vanilla_structure:")) {
                     val category = payload.zoneId.removePrefix("cobbletunes:vanilla_structure:")
-                    val vanillaTrack = TrackRegistry.vanillaStructureTrackFor(category)
+                    val vanillaTrack = if (category in VILLAGE_STRUCTURE_CATEGORIES) {
+                        pickVillageStructureTrack(category)
+                    } else {
+                        TrackRegistry.vanillaStructureTrackFor(category)
+                    }
                     if (vanillaTrack != null) {
-                        musicPlayer.playZoneAmbience(MusicContext.VANILLA_STRUCTURE, vanillaTrack)
+                        if (category in VILLAGE_STRUCTURE_CATEGORIES) {
+                            musicPlayer.playVillageAmbience(vanillaTrack)
+                        } else {
+                            musicPlayer.playZoneAmbience(MusicContext.VANILLA_STRUCTURE, vanillaTrack)
+                        }
                     } else {
                         LOGGER.warn("[$MOD_ID] No tracks registered for vanilla structure category '$category'")
                     }
@@ -453,6 +531,32 @@ class CobbleTunesClient : ClientModInitializer {
         }
     }
 
+    private fun registerCaptureVictoryWatcher() {
+        ClientTickEvents.END_CLIENT_TICK.register { _ ->
+            if (!captureVictoryActive) return@register
+            val endsAt = captureVictoryEndsAtMillis ?: return@register
+            if (System.currentTimeMillis() < endsAt) return@register
+
+            captureVictoryActive = false
+            captureVictoryEndsAtMillis = null
+            debugLog("[Capture victory] Brief theme ended resuming current world music")
+            musicPlayer.finishVictoryTheme()
+        }
+    }
+
+    private fun pickVillageStructureTrack(category: String): com.kaizzinho.cobbletunes.client.sound.MusicTrack? {
+        val pool = TrackRegistry.structureTracksFor(category)
+        if (pool.isEmpty()) return null
+
+        val lastTrackId = lastVillageTrackByCategory[category]
+        val candidates = if (pool.size > 1) {
+            pool.filter { it.id != lastTrackId }.ifEmpty { pool }
+        } else {
+            pool
+        }
+        return candidates.randomOrNull()?.also { lastVillageTrackByCategory[category] = it.id }
+    }
+
     private fun buildVictoryRequest(
         payload: BattleMusicStartPayload,
         routeHead: String,
@@ -480,17 +584,31 @@ class CobbleTunesClient : ClientModInitializer {
             ?.substringAfter("faction:")
             ?.takeIf { it.isNotBlank() }
 
+        val specialRole = parseSpecialTrainerRoute(routeHead)?.roleId
         val kind = when {
             factionTheme != null -> VictoryKind.FACTION
-            routeHead == "leader" -> VictoryKind.GYM_LEADER
-            routeHead == "e4" -> VictoryKind.ELITE_FOUR
-            routeHead == "champ" -> VictoryKind.CHAMPION
-            routeHead == "rival" -> VictoryKind.RIVAL
-            routeHead == "frontier" -> VictoryKind.FRONTIER_BRAIN
+            specialRole == "leader" || routeHead == "leader" -> VictoryKind.GYM_LEADER
+            specialRole == "e4" || routeHead == "e4" -> VictoryKind.ELITE_FOUR
+            specialRole == "champ" || routeHead == "champ" -> VictoryKind.CHAMPION
+            specialRole == "rival" || routeHead == "rival" -> VictoryKind.RIVAL
+            specialRole == "frontier" || routeHead == "frontier" -> VictoryKind.FRONTIER_BRAIN
             else -> VictoryKind.TRAINER
         }
 
         return VictoryRequest(region, kind, factionTheme)
+    }
+
+    private data class SpecialTrainerRoute(
+        val trackId: String,
+        val roleId: String
+    )
+
+    private fun parseSpecialTrainerRoute(routeHead: String): SpecialTrainerRoute? {
+        if (!routeHead.startsWith("special:")) return null
+        val parts = routeHead.removePrefix("special:").split(':', limit = 2)
+        val trackId = parts.firstOrNull()?.takeIf { it.isNotBlank() } ?: return null
+        val roleId = parts.getOrNull(1).orEmpty()
+        return SpecialTrainerRoute(trackId, roleId)
     }
 
     private fun parseRegion(value: String): RegionOfOrigin? =
@@ -499,11 +617,13 @@ class CobbleTunesClient : ClientModInitializer {
         }
 
     private fun clearVictoryState(finishMusic: Boolean) {
-        if (finishMusic && lootVictoryActive) musicPlayer.finishVictoryTheme()
+        if (finishMusic && (lootVictoryActive || captureVictoryActive)) musicPlayer.finishVictoryTheme()
         lastBattleVictoryRequest = null
         pendingLootVictory = null
         lootVictoryActive = false
         lootMenuWasOpen = false
+        captureVictoryActive = false
+        captureVictoryEndsAtMillis = null
     }
 
     private fun registerDeathScreenWatcher() {
@@ -530,6 +650,12 @@ class CobbleTunesClient : ClientModInitializer {
 
     private fun registerLowHpWatcher() {
         ClientTickEvents.END_CLIENT_TICK.register { client ->
+            if (musicPlayer.isVolumeSuspended()) {
+                lowHpBeepsRemaining = 0
+                lowHpBeepCooldownTicks = 0
+                return@register
+            }
+
             if (lowHpBeepsRemaining > 0) {
                 if (lowHpBeepCooldownTicks > 0) {
                     lowHpBeepCooldownTicks--

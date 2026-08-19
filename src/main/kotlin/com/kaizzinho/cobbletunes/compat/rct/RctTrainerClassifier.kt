@@ -54,7 +54,8 @@ data class TrainerOverride(
     val region: String? = null,
     val faction: TrainerFaction? = null,
     val factionRank: FactionRank? = null,
-    val factionTheme: String? = null
+    val factionTheme: String? = null,
+    val battleTrackId: String? = null
 )
 
 data class TrainerClassification(
@@ -66,9 +67,15 @@ data class TrainerClassification(
     val source: TrainerDetectionSource,
     val faction: TrainerFaction? = null,
     val factionRank: FactionRank? = null,
-    val factionTheme: String? = null
+    val factionTheme: String? = null,
+    val battleTrackId: String? = null
 ) {
     fun route(): String {
+        battleTrackId?.takeIf { it.isNotBlank() }?.let { trackId ->
+            val route = "special:$trackId:${role.routeId}"
+            return region?.let { "$route|$it" } ?: route
+        }
+
         factionTheme?.let { theme ->
             val route = "faction:$theme"
             return region?.let { "$route|$it" } ?: route
@@ -99,6 +106,7 @@ object RctTrainerClassifier {
         val trainerId = normalize(raw.trainerId)
         val typeId = normalize(raw.typeId)
         val override = exactOverrides[trainerId]
+            ?: trainerId.removePrefix("rctmod_").takeIf { it != trainerId }?.let(exactOverrides::get)
 
         if (override != null) {
             return result(
@@ -108,7 +116,8 @@ object RctTrainerClassifier {
                 source = TrainerDetectionSource.EXACT_OVERRIDE,
                 faction = override.faction,
                 factionRank = override.factionRank,
-                factionTheme = override.factionTheme
+                factionTheme = override.factionTheme,
+                battleTrackId = override.battleTrackId
             )
         }
 
@@ -472,7 +481,8 @@ object RctTrainerClassifier {
         source: TrainerDetectionSource,
         faction: TrainerFaction? = null,
         factionRank: FactionRank? = null,
-        factionTheme: String? = null
+        factionTheme: String? = null,
+        battleTrackId: String? = null
     ) = TrainerClassification(
         role = role,
         region = region,
@@ -482,7 +492,8 @@ object RctTrainerClassifier {
         source = source,
         faction = faction,
         factionRank = factionRank,
-        factionTheme = factionTheme
+        factionTheme = factionTheme,
+        battleTrackId = battleTrackId
     )
 
     private fun regionFrom(value: String): String? =

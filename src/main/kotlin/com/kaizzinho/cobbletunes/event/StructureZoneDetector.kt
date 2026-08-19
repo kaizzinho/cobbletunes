@@ -79,23 +79,34 @@ object StructureZoneDetector {
 
         Identifier.of("cobbleverse", "ash")            to "cobbleverse:ash",
         Identifier.of("cobbleverse", "crown_cemetery") to "cobbleverse:crown_cemetery",
-        Identifier.of("cobbleverse", "articuno")       to "cobbleverse:articuno",
-        Identifier.of("cobbleverse", "zapdos")         to "cobbleverse:zapdos",
-        Identifier.of("cobbleverse", "moltres")        to "cobbleverse:moltres",
-        Identifier.of("cobbleverse", "mew")            to "cobbleverse:mew",
+        Identifier.of("cobbleverse", "legendary/articuno") to "cobbleverse:articuno",
+        Identifier.of("cobbleverse", "articuno")           to "cobbleverse:articuno",
+        Identifier.of("cobbleverse", "legendary/zapdos")   to "cobbleverse:zapdos",
+        Identifier.of("cobbleverse", "zapdos")             to "cobbleverse:zapdos",
+        Identifier.of("cobbleverse", "legendary/moltres")  to "cobbleverse:moltres",
+        Identifier.of("cobbleverse", "moltres")            to "cobbleverse:moltres",
+        Identifier.of("cobbleverse", "mythical/mew")       to "cobbleverse:mew",
+        Identifier.of("cobbleverse", "mew")                to "cobbleverse:mew",
 
         Identifier.of("cobbleverse", "bell_tower")     to "cobbleverse:bell_tower",
         Identifier.of("cobbleverse", "burned_tower")   to "cobbleverse:burned_tower",
         Identifier.of("cobbleverse", "celebi_shrine")  to "cobbleverse:celebi_shrine",
         Identifier.of("cobbleverse", "whirl_island")   to "cobbleverse:whirl_island",
 
-        Identifier.of("cobbleverse", "groudon")        to "cobbleverse:groudon",
-        Identifier.of("cobbleverse", "kyogre")         to "cobbleverse:kyogre",
-        Identifier.of("cobbleverse", "regirock")       to "cobbleverse:regirock",
-        Identifier.of("cobbleverse", "regice")         to "cobbleverse:regice",
-        Identifier.of("cobbleverse", "registeel")      to "cobbleverse:registeel",
-        Identifier.of("cobbleverse", "deoxys")         to "cobbleverse:deoxys",
-        Identifier.of("cobbleverse", "jirachi")        to "cobbleverse:jirachi",
+        Identifier.of("cobbleverse", "legendary/groudon")  to "cobbleverse:groudon",
+        Identifier.of("cobbleverse", "groudon")            to "cobbleverse:groudon",
+        Identifier.of("cobbleverse", "legendary/kyogre")   to "cobbleverse:kyogre",
+        Identifier.of("cobbleverse", "kyogre")             to "cobbleverse:kyogre",
+        Identifier.of("cobbleverse", "legendary/regirock") to "cobbleverse:regirock",
+        Identifier.of("cobbleverse", "regirock")           to "cobbleverse:regirock",
+        Identifier.of("cobbleverse", "legendary/regice")   to "cobbleverse:regice",
+        Identifier.of("cobbleverse", "regice")             to "cobbleverse:regice",
+        Identifier.of("cobbleverse", "legendary/registeel") to "cobbleverse:registeel",
+        Identifier.of("cobbleverse", "registeel")           to "cobbleverse:registeel",
+        Identifier.of("cobbleverse", "mythical/deoxys")   to "cobbleverse:deoxys",
+        Identifier.of("cobbleverse", "deoxys")            to "cobbleverse:deoxys",
+        Identifier.of("cobbleverse", "mythical/jirachi")  to "cobbleverse:jirachi",
+        Identifier.of("cobbleverse", "jirachi")           to "cobbleverse:jirachi",
         Identifier.of("cobbleverse", "secret_garden")  to "cobbleverse:secret_garden",
         Identifier.of("cobbleverse", "sky_pillar")     to "cobbleverse:sky_pillar",
         Identifier.of("cobbleverse", "dyna_tree")      to "cobbleverse:dyna_tree",
@@ -108,6 +119,7 @@ object StructureZoneDetector {
         Identifier.of("cobbleverse", "crescent_isle")        to "cobbleverse:crescent_isle",
         Identifier.of("cobbleverse", "eterna_building")      to "cobbleverse:eterna_building",
         Identifier.of("cobbleverse", "wind_plant")           to "cobbleverse:wind_plant",
+        Identifier.of("cobbleverse", "mythical/manaphy")     to "cobbleverse:manaphy",
         Identifier.of("cobbleverse", "manaphy")              to "cobbleverse:manaphy",
     )
 
@@ -150,6 +162,57 @@ object StructureZoneDetector {
         Identifier.of("bca", "village/small") to "cobbletunes:vanilla_structure:bca_village_small",
         Identifier.of("bca", "village/mid")   to "cobbletunes:vanilla_structure:bca_village_mid",
         Identifier.of("bca", "village/large") to "cobbletunes:vanilla_structure:bca_village_large",
+        Identifier.of("bca", "village/dark_small")     to "cobbletunes:vanilla_structure:bca_village_small",
+        Identifier.of("bca", "village/default_small")  to "cobbletunes:vanilla_structure:bca_village_small",
+        Identifier.of("bca", "village/fighting_small") to "cobbletunes:vanilla_structure:bca_village_small",
+        Identifier.of("bca", "village/dark_mid")       to "cobbletunes:vanilla_structure:bca_village_mid",
+        Identifier.of("bca", "village/default_mid")    to "cobbletunes:vanilla_structure:bca_village_mid",
+        Identifier.of("bca", "village/fighting_mid")   to "cobbletunes:vanilla_structure:bca_village_mid",
+        Identifier.of("bca", "village/default_large")  to "cobbletunes:vanilla_structure:bca_village_large",
+        Identifier.of("bca", "village/fighting_large") to "cobbletunes:vanilla_structure:bca_village_large",
+        Identifier.of("bca", "village/witch_hut")      to "cobbletunes:vanilla_structure:swamp_hut",
+    )
+
+    // terralith datapack structures reuse existing pools
+    private val TERRALITH_STRUCTURES: Map<Identifier, String> = mapOf(
+        Identifier.of("terralith", "desert_outpost")                 to "cobbletunes:vanilla_structure:pillager_outpost",
+        Identifier.of("terralith", "fortified_desert_village")     to "cobbletunes:vanilla_structure:village_desert",
+        Identifier.of("terralith", "fortified_village")            to "cobbletunes:vanilla_structure:bca_village_large",
+        Identifier.of("terralith", "glacial_hut")                  to "cobbletunes:vanilla_structure:igloo",
+        Identifier.of("terralith", "igloo")                        to "cobbletunes:vanilla_structure:igloo",
+        Identifier.of("terralith", "mage_complex")                 to "cobbletunes:vanilla_structure:mansion",
+        Identifier.of("terralith", "mage_tower")                   to "cobbletunes:vanilla_structure:mansion",
+        Identifier.of("terralith", "mage_tower_autumn")            to "cobbletunes:vanilla_structure:mansion",
+        Identifier.of("terralith", "mage_tower_spring")            to "cobbletunes:vanilla_structure:mansion",
+        Identifier.of("terralith", "mage_tower_summer")            to "cobbletunes:vanilla_structure:mansion",
+        Identifier.of("terralith", "mage_tower_winter")            to "cobbletunes:vanilla_structure:mansion",
+        Identifier.of("terralith", "rubble_desert")                to "cobbletunes:vanilla_structure:trail_ruins",
+        Identifier.of("terralith", "rubble_forest")                to "cobbletunes:vanilla_structure:trail_ruins",
+        Identifier.of("terralith", "rubble_jungle")                to "cobbletunes:vanilla_structure:trail_ruins",
+        Identifier.of("terralith", "rubble_mesa")                  to "cobbletunes:vanilla_structure:trail_ruins",
+        Identifier.of("terralith", "rubble_mountain")              to "cobbletunes:vanilla_structure:trail_ruins",
+        Identifier.of("terralith", "rubble_taiga")                 to "cobbletunes:vanilla_structure:trail_ruins",
+        Identifier.of("terralith", "spire")                        to "cobbletunes:vanilla_structure:end_city",
+        Identifier.of("terralith", "underground/frosted_dungeon") to "cobbletunes:vanilla_structure:stronghold",
+        Identifier.of("terralith", "underground/giant_bee_hive")  to "cobbletunes:vanilla_structure:jungle_pyramid",
+        Identifier.of("terralith", "underground/mining_outpost")  to "cobbletunes:vanilla_structure:mineshaft",
+        Identifier.of("terralith", "underground/oak_cabin")       to "cobbletunes:vanilla_structure:village_taiga",
+        Identifier.of("terralith", "underground/old_refinery")    to "cobbletunes:vanilla_structure:mineshaft_mesa",
+        Identifier.of("terralith", "underground/sunken_tower")    to "cobbletunes:vanilla_structure:ocean_ruin",
+        Identifier.of("terralith", "valley_lodge")                 to "cobbletunes:vanilla_structure:village_taiga",
+        Identifier.of("terralith", "witch_hut")                    to "cobbletunes:vanilla_structure:swamp_hut",
+    )
+
+    private val legendaryMonumentsAvailable by lazy { FabricLoader.getInstance().isModLoaded("legendarymonuments") }
+
+    private val LEGENDARY_MONUMENT_STRUCTURES: Map<Identifier, String> = mapOf(
+        Identifier.of("legendarymonuments", "distortion_portal") to "legendarymonuments:distortion_portal",
+        Identifier.of("legendarymonuments", "giratina_island")   to "legendarymonuments:giratina_island",
+        Identifier.of("legendarymonuments", "turnback_cave")     to "legendarymonuments:turnback_cave",
+        Identifier.of("legendarymonuments", "lake_acuity")       to "legendarymonuments:lake_acuity",
+        Identifier.of("legendarymonuments", "lake_valor")        to "legendarymonuments:lake_valor",
+        Identifier.of("legendarymonuments", "lake_verity")       to "legendarymonuments:lake_verity",
+        Identifier.of("legendarymonuments", "stark_mountain")    to "legendarymonuments:stark_mountain",
     )
 
     private val repurposedStructuresAvailable by lazy { FabricLoader.getInstance().isModLoaded("repurposed_structures") }
@@ -254,6 +317,16 @@ object StructureZoneDetector {
         for ((structureId, zoneId) in VANILLA_AND_BCA_STRUCTURES) {
             val structure = structureRegistry.get(structureId) ?: continue
             structureToZone[structure] = zoneId
+        }
+        for ((structureId, zoneId) in TERRALITH_STRUCTURES) {
+            val structure = structureRegistry.get(structureId) ?: continue
+            structureToZone[structure] = zoneId
+        }
+        if (legendaryMonumentsAvailable) {
+            for ((structureId, zoneId) in LEGENDARY_MONUMENT_STRUCTURES) {
+                val structure = structureRegistry.get(structureId) ?: continue
+                structureToZone[structure] = zoneId
+            }
         }
         if (repurposedStructuresAvailable) {
             for ((structureId, zoneId) in REPURPOSED_STRUCTURES) {
