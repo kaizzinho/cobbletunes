@@ -787,9 +787,11 @@ This covers all 107 `data/repurposed_structures/worldgen/structure/*.json` entri
 
 ## Evolution music
 
-Evolution cues are client-local positional sounds. They do not enter the global CobbleTunes music slot and do not need a server packet. Suspense plays at `0.62x` the configured CobbleTunes music volume, completion at `0.78x`, both under Minecraft's Records/Jukebox slider with linear attenuation out to about 32 blocks. The watcher waits 20 ticks after `isEvolving` becomes true so suspense lines up with Cobblemon's visible animation. When `isEvolving` becomes false, any remaining suspense is stopped and the completion sting plays.
+Evolution cues are fully client-side and do not need a server packet. Visible world evolutions are positional: suspense plays at `0.62x` the configured CobbleTunes music volume and completion at `0.78x`, both under Minecraft's Records/Jukebox slider with linear attenuation out to about 32 blocks. The watcher waits 20 ticks after `isEvolving` becomes true so suspense lines up with Cobblemon's visible animation. When `isEvolving` becomes false, any remaining suspense is stopped and the completion sting plays.
 
-Alolan, Galarian, Hisuian, and Paldean forms override the base National Dex region. Alola and Galar each have two suspense variants and choose randomly between available files. If an evolution OGG is missing from the active resource packs, that cue stays silent; missing suspense also does not duck world music. Multiple nearby evolutions can play at the same time from independent positions.
+When an evolution is completed from Cobblemon's Summary UI with no matching world `PokemonEntity`, CobbleTunes detects the synchronized species change shown by the screen and plays only the regional completion cue locally at `0.78x`. This fallback has no suspense and does not duck world music. A matching world entity or active spatial evolution suppresses it to avoid duplicate completion audio.
+
+Alolan, Galarian, Hisuian, and Paldean forms override the base National Dex region. Alola and Galar each have two suspense variants and choose randomly between available files. If an evolution OGG is missing from the active resource packs, that cue stays silent; missing suspense also does not duck world music. Multiple nearby world evolutions can play at the same time from independent positions.
 
 | Key | File | Usage |
 |---|---|---|

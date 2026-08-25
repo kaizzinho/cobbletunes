@@ -10,8 +10,9 @@ import net.minecraft.util.math.random.Random
 
 class EvolutionSoundInstance(
     soundEvent: SoundEvent,
-    private val pokemon: PokemonEntity,
-    private val baseVolume: Float
+    private val pokemon: PokemonEntity?,
+    private val baseVolume: Float,
+    private val local: Boolean = false
 ) : AbstractSoundInstance(soundEvent, SoundCategory.RECORDS, Random.create()),
     TickableSoundInstance {
 
@@ -20,8 +21,12 @@ class EvolutionSoundInstance(
     init {
         repeat = false
         repeatDelay = 0
-        relative = false
-        attenuationType = SoundInstance.AttenuationType.LINEAR
+        relative = local
+        attenuationType = if (local) {
+            SoundInstance.AttenuationType.NONE
+        } else {
+            SoundInstance.AttenuationType.LINEAR
+        }
         pitch = 1f
         updatePosition()
     }
@@ -39,9 +44,10 @@ class EvolutionSoundInstance(
     }
 
     private fun updatePosition() {
-        x = pokemon.x
-        y = pokemon.y
-        z = pokemon.z
+        val entity = pokemon ?: return
+        x = entity.x
+        y = entity.y
+        z = entity.z
     }
 
     override fun isDone(): Boolean = done

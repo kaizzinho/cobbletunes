@@ -1,6 +1,7 @@
 package com.kaizzinho.cobbletunes.client.evolution
 
 import com.cobblemon.mod.common.entity.pokemon.PokemonEntity
+import com.cobblemon.mod.common.pokemon.Pokemon
 import com.kaizzinho.cobbletunes.MOD_ID
 import com.kaizzinho.cobbletunes.client.config.CobbleTunesClientConfig
 import com.kaizzinho.cobbletunes.client.sound.ClientMusicPlayer
@@ -13,6 +14,9 @@ import net.minecraft.client.MinecraftClient
 import net.minecraft.client.world.ClientWorld
 import net.minecraft.sound.SoundCategory
 import net.minecraft.util.Identifier
+import java.lang.reflect.Modifier
+import java.util.Collections
+import java.util.IdentityHashMap
 import java.util.UUID
 
 class ClientEvolutionWatcher(
@@ -30,9 +34,16 @@ class ClientEvolutionWatcher(
         var suspenseSound: EvolutionSoundInstance? = null
     )
 
+    private data class SummarySnapshot(
+        val speciesName: String,
+        val region: RegionOfOrigin?
+    )
+
     private val active = mutableMapOf<UUID, ActiveEvolution>()
     private val playedSounds = mutableSetOf<EvolutionSoundInstance>()
+    private val summarySnapshots = mutableMapOf<UUID, SummarySnapshot>()
     private var lastWorld: ClientWorld? = null
+    private var summaryScreenActive = false
     private var ducking = false
 
     fun register() {
@@ -68,6 +79,8 @@ class ClientEvolutionWatcher(
                 beginEvolution(client, entity)
             }
         }
+
+        tickSummaryFallback(client, nearby)
 
         val iterator = active.iterator()
         while (iterator.hasNext()) {
@@ -151,6 +164,152 @@ class ClientEvolutionWatcher(
         debugLog("[Evolution] complete ${cue.id} from ${tracked.entity.uuid}")
     }
 
+    private fun tickSummaryFallback(
+        client: MinecraftClient,
+        nearby: List<PokemonEntity>
+    ) {
+        val screen = client.currentScreen
+        if (screen == null || !screen.javaClass.name.startsWith(SUMMARY_SCREEN_PACKAGE)) {
+            summaryScreenActive = false
+            summarySnapshots.clear()
+            return
+        }
+
+        val observed = collectSummaryPokemon(screen)
+        if (!summaryScreenActive) {
+            summaryScreenActive = true
+            observed.forEach { pokemon ->
+                summarySnapshots[pokemon.uuid] = snapshot(pokemon)
+            }
+            debugLog("[Evolution] summary fallback watching ${observed.size} pokemon")
+            return
+        }
+
+        for (pokemon in observed) {
+            val previous = summarySnapshots[pokemon.uuid]
+            val current = snapshot(pokemon)
+            if (previous != null &&
+                !previous.speciesName.equals(current.speciesName, ignoreCase = true)
+            ) {
+                val hasWorldEntity = pokemon.entity != null ||
+                    nearby.any { entity -> entity.pokemon.uuid == pokemon.uuid } ||
+                    active.values.any { tracked -> tracked.entity.pokemon.uuid == pokemon.uuid }
+                if (!hasWorldEntity) {
+                    playSummaryCompletion(
+                        client = client,
+                        pokemonUuid = pokemon.uuid,
+                        previous = previous,
+                        currentSpeciesName = current.speciesName
+                    )
+                }
+            }
+            summarySnapshots[pokemon.uuid] = current
+        }
+    }
+
+    private fun playSummaryCompletion(
+        client: MinecraftClient,
+        pokemonUuid: UUID,
+        previous: SummarySnapshot,
+        currentSpeciesName: String
+    ) {
+        val region = previous.region ?: return
+        val cue = TrackRegistry.evolutionThemeFor(region)?.complete ?: return
+        if (!resourceExists(client, cue) || !canHearEvolution(client)) return
+
+        val sound = EvolutionSoundInstance(
+            soundEvent = cue.soundEvent,
+            pokemon = null,
+            baseVolume = COMPLETE_VOLUME,
+            local = true
+        )
+        sound.setVolumeScale(config.musicVolume)
+        client.soundManager.play(sound)
+        playedSounds += sound
+        debugLog(
+            "[Evolution] summary complete ${cue.id} for $pokemonUuid " +
+                "${previous.speciesName} -> $currentSpeciesName"
+        )
+    }
+
+    private fun collectSummaryPokemon(screen: Any): List<Pokemon> {
+        val found = linkedMapOf<UUID, Pokemon>()
+        val ambiguous = mutableSetOf<UUID>()
+        val visited = Collections.newSetFromMap(IdentityHashMap<Any, Boolean>())
+        var inspectedObjects = 0
+
+        fun inspect(value: Any?, depth: Int) {
+            if (value == null || depth > SUMMARY_REFLECTION_DEPTH) return
+            if (value is Pokemon) {
+                val existing = found[value.uuid]
+                if (existing == null) {
+                    found[value.uuid] = value
+                } else if (!existing.species.name.equals(value.species.name, ignoreCase = true)) {
+                    ambiguous += value.uuid
+                }
+                return
+            }
+            if (!visited.add(value)) return
+
+            when (value) {
+                is Iterable<*> -> {
+                    value.take(SUMMARY_COLLECTION_LIMIT).forEach { inspect(it, depth + 1) }
+                    return
+                }
+                is Array<*> -> {
+                    value.take(SUMMARY_COLLECTION_LIMIT).forEach { inspect(it, depth + 1) }
+                    return
+                }
+                is Map<*, *> -> {
+                    value.values.take(SUMMARY_COLLECTION_LIMIT).forEach { inspect(it, depth + 1) }
+                    return
+                }
+                is java.util.Optional<*> -> {
+                    inspect(value.orElse(null), depth + 1)
+                    return
+                }
+                is Pair<*, *> -> {
+                    inspect(value.first, depth + 1)
+                    inspect(value.second, depth + 1)
+                    return
+                }
+                is Triple<*, *, *> -> {
+                    inspect(value.first, depth + 1)
+                    inspect(value.second, depth + 1)
+                    inspect(value.third, depth + 1)
+                    return
+                }
+            }
+
+            val className = value.javaClass.name
+            if (!className.startsWith("com.cobblemon.")) return
+            if (inspectedObjects++ >= SUMMARY_REFLECTION_OBJECT_LIMIT) return
+
+            var type: Class<*>? = value.javaClass
+            while (type != null && type.name.startsWith("com.cobblemon.")) {
+                for (field in type.declaredFields) {
+                    if (Modifier.isStatic(field.modifiers) || field.isSynthetic) continue
+                    runCatching {
+                        if (field.trySetAccessible()) {
+                            inspect(field.get(value), depth + 1)
+                        }
+                    }
+                }
+                type = type.superclass
+            }
+        }
+
+        inspect(screen, 0)
+        ambiguous.forEach { uuid -> found.remove(uuid) }
+        return found.values.toList()
+    }
+
+    private fun snapshot(pokemon: Pokemon): SummarySnapshot =
+        SummarySnapshot(
+            speciesName = pokemon.species.name,
+            region = resolveRegion(pokemon)
+        )
+
     private fun stopSuspense(client: MinecraftClient, tracked: ActiveEvolution) {
         val sound = tracked.suspenseSound ?: return
         sound.finish()
@@ -178,6 +337,8 @@ class ClientEvolutionWatcher(
     private fun reset(client: MinecraftClient) {
         active.values.forEach { stopSuspense(client, it) }
         active.clear()
+        summarySnapshots.clear()
+        summaryScreenActive = false
         playedSounds.forEach { sound ->
             sound.finish()
             client.soundManager.stop(sound)
@@ -189,8 +350,10 @@ class ClientEvolutionWatcher(
         }
     }
 
-    private fun resolveRegion(entity: PokemonEntity): RegionOfOrigin? {
-        val pokemon = entity.pokemon
+    private fun resolveRegion(entity: PokemonEntity): RegionOfOrigin? =
+        resolveRegion(entity.pokemon)
+
+    private fun resolveRegion(pokemon: Pokemon): RegionOfOrigin? {
         val dexNumber = pokemon.species.nationalPokedexNumber
         val formName = pokemon.form.name
         val regional = (pokemon.aspects + formName).firstNotNullOfOrNull { value ->
@@ -225,6 +388,10 @@ class ClientEvolutionWatcher(
     }
 
     companion object {
+        private const val SUMMARY_SCREEN_PACKAGE = "com.cobblemon.mod.common.client.gui.summary."
+        private const val SUMMARY_REFLECTION_DEPTH = 3
+        private const val SUMMARY_REFLECTION_OBJECT_LIMIT = 96
+        private const val SUMMARY_COLLECTION_LIMIT = 16
         private const val MAX_DISTANCE = 32.0
         private const val MAX_DISTANCE_SQUARED = MAX_DISTANCE * MAX_DISTANCE
         private const val SUSPENSE_VOLUME = 0.62f
