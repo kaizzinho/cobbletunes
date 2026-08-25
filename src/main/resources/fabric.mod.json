@@ -3,7 +3,7 @@
   "id": "cobbletunes",
   "version": "${version}",
   "name": "CobbleTunes - Music Framework",
-  "description": "Adds dynamic Pokémon-style music to Cobblemon through resource packs, with regional battle themes, victory music, biome and structure ambience, Battle Tower, Game Corner, menu themes, low-HP cues, and optional integrations.",
+  "description": "Adds dynamic Pokémon-style music to Cobblemon through resource packs, with client-side battle routing, victory music, biome and structure ambience, Battle Tower, Game Corner, low-HP cues, and optional server-enhanced integrations.",
   "authors": [
     "kaizzinho"
   ],

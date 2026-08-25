@@ -8,8 +8,7 @@ import com.kaizzinho.cobbletunes.LOGGER
 import com.kaizzinho.cobbletunes.MOD_ID
 import com.kaizzinho.cobbletunes.compat.rct.RawRctTrainer
 import com.kaizzinho.cobbletunes.compat.rct.RctTrainerClassifier
-import com.kaizzinho.cobbletunes.compat.rct.TrainerOverride
-import com.kaizzinho.cobbletunes.compat.rct.TrainerRole
+import com.kaizzinho.cobbletunes.compat.rct.RctTrainerOverrides
 import com.kaizzinho.cobbletunes.config.CobbleTunesServerConfig
 import com.kaizzinho.cobbletunes.network.BattleMusicEndPayload
 import com.kaizzinho.cobbletunes.network.BattleMusicStartPayload
@@ -17,7 +16,7 @@ import com.kaizzinho.cobbletunes.network.BattleVictoryPayload
 import com.kaizzinho.cobbletunes.network.PlayerDeathPayload
 import com.kaizzinho.cobbletunes.network.PokemonCapturedPayload
 import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
+import com.kaizzinho.cobbletunes.network.CobbleTunesNetworking
 import net.fabricmc.loader.api.FabricLoader
 import java.lang.reflect.Modifier
 import java.util.Locale
@@ -26,7 +25,7 @@ object CobblemonBattleListener {
 
     fun register() {
         RaidDensBridge.registerRaidEndListener { player, won ->
-            ServerPlayNetworking.send(
+            CobbleTunesNetworking.sendIfSupported(
                 player,
                 if (won) BattleVictoryPayload else BattleMusicEndPayload
             )
@@ -103,7 +102,7 @@ object CobblemonBattleListener {
                     )
                 }
 
-                ServerPlayNetworking.send(
+                CobbleTunesNetworking.sendIfSupported(
                     player,
                     BattleMusicStartPayload(
                         isWild = battle.isPvW,
@@ -129,7 +128,7 @@ object CobblemonBattleListener {
                 pokemon.aspects
             )
 
-            ServerPlayNetworking.send(
+            CobbleTunesNetworking.sendIfSupported(
                 event.player,
                 PokemonCapturedPayload(
                     dexNumber = dexNumber,
@@ -158,7 +157,7 @@ object CobblemonBattleListener {
                 for (player in event.battle.players) {
                     val playerActor = event.battle.getActor(player)
                     val actuallyWon = !event.wasWildCapture && playerActor in winnerActors
-                    ServerPlayNetworking.send(
+                    CobbleTunesNetworking.sendIfSupported(
                         player,
                         if (actuallyWon) BattleVictoryPayload else BattleMusicEndPayload
                     )
@@ -168,14 +167,14 @@ object CobblemonBattleListener {
 
         CobblemonEvents.BATTLE_FLED.subscribe { event ->
             for (player in event.battle.players) {
-                ServerPlayNetworking.send(player, BattleMusicEndPayload)
+                CobbleTunesNetworking.sendIfSupported(player, BattleMusicEndPayload)
             }
         }
 
         // defeat uses the real respawn flag
         ServerPlayerEvents.AFTER_RESPAWN.register { _, newPlayer, alive ->
             if (!alive) {
-                ServerPlayNetworking.send(newPlayer, PlayerDeathPayload)
+                CobbleTunesNetworking.sendIfSupported(newPlayer, PlayerDeathPayload)
                 if (CobbleTunesServerConfig.current.debugLogging) {
                     LOGGER.info("[$MOD_ID] [Debug] Player ${newPlayer.name.string} died — sending PlayerDeathPayload")
                 }
@@ -211,38 +210,7 @@ object CobblemonBattleListener {
         private const val RCT_MOD_ID = "rctmod"
         private const val RCT_MOD_CLASS = "com.gitlab.srcmc.rctmod.api.RCTMod"
 
-        private val specialTrainerOverrides = mapOf(
-            "pokemon_trainer_barry" to TrainerOverride(
-                TrainerRole.RIVAL, "sinnoh", battleTrackId = "sinnoh_rival_pvp"
-            ),
-            "pokemon_trainer_gold" to TrainerOverride(
-                TrainerRole.NORMAL, "johto", battleTrackId = "unova_pvp_champion_johto"
-            ),
-            "pokemon_trainer_green" to TrainerOverride(
-                TrainerRole.NORMAL, "kanto", battleTrackId = "unova_pvp_champion_kanto"
-            ),
-            "pokemon_trainer_kris" to TrainerOverride(
-                TrainerRole.NORMAL, "johto", battleTrackId = "unova_pvp_champion_johto"
-            ),
-            "pokemon_trainer_may" to TrainerOverride(
-                TrainerRole.NORMAL, "hoenn", battleTrackId = "unova_pvp_champion_hoenn"
-            ),
-            "pokemon_trainer_morimoto" to TrainerOverride(
-                TrainerRole.NORMAL, "unova", battleTrackId = "tower_b2w2_pwt_final"
-            ),
-            "pokemon_trainer_oak" to TrainerOverride(
-                TrainerRole.NORMAL, "kanto", battleTrackId = "unova_pvp_champion_kanto"
-            ),
-            "pokemon_trainer_red" to TrainerOverride(
-                TrainerRole.NORMAL, "kanto", battleTrackId = "unova_pvp_champion_kanto"
-            ),
-            "pokemon_trainer_silver" to TrainerOverride(
-                TrainerRole.RIVAL, "johto", battleTrackId = "johto_rival_pvp"
-            ),
-            "pokemon_trainer_steven" to TrainerOverride(
-                TrainerRole.CHAMPION, "hoenn", battleTrackId = "hoenn_champion_wallace"
-            )
-        )
+        private val specialTrainerOverrides = RctTrainerOverrides.exact
 
         private val rctAvailable by lazy {
             FabricLoader.getInstance().isModLoaded(RCT_MOD_ID)

@@ -17,6 +17,10 @@ The current source audit resolves all 419 `sounds.json` keys from code. A resour
 
 ## Routing notes
 
+- CobbleTunes is client-first. On a remote server without CobbleTunes, the client infers standard battle routes from Cobblemon's synchronized battle actors and rosters, observes capture success locally, and uses client-visible WildBosses/RCT/Raid Dens metadata when available. When the server bridge is present, its packets are authoritative and the local fallback is disabled.
+- Server packets are capability-gated and are only sent to clients that advertise the matching CobbleTunes payload. Public-server clients do not need a CobbleTunes server to use battle, Victory/capture, biome, menu, low-HP, and other client-owned music systems.
+- Client-only Raid Dens detection can promote a battle from the native `cobblemonraiddens:battle.raid.tier_*` sound and uses the same tier-weighted pool. The client also treats the raid boss reaching 0 HP as the clear point, so the five-second regional Victory cue does not wait for Raid Dens to close its battle/dimension state.
+- Client-only structure routing is intentionally conservative. Gimmighoul towers, Poké Centers, Ruined Portals, villages, and nearby RCT Battle Tower floor trainers have local fingerprints; exact Cobbleverse/Terralith/BCA/Repurposed/Legendary Monuments `StructureStart` IDs and manual marker zones remain server-enhanced routing.
 - Battle routing keeps role and region separate, with RCT metadata preferred and opposing-roster voting as fallback.
 - The supplied RCT Tower datapack has exact overrides for its ten named `pokemon_trainer_*` encounters while all 90 `f1_trainer*` through `f9_trainer*` floor trainers remain on the normal Battle Tower route. Barry uses `sinnoh_rival_pvp`, Silver uses `johto_rival_pvp`, Steven uses `hoenn_champion_wallace`, Gold/Kris use `unova_pvp_champion_johto`, Green/Oak/Red use `unova_pvp_champion_kanto`, May uses `unova_pvp_champion_hoenn`, and Morimoto uses `tower_b2w2_pwt_final`. Exact matching also accepts the normalized `rctmod:`-namespaced form.
 - Alolan, Galarian, Hisuian, and Paldean forms override the base National Dex region for wild, trainer-roster, Boss, and Victory routing.
@@ -25,52 +29,44 @@ The current source audit resolves all 419 `sounds.json` keys from code. A resour
 - Standard Battle Victory music starts immediately on `BATTLE_VICTORY` when Cobblemon Loot Menu is installed, stays active while the loot screen is open, then restores the latest structure or biome target. Successful captures reuse the regional wild Victory pool for a brief ~3 second cue, including captures outside battle. Successful Raid Dens clears use Raid Dens' `RAID_END` event instead and play the same regional wild Victory resolver for a fixed 5 seconds before restoring the latest world target.
 - Hisui intentionally has no post-battle Victory file in this pack and falls back without creating a fake theme.
 - Battle Tower ambience uses low, mid, high, and final floor pools. Trainer battles started inside a Battle Tower zone use the Galar Battle Tower battle theme.
-- All 71 registered structures across the supplied Cobbleverse main, Johto, Hoenn, and Sinnoh datapacks are recognized. Current nested IDs such as `cobbleverse:legendary/articuno`, `cobbleverse:legendary/groudon`, and `cobbleverse:mythical/manaphy` normalize to the existing CobbleTunes zone IDs; the older flattened IDs remain compatibility aliases.
-- CobblemonAdditions `4.1.6` dark, default, and fighting villages reuse the existing BCA small/mid/large pools. `bca:village/witch_hut` reuses the Swamp Hut pool, and the older generic BCA village IDs remain supported. Village tracks play once, wait a random 5–60 seconds, then replay the same selection while the player stays inside; re-entering prefers a different track when possible.
-- All 26 structures referenced by the supplied Terralith structure sets reuse existing vanilla/BCA pools, so Terralith structure support adds no sound events. The two extra structure definitions not referenced by a Terralith structure set are intentionally ignored.
-- Repurposed Structures `7.5.21+1.21.1` is detected as a soft integration. All 107 worldgen structure IDs in that JAR reuse existing vanilla/BCA structure pools, so it adds no new audio files.
-- Legendary Monuments is detected as a soft integration for seven structures without adding sound events: Distortion Portal, Giratina Island, and Turnback Cave use `ambience.sinnoh.end_distortion_world`; Lake Acuity, Lake Valor, and Lake Verity use `ambience.sinnoh.cave_lake_caverns`; Stark Mountain uses `ambience.vanilla.fortress.stark_mountain`.
-- Structure detection resolves actual `StructureStart` objects from nearby chunk references before measuring the structure bounding box. Compact structures up to 16×16 blocks receive 4 blocks of horizontal padding per side and 4 vertical blocks of padding; larger structures retain 1 horizontal block and 2 vertical blocks. This keeps small landmarks such as Ruined Portals stable for several blocks around the visible structure instead of flickering back to biome ambience at the exact bounding-box edge.
+- With the server bridge, all 71 registered structures across the supplied Cobbleverse main, Johto, Hoenn, and Sinnoh datapacks are recognized. Current nested IDs such as `cobbleverse:legendary/articuno`, `cobbleverse:legendary/groudon`, and `cobbleverse:mythical/manaphy` normalize to the existing CobbleTunes zone IDs; the older flattened IDs remain compatibility aliases.
+- With the server bridge, CobblemonAdditions `4.1.6` dark, default, and fighting villages reuse the existing BCA small/mid/large pools. `bca:village/witch_hut` reuses the Swamp Hut pool, and the older generic BCA village IDs remain supported. Village tracks play once, wait a random 5–60 seconds, then replay the same selection while the player stays inside; re-entering prefers a different track when possible.
+- With the server bridge, all 26 structures referenced by the supplied Terralith structure sets reuse existing vanilla/BCA pools, so Terralith structure support adds no sound events. The two extra structure definitions not referenced by a Terralith structure set are intentionally ignored.
+- With the server bridge, Repurposed Structures `7.5.21+1.21.1` is detected as a soft integration. All 107 worldgen structure IDs in that JAR reuse existing vanilla/BCA structure pools, so it adds no new audio files.
+- With the server bridge, Legendary Monuments is detected as a soft integration for seven structures without adding sound events: Distortion Portal, Giratina Island, and Turnback Cave use `ambience.sinnoh.end_distortion_world`; Lake Acuity, Lake Valor, and Lake Verity use `ambience.sinnoh.cave_lake_caverns`; Stark Mountain uses `ambience.vanilla.fortress.stark_mountain`.
+- Server-enhanced structure detection resolves actual `StructureStart` objects from nearby chunk references before measuring the structure bounding box. Compact structures up to 16×16 blocks receive 4 blocks of horizontal padding per side and 4 vertical blocks of padding; larger structures retain 1 horizontal block and 2 vertical blocks. This keeps small landmarks such as Ruined Portals stable for several blocks around the visible structure instead of flickering back to biome ambience at the exact bounding-box edge.
 - All six Cobblemon Gimmighoul tower worldgen structures under `cobblemon:ruins/` map to `cobbletunes:gimmighoul_tower`. The zone randomly reuses `ambience.kanto.pokemon_tower`, `ambience.kanto.deep_dark_lavender_town`, or `ambience.johto.cave_deep_dark_pokegear_unown`; no new sound keys are added.
-- `cobbletunes:game_corner` and `cobbletunes:casino` are manual `MusicTriggerBlock` zones. Entering either zone starts a shuffled Game Corner playlist. Tracks do not loop individually; each file plays once, then another track is selected from the remaining shuffled pool. After all 15 tracks play, the pool reshuffles and avoids an immediate repeat across the cycle boundary.
+- `cobbletunes:game_corner` and `cobbletunes:casino` are manual server zones anchored by vanilla `minecraft:marker` entities tagged with `cobbletunes_zone:<zoneId>`. Entering either zone starts a shuffled Game Corner playlist. Tracks do not loop individually; each file plays once, then another track is selected from the remaining shuffled pool. After all 15 tracks play, the pool reshuffles and avoids an immediate repeat across the cycle boundary.
 
-## MusicTriggerBlock setup tutorial
+## Manual zone marker setup tutorial
 
-`MusicTriggerBlock` is the manual zone system used for Poké Centers, Poké Marts, Battle Tower floors, Game Corners, casinos, and any other hand-built area that needs an explicit CobbleTunes zone.
+Manual server zones use vanilla `minecraft:marker` entities instead of a custom CobbleTunes block. This keeps the server bridge optional for clients because CobbleTunes no longer registers gameplay content that a joining client must know about.
 
-The block stores a `ZoneId` in its block-entity NBT. The server checks nearby trigger blocks every 10 ticks. Manual trigger zones have priority over automatic worldgen structure detection, and when more than one trigger is in range the nearest one wins.
+The server checks nearby marker entities every 10 ticks. A marker is a CobbleTunes zone anchor when one of its scoreboard tags starts with `cobbletunes_zone:`. Everything after that prefix is the normal CobbleTunes zone ID. Manual marker zones have priority over automatic worldgen structure detection, and when more than one marker is in range the nearest one wins.
 
-The trigger scan covers up to 12 blocks on the X, Y, and Z axes around the player. For a large building, place more than one trigger block with the same `ZoneId` so the whole interior stays covered.
+The scan radius is 12 blocks around the player. For a large building, place more than one marker with the same tag so the whole interior stays covered. Markers are invisible and server-side, so they do not need a CobbleTunes block model or client registry entry.
 
 ### Basic placement
 
-Pick the coordinates where the trigger should sit. It can be hidden under the floor or inside a wall as long as players stay within its detection range.
-
-Place the block:
+Summon a marker with the full CobbleTunes zone tag:
 
 ```mcfunction
-/setblock <x> <y> <z> cobbletunes:music_trigger
+/summon minecraft:marker <x> <y> <z> {Tags:["cobbletunes_zone:cobbletunes:pokecenter"]}
 ```
 
-Then assign the zone:
+Inspect nearby CobbleTunes markers with:
 
 ```mcfunction
-/data merge block <x> <y> <z> {ZoneId:"cobbletunes:pokecenter"}
+/data get entity @e[type=minecraft:marker,tag=cobbletunes_zone:cobbletunes:pokecenter,sort=nearest,limit=1,distance=..12] Tags
 ```
 
-Check the saved zone at any time with:
+Remove a nearby marker with:
 
 ```mcfunction
-/data get block <x> <y> <z> ZoneId
+/kill @e[type=minecraft:marker,tag=cobbletunes_zone:cobbletunes:pokecenter,sort=nearest,limit=1,distance=..2]
 ```
 
-Remove a trigger with:
-
-```mcfunction
-/setblock <x> <y> <z> air
-```
-
-Only the `ZoneId` changes between the examples below.
+Only the tag suffix changes between the examples below.
 
 ### Poké Center
 
@@ -83,8 +79,7 @@ cobbletunes:pokecenter
 Example:
 
 ```mcfunction
-/setblock 100 64 100 cobbletunes:music_trigger
-/data merge block 100 64 100 {ZoneId:"cobbletunes:pokecenter"}
+/summon minecraft:marker 100 64 100 {Tags:["cobbletunes_zone:cobbletunes:pokecenter"]}
 ```
 
 The client randomly selects one of the five Poké Center themes when the zone becomes active. The selected track loops while the player stays inside the zone. Battle and Victory music can temporarily take priority, then the active zone music returns afterward.
@@ -100,8 +95,7 @@ cobbletunes:pokemart
 Example:
 
 ```mcfunction
-/setblock 120 64 100 cobbletunes:music_trigger
-/data merge block 120 64 100 {ZoneId:"cobbletunes:pokemart"}
+/summon minecraft:marker 120 64 100 {Tags:["cobbletunes_zone:cobbletunes:pokemart"]}
 ```
 
 The client randomly selects one of the three Poké Mart themes when the zone becomes active and loops that track while the player remains inside the zone.
@@ -126,11 +120,10 @@ For a ten-floor Battle Tower, use one floor-specific zone ID per floor:
 Example for floor 4:
 
 ```mcfunction
-/setblock 200 90 200 cobbletunes:music_trigger
-/data merge block 200 90 200 {ZoneId:"cobbletunes:battle_tower_floor_4"}
+/summon minecraft:marker 200 90 200 {Tags:["cobbletunes_zone:cobbletunes:battle_tower_floor_4"]}
 ```
 
-The nearest trigger wins, which is important for vertically stacked floors. Put each trigger near the center of its floor and avoid placing different floor triggers at nearly the same vertical position.
+The nearest marker wins, which is important for vertically stacked floors. Put each marker near the center of its floor and avoid placing different floor markers at nearly the same vertical position.
 
 The grouped IDs below are also valid when a build does not need numbered floors:
 
@@ -155,23 +148,26 @@ cobbletunes:casino
 Example:
 
 ```mcfunction
-/setblock 300 64 300 cobbletunes:music_trigger
-/data merge block 300 64 300 {ZoneId:"cobbletunes:game_corner"}
+/summon minecraft:marker 300 64 300 {Tags:["cobbletunes_zone:cobbletunes:game_corner"]}
 ```
 
 Both IDs use the same 15-track Game Corner pool. The first track is random. Individual tracks do not loop. When one finishes, CobbleTunes advances to another track from the shuffled no-repeat queue. After all 15 tracks have played, the pool is reshuffled and the previous track is prevented from immediately repeating across the cycle boundary.
 
-Leaving the Game Corner clears the current shuffle queue. Re-entering starts a fresh randomized order. Battle and Victory music can interrupt the zone without changing the Game Corner trigger itself.
+Leaving the Game Corner clears the current shuffle queue. Re-entering starts a fresh randomized order. Battle and Victory music can interrupt the zone without changing the Game Corner marker itself.
 
 ### Placement tips
 
-- hide trigger blocks under floors or inside walls when they should not be visible
-- keep players within 12 blocks on each axis of at least one trigger
-- use several triggers with the same `ZoneId` for large rooms or long hallways
-- if different trigger zones overlap the nearest trigger wins
-- manual trigger blocks override nearby automatic structure music while they are in range
-- leaving every manual trigger lets the current automatic structure or biome ambience take over again
+- markers are invisible and do not need to be hidden inside a block
+- keep players within 12 blocks of at least one marker
+- use several markers with the same zone tag for large rooms or long hallways
+- if different manual zones overlap the nearest marker wins
+- manual markers override nearby automatic structure music while they are in range
+- leaving every manual marker lets the current automatic structure or biome ambience take over again
 - use floor-specific Battle Tower IDs for stacked floors so nearest-first detection can resolve them correctly
+
+### Migration from older CobbleTunes builds
+
+The old `cobbletunes:music_trigger` custom block has been removed. It made a server-side CobbleTunes install part of registry synchronization, which worked against the new client-first goal. If an existing world used those blocks, replace each old trigger with a vanilla marker carrying the equivalent `cobbletunes_zone:<ZoneId>` tag before updating. The zone IDs and music pools themselves are unchanged.
 
 ## Battle music
 
@@ -412,7 +408,7 @@ Victory files are used by the optional Cobblemon Loot Menu bridge, successful ca
 
 ## Game Corner and Casino music
 
-These tracks are reserved for hand-built Game Corners, casinos, arcades, contest halls, and minigame areas. Put a `MusicTriggerBlock` in the build and use either `cobbletunes:game_corner` or `cobbletunes:casino` as the zone ID. The first track is random. When it ends, CobbleTunes advances through a shuffled no-repeat order until all 15 tracks have played, then reshuffles the pool. Individual Game Corner files use `loop = false`.
+These tracks are reserved for hand-built Game Corners, casinos, arcades, contest halls, and minigame areas. Add a vanilla `minecraft:marker` with either `cobbletunes_zone:cobbletunes:game_corner` or `cobbletunes_zone:cobbletunes:casino` as its tag. The first track is random. When it ends, CobbleTunes advances through a shuffled no-repeat order until all 15 tracks have played, then reshuffles the pool. Individual Game Corner files use `loop = false`.
 
 The source only registers the sound slots and filenames. No Pokémon soundtrack audio is included.
 

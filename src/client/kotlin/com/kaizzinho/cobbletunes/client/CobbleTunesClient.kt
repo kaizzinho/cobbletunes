@@ -4,6 +4,7 @@ import com.kaizzinho.cobbletunes.LOGGER
 import com.kaizzinho.cobbletunes.MOD_ID
 import com.kaizzinho.cobbletunes.client.config.CobbleTunesClientConfig
 import com.kaizzinho.cobbletunes.client.compat.lootmenu.LootMenuVictoryBridge
+import com.kaizzinho.cobbletunes.client.compat.standalone.ClientStandaloneBridge
 import com.kaizzinho.cobbletunes.client.sound.ClientMusicPlayer
 import com.kaizzinho.cobbletunes.client.sound.MusicContext
 import com.kaizzinho.cobbletunes.client.sound.RegionOfOrigin
@@ -22,6 +23,7 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking
 
 class CobbleTunesClient : ClientModInitializer {
     private var onDeathScreen = false
+    private lateinit var standaloneBridge: ClientStandaloneBridge
 
     private fun debugLog(message: String) {
         if (config.debugLogging) {
@@ -140,6 +142,15 @@ class CobbleTunesClient : ClientModInitializer {
         musicPlayer = ClientMusicPlayer(config)
 
         registerNetworkReceivers()
+        standaloneBridge = ClientStandaloneBridge(
+            debugLog = ::debugLog,
+            onBattleStart = { handleBattleStart(it, "client") },
+            onBattleEnd = { handleBattleEnd("client") },
+            onBattleVictory = { handleBattleVictory("client") },
+            onCapture = { dex, regional -> handlePokemonCaptured(dex, regional, "client") },
+            onZone = { handleStructureZone(it, "client") }
+        )
+        standaloneBridge.register()
         registerVanillaMusicSuppression()
         registerBiomeAmbienceWatcher()
         registerDeathScreenWatcher()
@@ -154,287 +165,306 @@ class CobbleTunesClient : ClientModInitializer {
 
     private fun registerNetworkReceivers() {
         ClientPlayNetworking.registerGlobalReceiver(BattleMusicStartPayload.ID) { payload, context ->
-            context.client().execute {
-                // keep string routes for old packet compat
-                val routeParts = payload.trainerTier.split('|', limit = 2)
-                val routeHead = routeParts.firstOrNull().orEmpty()
-                val routeValue = routeParts.getOrNull(1).orEmpty()
-
-                clearVictoryState(finishMusic = false)
-                lastBattleWasRaid = routeHead == "raid"
-                lastBattleVictoryRequest = buildVictoryRequest(payload, routeHead, routeValue)
-
-                if (routeHead == "boss" || routeHead == "raid") {
-                    val isRaid = routeHead == "raid"
-                    debugLog(
-                        "[${if (isRaid) "Raid" else "Boss"} route] raw='${payload.trainerTier}' " +
-                            "tier='${routeValue.ifBlank { "unknown" }}' opposingDex=${payload.opposingDexNumbers}"
-                    )
-                    if (isRaid) {
-                        musicPlayer.playRaidBattle(
-                            tierName = routeValue,
-                            opposingDexNumbers = payload.opposingDexNumbers,
-                            opposingRegionalVariants = payload.opposingRegionalVariants
-                        )
-                    } else {
-                        musicPlayer.playBossBattle(
-                            tierName = routeValue,
-                            opposingDexNumbers = payload.opposingDexNumbers,
-                            opposingRegionalVariants = payload.opposingRegionalVariants
-                        )
-                    }
-                    return@execute
-                }
-
-                val specialRoute = parseSpecialTrainerRoute(routeHead)
-                if (specialRoute != null) {
-                    val track = TrackRegistry.trackById(specialRoute.trackId)
-                    if (track != null) {
-                        debugLog(
-                            "[Special trainer route] raw='${payload.trainerTier}' " +
-                                "track='${specialRoute.trackId}' role='${specialRoute.roleId}' " +
-                                "region='${routeValue.ifBlank { "unknown" }}'"
-                        )
-                        musicPlayer.playExactTrainerBattle(track)
-                        return@execute
-                    }
-                    debugLog(
-                        "[Special trainer route] Missing track '${specialRoute.trackId}' using normal trainer fallback"
-                    )
-                }
-
-                val factionTheme = routeHead
-                    .takeIf { it.startsWith("faction:") }
-                    ?.substringAfter("faction:")
-                    ?.takeIf { it.isNotBlank() }
-                val trainerTier = routeHead.takeUnless { factionTheme != null }.orEmpty()
-                val routeRegion = routeValue.takeIf { it.isNotBlank() }?.let { regionId ->
-                    RegionOfOrigin.entries.firstOrNull {
-                        it.name.equals(regionId, ignoreCase = true)
-                    }
-                }
-                val variantRegion = RegionOfOrigin.fromRegionalVariant(payload.primaryRegionalVariant)
-                val preferredRegion = routeRegion ?: variantRegion.takeIf { payload.isWild }
-
-                val musicContext = when {
-                    payload.isWild -> if (payload.isLegendary) MusicContext.LEGENDARY_BATTLE else MusicContext.WILD_BATTLE
-                    payload.isTrainer && factionTheme != null -> MusicContext.FACTION_BATTLE
-                    payload.isTrainer -> when (trainerTier) {
-                        "leader" -> MusicContext.GYM_LEADER_BATTLE
-                        "e4"     -> MusicContext.ELITE_FOUR_BATTLE
-                        "champ"  -> MusicContext.CHAMPION_BATTLE
-                        "rival"    -> MusicContext.PVP_BATTLE
-                        "frontier" -> MusicContext.FRONTIER_BRAIN_BATTLE
-                        else       -> MusicContext.TRAINER_BATTLE
-                    }
-                    else -> MusicContext.PVP_BATTLE
-                }
-                val dexNumber = payload.dexNumber.takeIf { it >= 0 }
-
-                debugLog(
-                    "[Battle route] raw='${payload.trainerTier}' tier='$trainerTier' " +
-                        "factionTheme='${factionTheme.orEmpty()}' " +
-                        "region=${preferredRegion?.name ?: "roster-vote"} " +
-                        "variant='${payload.primaryRegionalVariant.ifEmpty { "standard" }}' context=$musicContext"
-                )
-
-                musicPlayer.playBattleContext(
-                    context = musicContext,
-                    dexNumber = dexNumber,
-                    opposingDexNumbers = payload.opposingDexNumbers,
-                    opposingRegionalVariants = payload.opposingRegionalVariants,
-                    primaryRegionalVariant = payload.primaryRegionalVariant,
-                    legendaryForm = payload.legendaryForm,
-                    preferredRegion = preferredRegion,
-                    factionTheme = factionTheme
-                )
-            }
+            context.client().execute { handleBattleStart(payload, "server") }
         }
-
         ClientPlayNetworking.registerGlobalReceiver(BattleMusicEndPayload.ID) { _, context ->
-            context.client().execute {
-                if (captureVictoryActive) {
-                    debugLog("[Capture victory] Ignoring battle end while capture theme is active")
-                    return@execute
-                }
-                if (raidVictoryActive) {
-                    debugLog("[Raid victory] Ignoring battle end while raid Victory is active")
-                    return@execute
-                }
-                clearVictoryState(finishMusic = false)
-                musicPlayer.playAmbience()
-            }
+            context.client().execute { handleBattleEnd("server") }
         }
-
         ClientPlayNetworking.registerGlobalReceiver(BattleVictoryPayload.ID) { _, context ->
-            context.client().execute {
-                if (raidVictoryActive) {
-                    debugLog("[Raid victory] Ignoring duplicate victory payload")
-                    return@execute
-                }
-
-                if (lastBattleWasRaid) {
-                    startRaidVictory()
-                    return@execute
-                }
-
-                val request = lastBattleVictoryRequest
-                lastBattleVictoryRequest = null
-                lastBattleWasRaid = false
-                pendingLootVictory = null
-                lootVictoryActive = false
-                lootMenuWasOpen = false
-
-                if (LootMenuVictoryBridge.available && request != null) {
-                    val pending = PendingLootVictory(
-                        request = request,
-                        expiresAtMillis = System.currentTimeMillis() + VICTORY_LOOT_WAIT_MILLIS
-                    )
-                    pendingLootVictory = pending
-
-                    val track = TrackRegistry.victoryTrackFor(request)
-                    if (track != null) {
-                        lootVictoryActive = true
-                        musicPlayer.playVictoryTheme(track)
-                        debugLog(
-                            "[Victory] Started at battle victory; waiting up to " +
-                                "${VICTORY_LOOT_WAIT_MILLIS / 1000}s for loot menu"
-                        )
-                    } else {
-                        pendingLootVictory = null
-                        debugLog("[Victory] No theme for ${request.region}/${request.kind}")
-                    }
-                }
-
-                if (!lootVictoryActive) {
-                    musicPlayer.playAmbience()
-                }
-            }
+            context.client().execute { handleBattleVictory("server") }
         }
-
         ClientPlayNetworking.registerGlobalReceiver(PokemonCapturedPayload.ID) { payload, context ->
             context.client().execute {
-                clearVictoryState(finishMusic = false)
-
-                if (!config.replaceBattleMusic) {
-                    musicPlayer.playAmbience()
-                    return@execute
-                }
-
-                val region = RegionOfOrigin.fromRegionalVariant(payload.regionalVariant)
-                    ?: RegionOfOrigin.fromDexNumber(payload.dexNumber)
-                val request = region?.let { VictoryRequest(it, VictoryKind.WILD) }
-                val track = request?.let(TrackRegistry::victoryTrackFor)
-
-                if (track == null) {
-                    debugLog(
-                        "[Capture victory] No theme for dex=${payload.dexNumber} " +
-                            "regional='${payload.regionalVariant.ifEmpty { "standard" }}'"
-                    )
-                    musicPlayer.playAmbience()
-                    return@execute
-                }
-
-                captureVictoryActive = true
-                captureVictoryEndsAtMillis = System.currentTimeMillis() + CAPTURE_VICTORY_MILLIS
-                musicPlayer.playVictoryTheme(track)
-                debugLog(
-                    "[Capture victory] Playing ${track.id} for ${CAPTURE_VICTORY_MILLIS / 1000}s"
-                )
+                handlePokemonCaptured(payload.dexNumber, payload.regionalVariant, "server")
             }
         }
-
         ClientPlayNetworking.registerGlobalReceiver(PlayerDeathPayload.ID) { _, context ->
             context.client().execute {
                 clearVictoryState(finishMusic = false)
                 musicPlayer.handlePlayerDeath()
             }
         }
-
         ClientPlayNetworking.registerGlobalReceiver(StructureZonePayload.ID) { payload, context ->
-            context.client().execute {
-                if (payload.zoneId.isBlank()) {
-                    val mc = net.minecraft.client.MinecraftClient.getInstance()
-                    val pos = mc.player?.blockPos
-                    val biomeId = if (pos != null) {
-                        mc.world?.getBiome(pos)?.key?.orElse(null)?.value?.toString()
-                    } else null
-                    musicPlayer.clearZone(biomeId)
-                    return@execute
-                }
+            context.client().execute { handleStructureZone(payload.zoneId, "server") }
+        }
+    }
 
-                when (payload.zoneId) {
-                    "cobbletunes:pokecenter" -> {
-                        val track = TrackRegistry.tracksFor(MusicContext.POKECENTER).randomOrNull()
-                        if (track != null) musicPlayer.playZoneAmbience(MusicContext.POKECENTER, track)
-                        return@execute
-                    }
-                    "cobbletunes:pokemart" -> {
-                        val track = TrackRegistry.tracksFor(MusicContext.POKEMART).randomOrNull()
-                        if (track != null) musicPlayer.playZoneAmbience(MusicContext.POKEMART, track)
-                        return@execute
-                    }
-                    "cobbletunes:game_corner",
-                    "cobbletunes:casino" -> {
-                        musicPlayer.enterGameCorner()
-                        return@execute
-                    }
-                    "cobbletunes:gym_kanto",
-                    "cobbletunes:gym_johto",
-                    "cobbletunes:gym_hoenn",
-                    "cobbletunes:gym_sinnoh",
-                    "cobbletunes:gym_unova" -> {
-                        val region = parseRegion(payload.zoneId.substringAfter("cobbletunes:gym_"))
-                        val track = region?.let(TrackRegistry::gymAmbienceTrackFor)
-                        if (track != null) musicPlayer.playZoneAmbience(MusicContext.GYM_AMBIENCE, track)
-                        return@execute
-                    }
-                }
+    private fun handleBattleStart(payload: BattleMusicStartPayload, source: String) {
+        // keep string routes for old packet compat
+        val routeParts = payload.trainerTier.split('|', limit = 2)
+        val routeHead = routeParts.firstOrNull().orEmpty()
+        val routeValue = routeParts.getOrNull(1).orEmpty()
 
-                // tower floors get their own zone picks
-                if (TrackRegistry.isBattleTowerZone(payload.zoneId)) {
-                    val track = TrackRegistry.battleTowerTrackFor(payload.zoneId)
-                    if (track != null) musicPlayer.playZoneAmbience(MusicContext.BATTLE_TOWER, track)
-                    return@execute
-                }
+        clearVictoryState(finishMusic = false)
+        lastBattleWasRaid = routeHead == "raid"
+        lastBattleVictoryRequest = buildVictoryRequest(payload, routeHead, routeValue)
 
-                // exact structures beat gym fallbacks
-                val specialTrack = TrackRegistry.specialStructureTrackFor(payload.zoneId)
-                if (specialTrack != null) {
-                    musicPlayer.playZoneAmbience(MusicContext.SPECIAL_STRUCTURE, specialTrack)
-                    return@execute
-                }
+        if (routeHead == "boss" || routeHead == "raid") {
+            val isRaid = routeHead == "raid"
+            debugLog(
+                "[${if (isRaid) "Raid" else "Boss"} route] source=$source raw='${payload.trainerTier}' " +
+                    "tier='${routeValue.ifBlank { "unknown" }}' opposingDex=${payload.opposingDexNumbers}"
+            )
+            if (isRaid) {
+                musicPlayer.playRaidBattle(
+                    tierName = routeValue,
+                    opposingDexNumbers = payload.opposingDexNumbers,
+                    opposingRegionalVariants = payload.opposingRegionalVariants
+                )
+            } else {
+                musicPlayer.playBossBattle(
+                    tierName = routeValue,
+                    opposingDexNumbers = payload.opposingDexNumbers,
+                    opposingRegionalVariants = payload.opposingRegionalVariants
+                )
+            }
+            return
+        }
 
-                val region = STRUCTURE_TO_REGION[payload.zoneId]
-                if (region != null) {
-                    val track = TrackRegistry.gymAmbienceTrackFor(region)
-                    if (track != null) musicPlayer.playZoneAmbience(MusicContext.GYM_AMBIENCE, track)
-                    return@execute
-                }
+        val specialRoute = parseSpecialTrainerRoute(routeHead)
+        if (specialRoute != null) {
+            val track = TrackRegistry.trackById(specialRoute.trackId)
+            if (track != null) {
+                debugLog(
+                    "[Special trainer route] source=$source raw='${payload.trainerTier}' " +
+                        "track='${specialRoute.trackId}' role='${specialRoute.roleId}' " +
+                        "region='${routeValue.ifBlank { "unknown" }}'"
+                )
+                musicPlayer.playExactTrainerBattle(track)
+                return
+            }
+            debugLog(
+                "[Special trainer route] Missing track '${specialRoute.trackId}' using normal trainer fallback"
+            )
+        }
 
-                // vanilla bca structures use pools
-                if (payload.zoneId.startsWith("cobbletunes:vanilla_structure:")) {
-                    val category = payload.zoneId.removePrefix("cobbletunes:vanilla_structure:")
-                    val vanillaTrack = if (category in VILLAGE_STRUCTURE_CATEGORIES) {
-                        pickVillageStructureTrack(category)
-                    } else {
-                        TrackRegistry.vanillaStructureTrackFor(category)
-                    }
-                    if (vanillaTrack != null) {
-                        if (category in VILLAGE_STRUCTURE_CATEGORIES) {
-                            musicPlayer.playVillageAmbience(vanillaTrack)
-                        } else {
-                            musicPlayer.playZoneAmbience(MusicContext.VANILLA_STRUCTURE, vanillaTrack)
-                        }
-                    } else {
-                        LOGGER.warn("[$MOD_ID] No tracks registered for vanilla structure category '$category'")
-                    }
-                    return@execute
-                }
-
-                LOGGER.warn("[$MOD_ID] Unknown zone id '${payload.zoneId}' — ignoring")
+        val factionTheme = routeHead
+            .takeIf { it.startsWith("faction:") }
+            ?.substringAfter("faction:")
+            ?.takeIf { it.isNotBlank() }
+        val trainerTier = routeHead.takeUnless { factionTheme != null }.orEmpty()
+        val routeRegion = routeValue.takeIf { it.isNotBlank() }?.let { regionId ->
+            RegionOfOrigin.entries.firstOrNull {
+                it.name.equals(regionId, ignoreCase = true)
             }
         }
+        val variantRegion = RegionOfOrigin.fromRegionalVariant(payload.primaryRegionalVariant)
+        val preferredRegion = routeRegion ?: variantRegion.takeIf { payload.isWild }
+
+        val musicContext = when {
+            payload.isWild -> if (payload.isLegendary) MusicContext.LEGENDARY_BATTLE else MusicContext.WILD_BATTLE
+            payload.isTrainer && factionTheme != null -> MusicContext.FACTION_BATTLE
+            payload.isTrainer -> when (trainerTier) {
+                "leader" -> MusicContext.GYM_LEADER_BATTLE
+                "e4" -> MusicContext.ELITE_FOUR_BATTLE
+                "champ" -> MusicContext.CHAMPION_BATTLE
+                "rival" -> MusicContext.PVP_BATTLE
+                "frontier" -> MusicContext.FRONTIER_BRAIN_BATTLE
+                else -> MusicContext.TRAINER_BATTLE
+            }
+            else -> MusicContext.PVP_BATTLE
+        }
+        val dexNumber = payload.dexNumber.takeIf { it >= 0 }
+
+        debugLog(
+            "[Battle route] source=$source raw='${payload.trainerTier}' tier='$trainerTier' " +
+                "factionTheme='${factionTheme.orEmpty()}' " +
+                "region=${preferredRegion?.name ?: "roster-vote"} " +
+                "variant='${payload.primaryRegionalVariant.ifEmpty { "standard" }}' context=$musicContext"
+        )
+
+        musicPlayer.playBattleContext(
+            context = musicContext,
+            dexNumber = dexNumber,
+            opposingDexNumbers = payload.opposingDexNumbers,
+            opposingRegionalVariants = payload.opposingRegionalVariants,
+            primaryRegionalVariant = payload.primaryRegionalVariant,
+            legendaryForm = payload.legendaryForm,
+            preferredRegion = preferredRegion,
+            factionTheme = factionTheme
+        )
+    }
+
+    private fun handleBattleEnd(source: String) {
+        if (captureVictoryActive) {
+            debugLog("[Capture victory] Ignoring battle end while capture theme is active")
+            return
+        }
+        if (raidVictoryActive) {
+            debugLog("[Raid victory] Ignoring battle end while raid Victory is active")
+            return
+        }
+        debugLog("[Battle end] source=$source resuming world music")
+        clearVictoryState(finishMusic = false)
+        musicPlayer.playAmbience()
+    }
+
+    private fun handleBattleVictory(source: String) {
+        if (raidVictoryActive) {
+            debugLog("[Raid victory] Ignoring duplicate victory source=$source")
+            return
+        }
+
+        if (lastBattleWasRaid) {
+            startRaidVictory()
+            return
+        }
+
+        val request = lastBattleVictoryRequest
+        lastBattleVictoryRequest = null
+        lastBattleWasRaid = false
+        pendingLootVictory = null
+        lootVictoryActive = false
+        lootMenuWasOpen = false
+
+        if (LootMenuVictoryBridge.available && request != null) {
+            pendingLootVictory = PendingLootVictory(
+                request = request,
+                expiresAtMillis = System.currentTimeMillis() + VICTORY_LOOT_WAIT_MILLIS
+            )
+
+            val track = TrackRegistry.victoryTrackFor(request)
+            if (track != null) {
+                lootVictoryActive = true
+                musicPlayer.playVictoryTheme(track)
+                debugLog(
+                    "[Victory] source=$source started at battle victory waiting up to " +
+                        "${VICTORY_LOOT_WAIT_MILLIS / 1000}s for loot menu"
+                )
+            } else {
+                pendingLootVictory = null
+                debugLog("[Victory] No theme for ${request.region}/${request.kind}")
+            }
+        }
+
+        if (!lootVictoryActive) {
+            // no loot menu still gets the same short victory cue
+            if (request != null && config.replaceBattleMusic) {
+                val track = TrackRegistry.victoryTrackFor(request)
+                if (track != null) {
+                    captureVictoryActive = true
+                    captureVictoryEndsAtMillis = System.currentTimeMillis() + CAPTURE_VICTORY_MILLIS
+                    musicPlayer.playVictoryTheme(track)
+                    debugLog("[Victory] Brief ${CAPTURE_VICTORY_MILLIS / 1000}s cue source=$source")
+                    return
+                }
+            }
+            musicPlayer.playAmbience()
+        }
+    }
+
+    private fun handlePokemonCaptured(dexNumber: Int, regionalVariant: String, source: String) {
+        clearVictoryState(finishMusic = false)
+
+        if (!config.replaceBattleMusic) {
+            musicPlayer.playAmbience()
+            return
+        }
+
+        val region = RegionOfOrigin.fromRegionalVariant(regionalVariant)
+            ?: RegionOfOrigin.fromDexNumber(dexNumber)
+        val request = region?.let { VictoryRequest(it, VictoryKind.WILD) }
+        val track = request?.let(TrackRegistry::victoryTrackFor)
+
+        if (track == null) {
+            debugLog(
+                "[Capture victory] source=$source no theme for dex=$dexNumber " +
+                    "regional='${regionalVariant.ifEmpty { "standard" }}'"
+            )
+            musicPlayer.playAmbience()
+            return
+        }
+
+        captureVictoryActive = true
+        captureVictoryEndsAtMillis = System.currentTimeMillis() + CAPTURE_VICTORY_MILLIS
+        musicPlayer.playVictoryTheme(track)
+        debugLog(
+            "[Capture victory] source=$source playing ${track.id} for ${CAPTURE_VICTORY_MILLIS / 1000}s"
+        )
+    }
+
+    private fun handleStructureZone(zoneId: String, source: String) {
+        if (zoneId.isBlank()) {
+            val mc = net.minecraft.client.MinecraftClient.getInstance()
+            val pos = mc.player?.blockPos
+            val biomeId = if (pos != null) {
+                mc.world?.getBiome(pos)?.key?.orElse(null)?.value?.toString()
+            } else null
+            musicPlayer.clearZone(biomeId)
+            return
+        }
+
+        debugLog("[Zone] source=$source id='$zoneId'")
+        when (zoneId) {
+            "cobbletunes:pokecenter" -> {
+                val track = TrackRegistry.tracksFor(MusicContext.POKECENTER).randomOrNull()
+                if (track != null) musicPlayer.playZoneAmbience(MusicContext.POKECENTER, track)
+                return
+            }
+            "cobbletunes:pokemart" -> {
+                val track = TrackRegistry.tracksFor(MusicContext.POKEMART).randomOrNull()
+                if (track != null) musicPlayer.playZoneAmbience(MusicContext.POKEMART, track)
+                return
+            }
+            "cobbletunes:game_corner",
+            "cobbletunes:casino" -> {
+                musicPlayer.enterGameCorner()
+                return
+            }
+            "cobbletunes:gym_kanto",
+            "cobbletunes:gym_johto",
+            "cobbletunes:gym_hoenn",
+            "cobbletunes:gym_sinnoh",
+            "cobbletunes:gym_unova" -> {
+                val region = parseRegion(zoneId.substringAfter("cobbletunes:gym_"))
+                val track = region?.let(TrackRegistry::gymAmbienceTrackFor)
+                if (track != null) musicPlayer.playZoneAmbience(MusicContext.GYM_AMBIENCE, track)
+                return
+            }
+        }
+
+        // tower floors get their own zone picks
+        if (TrackRegistry.isBattleTowerZone(zoneId)) {
+            val track = TrackRegistry.battleTowerTrackFor(zoneId)
+            if (track != null) musicPlayer.playZoneAmbience(MusicContext.BATTLE_TOWER, track)
+            return
+        }
+
+        // exact structures beat gym fallbacks
+        val specialTrack = TrackRegistry.specialStructureTrackFor(zoneId)
+        if (specialTrack != null) {
+            musicPlayer.playZoneAmbience(MusicContext.SPECIAL_STRUCTURE, specialTrack)
+            return
+        }
+
+        val region = STRUCTURE_TO_REGION[zoneId]
+        if (region != null) {
+            val track = TrackRegistry.gymAmbienceTrackFor(region)
+            if (track != null) musicPlayer.playZoneAmbience(MusicContext.GYM_AMBIENCE, track)
+            return
+        }
+
+        // vanilla bca structures use pools
+        if (zoneId.startsWith("cobbletunes:vanilla_structure:")) {
+            val category = zoneId.removePrefix("cobbletunes:vanilla_structure:")
+            val vanillaTrack = if (category in VILLAGE_STRUCTURE_CATEGORIES) {
+                pickVillageStructureTrack(category)
+            } else {
+                TrackRegistry.vanillaStructureTrackFor(category)
+            }
+            if (vanillaTrack != null) {
+                if (category in VILLAGE_STRUCTURE_CATEGORIES) {
+                    musicPlayer.playVillageAmbience(vanillaTrack)
+                } else {
+                    musicPlayer.playZoneAmbience(MusicContext.VANILLA_STRUCTURE, vanillaTrack)
+                }
+            } else {
+                LOGGER.warn("[$MOD_ID] No tracks registered for vanilla structure category '$category'")
+            }
+            return
+        }
+
+        LOGGER.warn("[$MOD_ID] Unknown zone id '$zoneId' — ignoring")
     }
 
     private fun registerVanillaMusicSuppression() {

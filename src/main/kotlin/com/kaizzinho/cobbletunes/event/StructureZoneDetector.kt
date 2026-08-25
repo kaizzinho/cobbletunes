@@ -4,7 +4,6 @@ import com.kaizzinho.cobbletunes.LOGGER
 import com.kaizzinho.cobbletunes.MOD_ID
 import com.kaizzinho.cobbletunes.config.CobbleTunesServerConfig
 import com.kaizzinho.cobbletunes.network.StructureZonePayload
-import com.kaizzinho.cobbletunes.world.MusicTriggerBlock
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents
 import net.minecraft.registry.RegistryKeys
 import net.minecraft.server.network.ServerPlayerEntity
@@ -22,19 +21,8 @@ object StructureZoneDetector {
     private const val SMALL_STRUCTURE_VERTICAL_PADDING = 4
     private const val STRUCTURE_PADDING = 1
     private const val STRUCTURE_VERTICAL_PADDING = 2
-    private const val TRIGGER_BLOCK_RADIUS = 12
-    private val TRIGGER_SCAN_OFFSETS: List<Triple<Int, Int, Int>> by lazy {
-        val r = TRIGGER_BLOCK_RADIUS
-        buildList {
-            for (x in -r..r) {
-                for (y in -r..r) {
-                    for (z in -r..r) {
-                        add(Triple(x, y, z))
-                    }
-                }
-            }
-        }.sortedBy { (x, y, z) -> x * x + y * y + z * z }
-    }
+    private const val MANUAL_ZONE_RADIUS = 12
+    private const val MANUAL_ZONE_TAG_PREFIX = "cobbletunes_zone:"
 
     private val GYM_STRUCTURES: Map<Identifier, String> = mapOf(
         Identifier.of("cobbleverse", "brock")             to "cobbleverse:brock",
@@ -276,6 +264,12 @@ object StructureZoneDetector {
             tickCounter = 0
 
             for (player in server.playerManager.playerList) {
+                // public clients can use local fallback without server packets
+                if (!ServerPlayNetworking.canSend(player, StructureZonePayload.ID)) {
+                    playerZoneCache.remove(player.uuid)
+                    continue
+                }
+
                 val world = player.serverWorld
                 val zone = detectZone(player, world)
                 val previous = playerZoneCache[player.uuid] ?: ""
@@ -293,7 +287,7 @@ object StructureZoneDetector {
 
     private fun detectZone(player: ServerPlayerEntity, world: ServerWorld): String {
         // manual zones win first
-        val triggerZone = scanForTriggerBlock(player, world)
+        val triggerZone = scanForManualZone(player, world)
         if (triggerZone != null) return triggerZone
 
         // worldgen zones come next
@@ -301,21 +295,20 @@ object StructureZoneDetector {
     }
 
 
-    private fun scanForTriggerBlock(player: ServerPlayerEntity, world: ServerWorld): String? {
-        val center = player.blockPos
+    private fun scanForManualZone(player: ServerPlayerEntity, world: ServerWorld): String? {
+        val box = player.boundingBox.expand(MANUAL_ZONE_RADIUS.toDouble())
 
-        // tower floors overlap so nearest trigger wins
-        for ((x, y, z) in TRIGGER_SCAN_OFFSETS) {
-            val pos = center.add(x, y, z)
-            val state = world.getBlockState(pos)
-            if (state.block !is MusicTriggerBlock) continue
-
-            val be = world.getBlockEntity(pos)
-            if (be is MusicTriggerBlock.Entity) {
-                return be.zoneId.ifBlank { null }
-            }
+        // vanilla marker entities keep server installs optional for clients
+        return world.getOtherEntities(null, box) { entity ->
+            entity.commandTags.any { it.startsWith(MANUAL_ZONE_TAG_PREFIX) }
         }
-        return null
+            .sortedBy { it.squaredDistanceTo(player) }
+            .firstNotNullOfOrNull { entity ->
+                entity.commandTags
+                    .firstOrNull { it.startsWith(MANUAL_ZONE_TAG_PREFIX) }
+                    ?.removePrefix(MANUAL_ZONE_TAG_PREFIX)
+                    ?.takeIf { it.isNotBlank() }
+            }
     }
 
     private fun locateNearbyStructure(player: ServerPlayerEntity, world: ServerWorld): String? {

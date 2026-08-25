@@ -13,7 +13,8 @@ import com.kaizzinho.cobbletunes.network.StructureZonePayload
 import com.kaizzinho.cobbletunes.event.StructureZoneDetector
 import com.kaizzinho.cobbletunes.network.PlayerDeathPayload
 import com.kaizzinho.cobbletunes.network.PokemonCapturedPayload
-import com.kaizzinho.cobbletunes.world.MusicTriggerBlock
+import com.kaizzinho.cobbletunes.network.ClientBridgeProbePayload
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
 
 const val MOD_ID = "cobbletunes"
 
@@ -29,12 +30,15 @@ class CobbleTunes : ModInitializer {
         PayloadTypeRegistry.playS2C().register(StructureZonePayload.ID, StructureZonePayload.CODEC)
         PayloadTypeRegistry.playS2C().register(PlayerDeathPayload.ID, PlayerDeathPayload.CODEC)
         PayloadTypeRegistry.playS2C().register(PokemonCapturedPayload.ID, PokemonCapturedPayload.CODEC)
+        PayloadTypeRegistry.playC2S().register(ClientBridgeProbePayload.ID, ClientBridgeProbePayload.CODEC)
 
-        MusicTriggerBlock.register()
+        // channel presence lets clients detect the optional server bridge
+        ServerPlayNetworking.registerGlobalReceiver(ClientBridgeProbePayload.ID) { _, _ -> }
+
         StructureZoneDetector.register()
         CobblemonBattleListener.register()
 
-        LOGGER.info("[$MOD_ID] Common init complete — battle classification runs server-side, playback client-side.")
+        LOGGER.info("[$MOD_ID] Common init complete — client fallback active with optional server authority.")
     }
 }
 
