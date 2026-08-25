@@ -5,6 +5,7 @@ import com.kaizzinho.cobbletunes.MOD_ID
 import com.kaizzinho.cobbletunes.client.config.CobbleTunesClientConfig
 import com.kaizzinho.cobbletunes.client.compat.lootmenu.LootMenuVictoryBridge
 import com.kaizzinho.cobbletunes.client.compat.standalone.ClientStandaloneBridge
+import com.kaizzinho.cobbletunes.client.evolution.ClientEvolutionWatcher
 import com.kaizzinho.cobbletunes.client.sound.ClientMusicPlayer
 import com.kaizzinho.cobbletunes.client.sound.MusicContext
 import com.kaizzinho.cobbletunes.client.sound.RegionOfOrigin
@@ -24,6 +25,7 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking
 class CobbleTunesClient : ClientModInitializer {
     private var onDeathScreen = false
     private lateinit var standaloneBridge: ClientStandaloneBridge
+    private lateinit var evolutionWatcher: ClientEvolutionWatcher
 
     private fun debugLog(message: String) {
         if (config.debugLogging) {
@@ -151,6 +153,12 @@ class CobbleTunesClient : ClientModInitializer {
             onZone = { handleStructureZone(it, "client") }
         )
         standaloneBridge.register()
+        evolutionWatcher = ClientEvolutionWatcher(
+            config = config,
+            musicPlayer = musicPlayer,
+            debugLog = ::debugLog
+        )
+        evolutionWatcher.register()
         registerVanillaMusicSuppression()
         registerBiomeAmbienceWatcher()
         registerDeathScreenWatcher()

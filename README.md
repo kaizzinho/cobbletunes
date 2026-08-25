@@ -16,11 +16,11 @@
 
 ### Overview
 
-**CobbleTunes** is a dynamic music framework for Cobblemon on Fabric. It replaces Minecraft music with context-aware battle themes, regional ambience, structure music, Victory themes, Battle Tower music, Game Corner zones, title-screen tracks, and low-HP cues.
+**CobbleTunes** is a dynamic music framework for Cobblemon on Fabric. It replaces Minecraft music with context-aware battle themes, regional ambience, structure music, Victory themes, Battle Tower music, Game Corner zones, title-screen tracks, low-HP cues, and client-observed spatial evolution music.
 
 The mod ships the routing and playback system only. It does **not** include, download, or generate Pokémon OST files. Music is supplied by a normal Minecraft resource pack under `assets/cobbletunes/sounds/`.
 
-The current source defines **419 sound events** across battle, Victory, Battle Tower, Game Corner, ambience, menu, and effects. The complete list is in [`SOUND_MANIFEST.md`](./SOUND_MANIFEST.md).
+The current source defines **441 sound events** across battle, Victory, Battle Tower, Game Corner, evolution, ambience, menu, and effects. The complete list is in [`SOUND_MANIFEST.md`](./SOUND_MANIFEST.md).
 
 ### What it does
 
@@ -53,7 +53,7 @@ Lower-priority world detection keeps running while battle or Victory music owns 
 
 CobbleTunes can be installed on the **client only** and used on public Cobblemon servers that do not run the mod. In that mode it infers standard wild, trainer, PvP, Legendary/Mythical, regional-form, Victory, capture, WildBosses, Raid Dens, and observable RCT routes from client-visible Cobblemon/mod state. Raid Dens can also be identified from its native tier battle sound, and successful client-only raids trigger the same five-second regional Victory cue when the raid boss faints.
 
-World biome ambience, menu music, low-HP handling, volume suspension, and other purely client-side systems work normally. For structures, standalone mode uses conservative fingerprints for locations the client can recognize reliably, currently including Gimmighoul towers, Poké Centers, Ruined Portals, and villages. Exact `StructureStart` identities for the full Cobbleverse/Terralith/BCA/Repurposed/Legendary Monuments mapping and manual marker zones remain server-enhanced features because vanilla chunk networking does not provide those authoritative structure identities to a normal remote client.
+World biome ambience, menu music, low-HP handling, spatial evolution music, volume suspension, and other purely client-side systems work normally. Evolution is fully client-observed from Cobblemon's synchronized `PokemonEntity.isEvolving` state and never needs a CobbleTunes server packet. For structures, standalone mode uses conservative fingerprints for locations the client can recognize reliably, currently including Gimmighoul towers, Poké Centers, Ruined Portals, and villages. Exact `StructureStart` identities for the full Cobbleverse/Terralith/BCA/Repurposed/Legendary Monuments mapping and manual marker zones remain server-enhanced features because vanilla chunk networking does not provide those authoritative structure identities to a normal remote client.
 
 When a CobbleTunes server bridge is present, the client automatically stops its fallback classifier and prefers the existing server-authoritative packets. Server packets are sent only to clients that advertise the matching CobbleTunes payload channel, so the fallback and enhanced paths do not compete. The server side registers no CobbleTunes block, item, or entity content, so installing the same JAR on a server does not make CobbleTunes mandatory for other players.
 
@@ -78,6 +78,7 @@ When a CobbleTunes server bridge is present, the client automatically stops its 
 - [x] **Game Corner pool** with 15 FRLG, Emerald, HGSS, and Platinum tracks played as a shuffled no-repeat playlist.
 - [x] **Title-screen music** that stays active across submenus and stops when a world loads.
 - [x] **Low-HP cue** for the active battle Pokémon with a single 80%-volume alert.
+- [x] **Spatial evolution music** emitted from the evolving Pokémon, with regional suspense/completion cues, Alola/Galar alternate suspense variants, 32-block attenuation, and smooth world-music ducking.
 - [x] **Player-death handling** and safe world/zone reset.
 - [x] **Client and server debug logging**, disabled by default.
 - [x] **Client-only public-server mode** with automatic server-bridge detection and server-authoritative upgrades when available.
@@ -296,6 +297,14 @@ The active battle Pokémon is checked periodically. When a living active Pokémo
 
 The effect uses `0.80x` the configured music volume, so the low-HP cue plays at 80% of the current CobbleTunes music volume.
 
+### Spatial evolution music
+
+Evolution music is a client-only world event. Every CobbleTunes client watches nearby synchronized `PokemonEntity` instances and reacts to `isEvolving` without a custom server packet. The suspense cue begins after a 20-tick delay so it lines up with Cobblemon's visible evolution animation, then stops when the synchronized evolution state returns to false and the regional completion sting plays from the same Pokémon position. Evolutions without a visible `PokemonEntity` do not trigger CobbleTunes audio.
+
+The sound is positional under Minecraft's **Records/Jukebox** category instead of the global Music category. Suspense uses `0.62x` and completion uses `0.78x` the configured CobbleTunes music volume, with linear attenuation out to about 32 blocks. Multiple nearby evolutions can play independently from different directions. While at least one audible suspense cue is active, world ambience/structure music smoothly ducks to `0.68x`; battle, Victory, and menu music are not ducked. If the evolving state ends without the Pokémon species changing, CobbleTunes treats it as an interrupted evolution and does not play the congratulation sting.
+
+Regional routing uses the evolving Pokémon's National Dex region, with Alolan, Galarian, Hisuian, and Paldean forms overriding the base species region. Alola randomly chooses `um/_evo.ogg` or `um/_evo2.ogg`, and Galar randomly chooses `swsh/_evo.ogg` or `swsh/_evo2.ogg`. The completion cue always uses that region's `_congrat.ogg`. Missing evolution files are detected directly in the active resource packs, so a missing cue stays silent and does not duck the world soundtrack.
+
 ### Configuration
 
 CobbleTunes creates two JSON files in `config/`. When Mod Menu is installed, the Configure button opens a native CobbleTunes screen for all client-side options below. The server debug option remains in the server JSON.
@@ -307,6 +316,7 @@ CobbleTunes creates two JSON files in `config/`. When Mod Menu is installed, the
 | `replaceAmbience` | `true` |
 | `replaceMenuMusic` | `true` |
 | `replaceBattleMusic` | `true` |
+| `enableEvolutionMusic` | `true` |
 | `musicVolume` | `1.0` |
 | `crossfadeSeconds` | `2.5` |
 | `shuffleAmbienceTracks` | `true` |
@@ -333,14 +343,14 @@ CobbleTunes does not include soundtrack files. Put your `.ogg` files under:
 assets/cobbletunes/sounds/
 ```
 
-The included `sounds.json` defines all 419 expected sound events. [`SOUND_MANIFEST.md`](./SOUND_MANIFEST.md) mirrors those entries and explains their routing.
+The included `sounds.json` defines all 441 expected sound events. [`SOUND_MANIFEST.md`](./SOUND_MANIFEST.md) mirrors those entries and explains their routing.
 
-Missing audio is handled as silence instead of crashing the music system. The new `gamecorner/` entries are intentionally empty slots until the matching OGG files are added to the resource pack.
+Missing audio is handled as silence instead of crashing the music system. Evolution files are expected under the regional `evolution/` folders listed in the sound manifest, while `gamecorner/` entries remain empty slots until the matching OGG files are added to the resource pack.
 
 ### Project layout
 
 - **`src/main/kotlin`** — common/server entrypoint, battle events, RCT classification, WildBosses and Raid Dens bridges, structure detection including Cobbleverse compatibility aliases, Terralith, CobblemonAdditions, Repurposed Structures, and Legendary Monuments mappings, manual zone markers, configs, and networking.
-- **`src/client/kotlin`** — packet routing plus the client-only fallback classifier, region selection, Victory/Loot Menu bridge, local Raid Dens/WildBosses/RCT inference, conservative structure fingerprints, ambience watching, music state, fades, menu music, low-HP handling, and the optional Mod Menu config screen.
+- **`src/client/kotlin`** — packet routing plus the client-only fallback classifier, region selection, Victory/Loot Menu bridge, local Raid Dens/WildBosses/RCT inference, the client-observed spatial evolution watcher, conservative structure fingerprints, ambience watching, music state, fades, menu music, low-HP handling, and the optional Mod Menu config screen.
 - **`src/main/resources/assets/cobbletunes/sounds.json`** — all sound keys and resource-pack paths.
 
 ### Building
@@ -373,11 +383,11 @@ CobbleTunes source code is available under the MIT license.
 
 ### Visão geral
 
-**CobbleTunes** é um framework de música dinâmica para Cobblemon em Fabric. Ele substitui a música do Minecraft por temas de batalha, ambientação regional, músicas de estruturas, temas de vitória, Battle Tower, Game Corner, menu e alerta de HP baixo de acordo com o contexto atual.
+**CobbleTunes** é um framework de música dinâmica para Cobblemon em Fabric. Ele substitui a música do Minecraft por temas de batalha, ambientação regional, músicas de estruturas, temas de vitória, Battle Tower, Game Corner, menu, alerta de HP baixo e música espacial de evolução observada pelo cliente.
 
 O mod contém apenas a lógica de roteamento e reprodução. Ele **não** inclui, baixa ou gera arquivos de OST de Pokémon. As músicas são fornecidas por um resource pack normal dentro de `assets/cobbletunes/sounds/`.
 
-O código atual define **419 eventos de som** entre batalhas, vitória, Battle Tower, Game Corner, ambientação, menu e efeitos. A lista completa está em [`SOUND_MANIFEST.md`](./SOUND_MANIFEST.md).
+O código atual define **441 eventos de som** entre batalhas, vitória, Battle Tower, Game Corner, evolução, ambientação, menu e efeitos. A lista completa está em [`SOUND_MANIFEST.md`](./SOUND_MANIFEST.md).
 
 ### O que ele faz
 
@@ -410,7 +420,7 @@ As detecções de prioridade menor continuam atualizando em segundo plano enquan
 
 O CobbleTunes pode ser instalado **somente no cliente** e usado em servidores públicos de Cobblemon que não possuem o mod. Nesse modo ele infere batalhas selvagens, treinadores, PvP, lendários/míticos, formas regionais, Victory, capturas, WildBosses, Raid Dens e dados observáveis do RCT a partir do estado que o cliente já recebe. Raid Dens também pode ser reconhecido pelo som nativo do tier da raid, e uma raid concluída no modo somente cliente dispara a mesma Victory regional de cinco segundos quando o boss desmaia.
 
-Ambientação de bioma, menu, HP baixo, suspensão por volume e outros sistemas puramente locais continuam funcionando normalmente. Para estruturas, o modo standalone usa fingerprints conservadores para locais que o cliente consegue reconhecer com segurança, atualmente torres de Gimmighoul, Poké Centers, Ruined Portals e vilas. Os IDs exatos de `StructureStart` usados por Cobbleverse/Terralith/BCA/Repurposed/Legendary Monuments e as zonas manuais com markers continuam como recursos melhorados pelo servidor, pois o cliente remoto normal não recebe essas identidades autoritativas de estrutura.
+Ambientação de bioma, menu, HP baixo, música espacial de evolução, suspensão por volume e outros sistemas puramente locais continuam funcionando normalmente. A evolução é observada totalmente no cliente pelo estado sincronizado `PokemonEntity.isEvolving` do Cobblemon e nunca exige pacote do servidor do CobbleTunes. Para estruturas, o modo standalone usa fingerprints conservadores para locais que o cliente consegue reconhecer com segurança, atualmente torres de Gimmighoul, Poké Centers, Ruined Portals e vilas. Os IDs exatos de `StructureStart` usados por Cobbleverse/Terralith/BCA/Repurposed/Legendary Monuments e as zonas manuais com markers continuam como recursos melhorados pelo servidor, pois o cliente remoto normal não recebe essas identidades autoritativas de estrutura.
 
 Quando uma ponte de servidor do CobbleTunes está disponível, o cliente desativa automaticamente o classificador fallback e prefere os pacotes autoritativos já existentes. O servidor só envia esses pacotes para clientes que anunciam o canal correspondente do CobbleTunes, evitando disputa entre os dois caminhos. O lado servidor não registra blocos, itens ou entidades do CobbleTunes, então instalar o mesmo JAR no servidor não torna o mod obrigatório para os outros jogadores.
 
@@ -435,6 +445,7 @@ Quando uma ponte de servidor do CobbleTunes está disponível, o cliente desativ
 - [x] **Pool de Game Corner** com 15 faixas de FRLG, Emerald, HGSS e Platinum tocadas como uma playlist embaralhada sem repetição imediata.
 - [x] **Música de menu** contínua entre os submenus da tela inicial.
 - [x] **Alerta de HP baixo** tocado uma vez a 80% do volume configurado.
+- [x] **Música espacial de evolução** emitida pelo Pokémon que está evoluindo, com temas regionais de suspense/conclusão, variantes alternativas em Alola/Galar, atenuação em 32 blocos e ducking suave da música do mundo.
 - [x] **Tratamento de morte do jogador** e limpeza segura de estado do mundo.
 - [x] **Logs de debug no cliente e servidor**, desligados por padrão.
 - [x] **Modo somente cliente para servidores públicos** com detecção automática da ponte do servidor e dados autoritativos quando ela está disponível.
@@ -653,6 +664,14 @@ O Pokémon ativo é verificado periodicamente durante a batalha. Quando um Poké
 
 O efeito usa `0.80x` o volume configurado para música, fazendo o alerta tocar a 80% do volume atual de música do CobbleTunes.
 
+### Música espacial de evolução
+
+A música de evolução é um evento de mundo somente do cliente. Cada cliente com CobbleTunes observa os `PokemonEntity` sincronizados próximos e reage ao estado `isEvolving` sem pacote customizado do servidor. O suspense começa após 20 ticks para alinhar com o início da animação visual de evolução do Cobblemon, para quando o estado sincronizado volta para false e então toca o sting regional de conclusão na mesma posição do Pokémon. Evoluções sem um `PokemonEntity` visível não acionam áudio do CobbleTunes.
+
+O som é posicional e usa a categoria **Discos/Jukebox** do Minecraft em vez da categoria global de Música. O suspense usa `0.62x` e a conclusão `0.78x` do volume de música configurado no CobbleTunes, com atenuação linear até aproximadamente 32 blocos. Várias evoluções próximas podem tocar ao mesmo tempo em direções diferentes. Enquanto houver pelo menos um suspense audível, a música de ambiente/estrutura do mundo reduz suavemente para `0.68x`; batalha, vitória e menu não recebem esse ducking. Se o estado de evolução terminar sem a espécie do Pokémon mudar, o CobbleTunes trata como uma evolução interrompida e não toca o sting de congratulação.
+
+O roteamento regional usa a região da Pokédex Nacional do Pokémon em evolução, com formas de Alola, Galar, Hisui e Paldea substituindo a região da espécie base. Alola escolhe aleatoriamente entre `um/_evo.ogg` e `um/_evo2.ogg`, e Galar entre `swsh/_evo.ogg` e `swsh/_evo2.ogg`. A conclusão sempre usa o `_congrat.ogg` da mesma região. Arquivos de evolução ausentes são verificados diretamente nos resource packs ativos, então um cue ausente fica em silêncio e não reduz a música do mundo.
+
 ### Configuração
 
 O CobbleTunes cria dois JSONs dentro de `config/`. Quando o Mod Menu está instalado, o botão Configure abre uma tela nativa do CobbleTunes com todas as opções do cliente abaixo. O debug do servidor continua no JSON do servidor.
@@ -664,6 +683,7 @@ O CobbleTunes cria dois JSONs dentro de `config/`. Quando o Mod Menu está insta
 | `replaceAmbience` | `true` |
 | `replaceMenuMusic` | `true` |
 | `replaceBattleMusic` | `true` |
+| `enableEvolutionMusic` | `true` |
 | `musicVolume` | `1.0` |
 | `crossfadeSeconds` | `2.5` |
 | `shuffleAmbienceTracks` | `true` |
@@ -690,14 +710,14 @@ O CobbleTunes não inclui arquivos de soundtrack. Coloque os `.ogg` dentro de:
 assets/cobbletunes/sounds/
 ```
 
-O `sounds.json` incluído define todos os 419 eventos esperados. [`SOUND_MANIFEST.md`](./SOUND_MANIFEST.md) espelha essas entradas e explica o roteamento.
+O `sounds.json` incluído define todos os 441 eventos esperados. [`SOUND_MANIFEST.md`](./SOUND_MANIFEST.md) espelha essas entradas e explica o roteamento.
 
-Áudio ausente vira silêncio sem derrubar o sistema de música. As novas entradas de `gamecorner/` ficam como espaços vazios até os OGGs correspondentes serem adicionados ao resource pack.
+Áudio ausente vira silêncio sem derrubar o sistema de música. Os arquivos de evolução são esperados nas pastas regionais de `evolution/` listadas no sound manifest, enquanto as entradas de `gamecorner/` continuam como espaços vazios até os OGGs correspondentes serem adicionados ao resource pack.
 
 ### Organização do projeto
 
 - **`src/main/kotlin`** — inicialização comum/servidor, eventos de batalha, classificação do RCT, pontes com WildBosses e Raid Dens, detecção de estruturas incluindo aliases de compatibilidade do Cobbleverse e mapeamentos do Terralith, CobblemonAdditions, Repurposed Structures e Legendary Monuments, markers de zonas manuais, configs e rede.
-- **`src/client/kotlin`** — roteamento dos pacotes e classificador fallback somente cliente, região, ponte de Victory/Loot Menu, inferência local de Raid Dens/WildBosses/RCT, fingerprints conservadores de estruturas, observação de biomas, estado musical, fades, menu, HP baixo e a tela opcional de configuração do Mod Menu.
+- **`src/client/kotlin`** — roteamento dos pacotes e classificador fallback somente cliente, região, ponte de Victory/Loot Menu, inferência local de Raid Dens/WildBosses/RCT, watcher espacial de evolução observado pelo cliente, fingerprints conservadores de estruturas, observação de biomas, estado musical, fades, menu, HP baixo e a tela opcional de configuração do Mod Menu.
 - **`src/main/resources/assets/cobbletunes/sounds.json`** — todas as chaves e caminhos do resource pack.
 
 ### Compilação

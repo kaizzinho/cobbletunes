@@ -3769,5 +3769,225 @@
         "stream": true
       }
     ]
+  },
+  "evolution.fr.evo": {
+    "category": "record",
+    "sounds": [
+      {
+        "name": "cobbletunes:evolution/fr/_evo",
+        "stream": true,
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "evolution.fr.congrat": {
+    "category": "record",
+    "sounds": [
+      {
+        "name": "cobbletunes:evolution/fr/_congrat",
+        "stream": true,
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "evolution.hg.evo": {
+    "category": "record",
+    "sounds": [
+      {
+        "name": "cobbletunes:evolution/hg/_evo",
+        "stream": true,
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "evolution.hg.congrat": {
+    "category": "record",
+    "sounds": [
+      {
+        "name": "cobbletunes:evolution/hg/_congrat",
+        "stream": true,
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "evolution.em.evo": {
+    "category": "record",
+    "sounds": [
+      {
+        "name": "cobbletunes:evolution/em/_evo",
+        "stream": true,
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "evolution.em.congrat": {
+    "category": "record",
+    "sounds": [
+      {
+        "name": "cobbletunes:evolution/em/_congrat",
+        "stream": true,
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "evolution.plat.evo": {
+    "category": "record",
+    "sounds": [
+      {
+        "name": "cobbletunes:evolution/plat/_evo",
+        "stream": true,
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "evolution.plat.congrat": {
+    "category": "record",
+    "sounds": [
+      {
+        "name": "cobbletunes:evolution/plat/_congrat",
+        "stream": true,
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "evolution.bl.evo": {
+    "category": "record",
+    "sounds": [
+      {
+        "name": "cobbletunes:evolution/bl/_evo",
+        "stream": true,
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "evolution.bl.congrat": {
+    "category": "record",
+    "sounds": [
+      {
+        "name": "cobbletunes:evolution/bl/_congrat",
+        "stream": true,
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "evolution.xy.evo": {
+    "category": "record",
+    "sounds": [
+      {
+        "name": "cobbletunes:evolution/xy/_evo",
+        "stream": true,
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "evolution.xy.congrat": {
+    "category": "record",
+    "sounds": [
+      {
+        "name": "cobbletunes:evolution/xy/_congrat",
+        "stream": true,
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "evolution.um.evo": {
+    "category": "record",
+    "sounds": [
+      {
+        "name": "cobbletunes:evolution/um/_evo",
+        "stream": true,
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "evolution.um.evo2": {
+    "category": "record",
+    "sounds": [
+      {
+        "name": "cobbletunes:evolution/um/_evo2",
+        "stream": true,
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "evolution.um.congrat": {
+    "category": "record",
+    "sounds": [
+      {
+        "name": "cobbletunes:evolution/um/_congrat",
+        "stream": true,
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "evolution.swsh.evo": {
+    "category": "record",
+    "sounds": [
+      {
+        "name": "cobbletunes:evolution/swsh/_evo",
+        "stream": true,
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "evolution.swsh.evo2": {
+    "category": "record",
+    "sounds": [
+      {
+        "name": "cobbletunes:evolution/swsh/_evo2",
+        "stream": true,
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "evolution.swsh.congrat": {
+    "category": "record",
+    "sounds": [
+      {
+        "name": "cobbletunes:evolution/swsh/_congrat",
+        "stream": true,
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "evolution.leg.evo": {
+    "category": "record",
+    "sounds": [
+      {
+        "name": "cobbletunes:evolution/leg/_evo",
+        "stream": true,
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "evolution.leg.congrat": {
+    "category": "record",
+    "sounds": [
+      {
+        "name": "cobbletunes:evolution/leg/_congrat",
+        "stream": true,
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "evolution.sv.evo": {
+    "category": "record",
+    "sounds": [
+      {
+        "name": "cobbletunes:evolution/sv/_evo",
+        "stream": true,
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "evolution.sv.congrat": {
+    "category": "record",
+    "sounds": [
+      {
+        "name": "cobbletunes:evolution/sv/_congrat",
+        "stream": true,
+        "attenuation_distance": 32
+      }
+    ]
   }
 }

@@ -15,6 +15,17 @@ data class MusicTrack(
     val factionThemes: Set<String> = emptySet()
 )
 
+data class EvolutionCue(
+    val id: String,
+    val soundEvent: SoundEvent,
+    val assetPath: String
+)
+
+data class EvolutionTheme(
+    val suspense: List<EvolutionCue>,
+    val complete: EvolutionCue
+)
+
 object TrackRegistry {
     private val tracks: MutableMap<MusicContext, MutableList<MusicTrack>> =
         MusicContext.entries.associateWith { mutableListOf<MusicTrack>() }.toMutableMap()
@@ -337,6 +348,61 @@ object TrackRegistry {
 
     fun battleTowerBattleTrack(): MusicTrack? =
         tracks[MusicContext.BATTLE_TOWER_BATTLE].orEmpty().randomOrNull()
+
+    private fun evolutionCue(prefix: String, suffix: String): EvolutionCue =
+        EvolutionCue(
+            id = "evolution.$prefix.$suffix",
+            soundEvent = soundEvent("evolution.$prefix.$suffix"),
+            assetPath = "sounds/evolution/$prefix/_$suffix.ogg"
+        )
+
+    private val evolutionThemes: Map<RegionOfOrigin, EvolutionTheme> by lazy {
+        mapOf(
+            RegionOfOrigin.KANTO to EvolutionTheme(
+                listOf(evolutionCue("fr", "evo")),
+                evolutionCue("fr", "congrat")
+            ),
+            RegionOfOrigin.JOHTO to EvolutionTheme(
+                listOf(evolutionCue("hg", "evo")),
+                evolutionCue("hg", "congrat")
+            ),
+            RegionOfOrigin.HOENN to EvolutionTheme(
+                listOf(evolutionCue("em", "evo")),
+                evolutionCue("em", "congrat")
+            ),
+            RegionOfOrigin.SINNOH to EvolutionTheme(
+                listOf(evolutionCue("plat", "evo")),
+                evolutionCue("plat", "congrat")
+            ),
+            RegionOfOrigin.UNOVA to EvolutionTheme(
+                listOf(evolutionCue("bl", "evo")),
+                evolutionCue("bl", "congrat")
+            ),
+            RegionOfOrigin.KALOS to EvolutionTheme(
+                listOf(evolutionCue("xy", "evo")),
+                evolutionCue("xy", "congrat")
+            ),
+            RegionOfOrigin.ALOLA to EvolutionTheme(
+                listOf(evolutionCue("um", "evo"), evolutionCue("um", "evo2")),
+                evolutionCue("um", "congrat")
+            ),
+            RegionOfOrigin.GALAR to EvolutionTheme(
+                listOf(evolutionCue("swsh", "evo"), evolutionCue("swsh", "evo2")),
+                evolutionCue("swsh", "congrat")
+            ),
+            RegionOfOrigin.HISUI to EvolutionTheme(
+                listOf(evolutionCue("leg", "evo")),
+                evolutionCue("leg", "congrat")
+            ),
+            RegionOfOrigin.PALDEA to EvolutionTheme(
+                listOf(evolutionCue("sv", "evo")),
+                evolutionCue("sv", "congrat")
+            )
+        )
+    }
+
+    fun evolutionThemeFor(region: RegionOfOrigin): EvolutionTheme? =
+        evolutionThemes[region]
 
     fun soundEvent(path: String): SoundEvent =
         SoundEvent.of(Identifier.of(MOD_ID, path))

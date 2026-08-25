@@ -1,24 +1,26 @@
 # CobbleTunes — Sound Manifest
 
-This manifest matches the current final source and `sounds.json`. Every entry below is wired by `TrackRegistry` or the low-HP effect path; there are no reserved-only sound keys in this build.
+This manifest matches the current final source and `sounds.json`. Every entry below is wired by `TrackRegistry`, the client evolution watcher, or the low-HP effect path; there are no reserved-only sound keys in this build.
 
-- **Total sound events:** 419
+- **Total sound events:** 441
 - **Battle:** 117
 - **Victory:** 31
 - **Battle Tower:** 25
 - **Game Corner:** 15
+- **Evolution:** 22
 - **Ambience and structures:** 227
 - **Menu:** 3
 - **Effects:** 1
 - **Base folder:** `assets/cobbletunes/sounds/`
 - **Music files:** streamed through `sounds.json`
 
-The current source audit resolves all 419 `sounds.json` keys from code. A resource pack still needs to provide the matching `.ogg` files.
+The current source audit resolves all 441 `sounds.json` keys from code. A resource pack still needs to provide the matching `.ogg` files.
 
 ## Routing notes
 
 - CobbleTunes is client-first. On a remote server without CobbleTunes, the client infers standard battle routes from Cobblemon's synchronized battle actors and rosters, observes capture success locally, and uses client-visible WildBosses/RCT/Raid Dens metadata when available. When the server bridge is present, its packets are authoritative and the local fallback is disabled.
 - Server packets are capability-gated and are only sent to clients that advertise the matching CobbleTunes payload. Public-server clients do not need a CobbleTunes server to use battle, Victory/capture, biome, menu, low-HP, and other client-owned music systems.
+- Evolution music is fully client-observed and never uses a CobbleTunes server packet. Nearby clients watch Cobblemon's synchronized `PokemonEntity.isEvolving` state, begin the suspense cue after 20 ticks to align with the visible animation, and stop it when the state returns to false. A regional completion sting plays from the Pokémon position only when the species actually changed, so an interrupted evolution does not produce a false congratulations cue. The cues use the Records/Jukebox category with 32-block attenuation; audible suspense ducks world ambience/structure music to `0.68x` without ducking battle, Victory, or menu music.
 - Client-only Raid Dens detection can promote a battle from the native `cobblemonraiddens:battle.raid.tier_*` sound and uses the same tier-weighted pool. The client also treats the raid boss reaching 0 HP as the clear point, so the five-second regional Victory cue does not wait for Raid Dens to close its battle/dimension state.
 - Client-only structure routing is intentionally conservative. Gimmighoul towers, Poké Centers, Ruined Portals, villages, and nearby RCT Battle Tower floor trainers have local fingerprints; exact Cobbleverse/Terralith/BCA/Repurposed/Legendary Monuments `StructureStart` IDs and manual marker zones remain server-enhanced routing.
 - Battle routing keeps role and region separate, with RCT metadata preferred and opposing-roster voting as fallback.
@@ -783,6 +785,37 @@ This covers all 107 `data/repurposed_structures/worldgen/structure/*.json` entri
 | `menu.frlg` | `menu/frlg.ogg` | title screen and submenu pool |
 | `menu.emerald` | `menu/emerald.ogg` | title screen and submenu pool |
 
+## Evolution music
+
+Evolution cues are client-local positional sounds. They do not enter the global CobbleTunes music slot and do not need a server packet. Suspense plays at `0.62x` the configured CobbleTunes music volume, completion at `0.78x`, both under Minecraft's Records/Jukebox slider with linear attenuation out to about 32 blocks. The watcher waits 20 ticks after `isEvolving` becomes true so suspense lines up with Cobblemon's visible animation. When `isEvolving` becomes false, any remaining suspense is stopped and the completion sting plays.
+
+Alolan, Galarian, Hisuian, and Paldean forms override the base National Dex region. Alola and Galar each have two suspense variants and choose randomly between available files. If an evolution OGG is missing from the active resource packs, that cue stays silent; missing suspense also does not duck world music. Multiple nearby evolutions can play at the same time from independent positions.
+
+| Key | File | Usage |
+|---|---|---|
+| `evolution.fr.evo` | `evolution/fr/_evo.ogg` | Kanto suspense |
+| `evolution.fr.congrat` | `evolution/fr/_congrat.ogg` | Kanto completion |
+| `evolution.hg.evo` | `evolution/hg/_evo.ogg` | Johto suspense |
+| `evolution.hg.congrat` | `evolution/hg/_congrat.ogg` | Johto completion |
+| `evolution.em.evo` | `evolution/em/_evo.ogg` | Hoenn suspense |
+| `evolution.em.congrat` | `evolution/em/_congrat.ogg` | Hoenn completion |
+| `evolution.plat.evo` | `evolution/plat/_evo.ogg` | Sinnoh suspense |
+| `evolution.plat.congrat` | `evolution/plat/_congrat.ogg` | Sinnoh completion |
+| `evolution.bl.evo` | `evolution/bl/_evo.ogg` | Unova suspense |
+| `evolution.bl.congrat` | `evolution/bl/_congrat.ogg` | Unova completion |
+| `evolution.xy.evo` | `evolution/xy/_evo.ogg` | Kalos suspense |
+| `evolution.xy.congrat` | `evolution/xy/_congrat.ogg` | Kalos completion |
+| `evolution.um.evo` | `evolution/um/_evo.ogg` | Alola suspense variant 1 |
+| `evolution.um.evo2` | `evolution/um/_evo2.ogg` | Alola suspense variant 2 |
+| `evolution.um.congrat` | `evolution/um/_congrat.ogg` | Alola completion |
+| `evolution.swsh.evo` | `evolution/swsh/_evo.ogg` | Galar suspense variant 1 |
+| `evolution.swsh.evo2` | `evolution/swsh/_evo2.ogg` | Galar suspense variant 2 |
+| `evolution.swsh.congrat` | `evolution/swsh/_congrat.ogg` | Galar completion |
+| `evolution.leg.evo` | `evolution/leg/_evo.ogg` | Hisui suspense |
+| `evolution.leg.congrat` | `evolution/leg/_congrat.ogg` | Hisui completion |
+| `evolution.sv.evo` | `evolution/sv/_evo.ogg` | Paldea suspense |
+| `evolution.sv.congrat` | `evolution/sv/_congrat.ogg` | Paldea completion |
+
 ## Effects
 
 | Key | File | Usage |
@@ -795,4 +828,5 @@ This covers all 107 `data/repurposed_structures/worldgen/structure/*.json` entri
 - Keep music entries streamed.
 - `effect.lowhp` is played once per low-HP trigger at `0.80x` the configured CobbleTunes music volume.
 - Missing files stay silent instead of crashing CobbleTunes.
-- `/playsound cobbletunes:<key> music @s` can be used to test music keys directly.
+- `/playsound cobbletunes:<key> music @s` can be used to test normal music keys directly.
+- `/playsound cobbletunes:evolution.fr.evo record @s` can be used to test an evolution key through the Records/Jukebox category.

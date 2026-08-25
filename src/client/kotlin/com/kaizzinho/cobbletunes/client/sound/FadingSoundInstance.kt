@@ -17,6 +17,11 @@ class FadingSoundInstance(
     TickableSoundInstance {
 
     private var elapsedTicks = 0
+    private var baseVolume = 0f
+    private var volumeMultiplier = 1f
+    private var volumeMultiplierTarget = 1f
+    private var volumeMultiplierTicks = 0
+    private var volumeMultiplierStep = 0f
     private var fadingOut = false
     private var fadeOutTicks = 1
     private var fadeOutElapsed = 0
@@ -29,11 +34,28 @@ class FadingSoundInstance(
         this.relative = true
         this.attenuationType = SoundInstance.AttenuationType.NONE
         this.pitch = 1f
-        this.volume = if (fadeInSeconds <= 0f) {
+        this.baseVolume = if (fadeInSeconds <= 0f) {
             targetVolume
         } else {
             0.05f // small floor keeps quiet tracks alive
         }
+        this.volume = baseVolume
+    }
+
+    fun setExternalVolumeMultiplier(multiplier: Float, transitionSeconds: Float = 0.35f) {
+        val target = multiplier.coerceIn(0f, 1f)
+        if (transitionSeconds <= 0f) {
+            volumeMultiplier = target
+            volumeMultiplierTarget = target
+            volumeMultiplierTicks = 0
+            volumeMultiplierStep = 0f
+            if (!fadingOut) volume = baseVolume * volumeMultiplier
+            return
+        }
+
+        volumeMultiplierTarget = target
+        volumeMultiplierTicks = max(1, (transitionSeconds * 20f).toInt())
+        volumeMultiplierStep = (volumeMultiplierTarget - volumeMultiplier) / volumeMultiplierTicks
     }
 
     fun beginFadeOut(seconds: Float) {
@@ -47,13 +69,15 @@ class FadingSoundInstance(
 
     override fun tick() {
         if (!fadingOut) {
+            tickVolumeMultiplier()
             if (fadeInSeconds <= 0f) {
-                volume = targetVolume
+                baseVolume = targetVolume
             } else {
                 elapsedTicks++
                 val fadeInTicks = max(1, (fadeInSeconds * 20f).toInt())
-                volume = min(1f, elapsedTicks.toFloat() / fadeInTicks) * targetVolume
+                baseVolume = min(1f, elapsedTicks.toFloat() / fadeInTicks) * targetVolume
             }
+            volume = baseVolume * volumeMultiplier
         } else {
             fadeOutElapsed++
             val outFraction = 1f - min(1f, fadeOutElapsed.toFloat() / fadeOutTicks)
@@ -61,6 +85,16 @@ class FadingSoundInstance(
             if (fadeOutElapsed >= fadeOutTicks) {
                 done = true
             }
+        }
+    }
+
+    private fun tickVolumeMultiplier() {
+        if (volumeMultiplierTicks <= 0) return
+        volumeMultiplier += volumeMultiplierStep
+        volumeMultiplierTicks--
+        if (volumeMultiplierTicks <= 0) {
+            volumeMultiplier = volumeMultiplierTarget
+            volumeMultiplierStep = 0f
         }
     }
 

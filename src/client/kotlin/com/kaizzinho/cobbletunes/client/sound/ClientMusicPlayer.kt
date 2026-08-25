@@ -27,6 +27,7 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
     private var villageCooldownEndsAtMillis: Long? = null
 
     private var volumeSuspended = false
+    private var evolutionDucking = false
 
     // latest biome target survives battle and victory
     private var overrideBiomeId: String? = null
@@ -49,6 +50,7 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
 
     private val VILLAGE_COOLDOWN_MIN_SECONDS = 5f
     private val VILLAGE_COOLDOWN_MAX_SECONDS = 60f
+    private val EVOLUTION_DUCK_MULTIPLIER = 0.68f
 
 
     fun playBattleContext(
@@ -733,6 +735,20 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
 
     fun isVolumeSuspended(): Boolean = isMusicMutedNow()
 
+    fun setEvolutionDucking(active: Boolean) {
+        if (evolutionDucking == active) return
+        evolutionDucking = active
+        val multiplier = evolutionVolumeMultiplierFor(currentContext)
+        currentSound?.setExternalVolumeMultiplier(multiplier)
+        debugLog("[Evolution] world music duck=${if (active) "on" else "off"}")
+    }
+
+    private fun evolutionVolumeMultiplierFor(context: MusicContext): Float =
+        if (evolutionDucking && isEvolutionDuckable(context)) EVOLUTION_DUCK_MULTIPLIER else 1f
+
+    private fun isEvolutionDuckable(context: MusicContext): Boolean =
+        !isBattleContext(context) && context != MusicContext.VICTORY && context != MusicContext.MENU
+
     private fun isMusicMutedNow(): Boolean {
         val minecraftMusicVolume = MinecraftClient.getInstance()
             .options
@@ -854,6 +870,10 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
             targetVolume = config.musicVolume,
             fadeInSeconds = fadeInSeconds,
             looping = track.loop
+        )
+        instance.setExternalVolumeMultiplier(
+            evolutionVolumeMultiplierFor(context),
+            transitionSeconds = 0f
         )
         mc.soundManager.play(instance)
         currentSound = instance

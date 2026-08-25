@@ -97,6 +97,12 @@ class CobbleTunesConfigScreen(
 
         addBooleanOption(
             row++,
+            "cobbletunes.config.evolution_music",
+            working.enableEvolutionMusic
+        ) { working.enableEvolutionMusic = it }
+
+        addBooleanOption(
+            row++,
             "cobbletunes.config.replace_ambience",
             working.replaceAmbience
         ) { working.replaceAmbience = it }

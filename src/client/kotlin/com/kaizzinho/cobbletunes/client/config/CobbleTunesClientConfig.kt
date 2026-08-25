@@ -1,6 +1,7 @@
 package com.kaizzinho.cobbletunes.client.config
 
 import com.google.gson.GsonBuilder
+import com.google.gson.JsonParser
 import com.kaizzinho.cobbletunes.LOGGER
 import com.kaizzinho.cobbletunes.MOD_ID
 import net.fabricmc.loader.api.FabricLoader
@@ -10,6 +11,7 @@ data class CobbleTunesClientConfig(
     var replaceAmbience: Boolean = true,
     var replaceMenuMusic: Boolean = true,
     var replaceBattleMusic: Boolean = true,
+    var enableEvolutionMusic: Boolean = true,
     var musicVolume: Float = 1.0f,
     var crossfadeSeconds: Float = 2.5f,
     var shuffleAmbienceTracks: Boolean = true,
@@ -36,8 +38,13 @@ data class CobbleTunesClientConfig(
                 return default
             }
             return try {
-                file.reader().use { gson.fromJson(it, CobbleTunesClientConfig::class.java) }
+                val json = file.reader().use { JsonParser.parseReader(it) }
+                val loaded = gson.fromJson(json, CobbleTunesClientConfig::class.java)
                     ?: CobbleTunesClientConfig()
+                if (!json.asJsonObject.has("enableEvolutionMusic")) {
+                    loaded.enableEvolutionMusic = true
+                }
+                loaded
             } catch (e: Exception) {
                 LOGGER.warn("[$MOD_ID] Failed to read client config, falling back to defaults", e)
                 CobbleTunesClientConfig()
@@ -49,6 +56,7 @@ data class CobbleTunesClientConfig(
         replaceAmbience = other.replaceAmbience
         replaceMenuMusic = other.replaceMenuMusic
         replaceBattleMusic = other.replaceBattleMusic
+        enableEvolutionMusic = other.enableEvolutionMusic
         musicVolume = other.musicVolume
         crossfadeSeconds = other.crossfadeSeconds
         shuffleAmbienceTracks = other.shuffleAmbienceTracks
