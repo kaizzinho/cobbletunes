@@ -279,22 +279,34 @@ object TrackRegistry {
         return pool.filter { it.regions.isEmpty() }.randomOrNull()
     }
 
-    fun ambienceTrackFor(biomeId: String, region: RegionOfOrigin?): MusicTrack? {
+    fun ambienceTrackFor(
+        biomeId: String,
+        region: RegionOfOrigin?,
+        excludeTrackId: String? = null
+    ): MusicTrack? {
         val pool = tracks[MusicContext.AMBIENCE].orEmpty()
 
-        region?.let { r ->
-            pool.filter { r in it.regions && biomeId in it.biomeKeys }
-                .randomOrNull()?.let { return it }
+        fun pick(candidates: List<MusicTrack>): MusicTrack? {
+            if (candidates.isEmpty()) return null
+            val alternatives = excludeTrackId
+                ?.let { excluded -> candidates.filter { it.id != excluded } }
+                .orEmpty()
+            return (if (alternatives.isNotEmpty()) alternatives else candidates).randomOrNull()
         }
 
-        pool.filter { biomeId in it.biomeKeys }.randomOrNull()?.let { return it }
-
         region?.let { r ->
-            pool.filter { r in it.regions && it.biomeKeys.isEmpty() }
-                .randomOrNull()?.let { return it }
+            pick(pool.filter { r in it.regions && biomeId in it.biomeKeys })
+                ?.let { return it }
         }
 
-        return pool.filter { it.regions.isEmpty() && it.biomeKeys.isEmpty() }.randomOrNull()
+        pick(pool.filter { biomeId in it.biomeKeys })?.let { return it }
+
+        region?.let { r ->
+            pick(pool.filter { r in it.regions && it.biomeKeys.isEmpty() })
+                ?.let { return it }
+        }
+
+        return pick(pool.filter { it.regions.isEmpty() && it.biomeKeys.isEmpty() })
     }
 
     fun victoryTrackFor(request: VictoryRequest): MusicTrack? {
@@ -1304,7 +1316,7 @@ object TrackRegistry {
         )
     }
 
-    fun caveAmbienceTrack(): MusicTrack? {
+    fun caveAmbienceTrack(excludeTrackId: String? = null): MusicTrack? {
         val caveBiomes = setOf(
             "minecraft:dripstone_caves", "minecraft:lush_caves", "minecraft:deep_dark",
             "terralith:andesite_caves", "terralith:crystal_caves", "terralith:deep_caves",
@@ -1315,7 +1327,10 @@ object TrackRegistry {
         )
         val pool = tracks[MusicContext.AMBIENCE].orEmpty()
             .filter { track -> track.biomeKeys.any { it in caveBiomes } }
-        return pool.randomOrNull()
+        val alternatives = excludeTrackId
+            ?.let { excluded -> pool.filter { it.id != excluded } }
+            .orEmpty()
+        return (if (alternatives.isNotEmpty()) alternatives else pool).randomOrNull()
     }
 
     // low hp sfx skips music fades

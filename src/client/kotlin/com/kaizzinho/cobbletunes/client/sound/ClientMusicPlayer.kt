@@ -36,7 +36,16 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
     private val gameCornerQueue = ArrayDeque<MusicTrack>()
     private var lastGameCornerTrackId: String? = null
 
-    private val biomeTrackMemory: MutableMap<String, MusicTrack> = mutableMapOf()
+    private data class BiomeTrackMemory(
+        val track: MusicTrack,
+        var leftAtTick: Long? = null,
+        var expiryTicks: Long = 0L,
+        var meaningfulTransitionsSinceExit: Int = 0
+    )
+
+    private val biomeTrackMemory: MutableMap<String, BiomeTrackMemory> = mutableMapOf()
+    private var activeBiomeMemoryId: String? = null
+    private var ambienceMemoryTick: Long = 0L
     private val trackBudgetStartMillis: MutableMap<String, Long> = mutableMapOf()
     private val trackBudgetDurationMillis: MutableMap<String, Long> = mutableMapOf()
     private var ambienceSegmentStartedAtMillis: Long? = null
@@ -51,6 +60,9 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
     private val VILLAGE_COOLDOWN_MIN_SECONDS = 5f
     private val VILLAGE_COOLDOWN_MAX_SECONDS = 60f
     private val EVOLUTION_DUCK_MULTIPLIER = 0.20f
+    private val BIOME_MEMORY_MIN_TICKS = 3L * 60L * 20L
+    private val BIOME_MEMORY_MAX_TICKS = 6L * 60L * 20L
+    private val BIOME_MEMORY_TRANSITION_LIMIT = 3
 
 
     fun playBattleContext(
@@ -218,6 +230,7 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
             pendingSilenceEndsAtMillis = null
             debounceBiomeId = null
             debounceEndsAtMillis = null
+            latestOverrideBiome?.let(::commitBiomeMemoryVisit)
             currentBiomeId = latestOverrideBiome
             currentAmbienceTrack = latestOverrideTrack
             val budgetMillis = randomRotationBudgetMillis()
@@ -234,7 +247,9 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
             debugLog("[Battle end resume] Using pending track: ${t.id}")
             pendingTrack = null
             pendingSilenceEndsAtMillis = null
-            currentBiomeId = pendingBiomeId
+            val resumedBiome = pendingBiomeId
+            resumedBiome?.let(::commitBiomeMemoryVisit)
+            currentBiomeId = resumedBiome
             pendingBiomeId = null
             currentAmbienceTrack = t
             val budgetMillis = randomRotationBudgetMillis()
@@ -270,6 +285,7 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
         overrideBiomeId = null
         overrideBiomeTrack = null
         biomeTrackMemory.clear()
+        activeBiomeMemoryId = null
         trackBudgetStartMillis.clear()
         trackBudgetDurationMillis.clear()
         debounceBiomeId = null
@@ -393,6 +409,11 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
     fun tick() {
         syncVolumeSuspension()
         if (volumeSuspended) return
+
+        val client = MinecraftClient.getInstance()
+        if (client.world != null && !client.isPaused) {
+            ambienceMemoryTick++
+        }
 
         when (currentContext) {
             MusicContext.GAME_CORNER -> tickGameCorner()
@@ -579,7 +600,7 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
 
 
     private fun checkAndRotateCurrentTrack(biomeId: String) {
-        val track = biomeTrackMemory[biomeId] ?: run {
+        val track = biomeTrackMemory[biomeId]?.track ?: run {
             handleBiomeTransitionDebounce(biomeId)
             return
         }
@@ -629,6 +650,7 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
 
         debounceBiomeId = null; debounceEndsAtMillis = null
         val track = resolveTrackForBiome(biomeId) ?: return
+        commitBiomeMemoryVisit(biomeId)
         currentBiomeId = biomeId; currentAmbienceTrack = track
 
         // timer starts when track commits
@@ -642,17 +664,94 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
 
     private fun resolveTrackForBiome(biomeId: String): MusicTrack? {
         val remembered = biomeTrackMemory[biomeId]
-        if (remembered != null) return remembered
-        val fresh = if (biomeId == "cobbletunes:cave") {
-            TrackRegistry.caveAmbienceTrack()
-        } else {
-            TrackRegistry.ambienceTrackFor(biomeId, region = null)
-        } ?: run {
+        if (remembered != null) {
+            val leftAtTick = remembered.leftAtTick
+            if (leftAtTick == null) return remembered.track
+
+            val elapsedTicks = (ambienceMemoryTick - leftAtTick).coerceAtLeast(0L)
+            val expiredByTime = remembered.expiryTicks > 0L && elapsedTicks >= remembered.expiryTicks
+            val expiredByTravel = remembered.meaningfulTransitionsSinceExit >= BIOME_MEMORY_TRANSITION_LIMIT
+
+            if (!expiredByTime && !expiredByTravel) return remembered.track
+
+            val previousTrackId = remembered.track.id
+            val reason = when {
+                expiredByTime && expiredByTravel -> "time and travel"
+                expiredByTime -> "time"
+                else -> "travel"
+            }
+            val fresh = selectFreshTrackForBiome(biomeId, previousTrackId) ?: return remembered.track
+            biomeTrackMemory[biomeId] = BiomeTrackMemory(track = fresh)
+            debugLog(
+                "[Biome memory] Expired $biomeId by $reason; " +
+                    "${previousTrackId} -> ${fresh.id}"
+            )
+            return fresh
+        }
+
+        val fresh = selectFreshTrackForBiome(biomeId, excludeTrackId = null) ?: run {
             LOGGER.warn("[$MOD_ID] No ambience track for biome: $biomeId")
             return null
         }
-        biomeTrackMemory[biomeId] = fresh
+        biomeTrackMemory[biomeId] = BiomeTrackMemory(track = fresh)
         return fresh
+    }
+
+    private fun selectFreshTrackForBiome(biomeId: String, excludeTrackId: String?): MusicTrack? =
+        if (biomeId == "cobbletunes:cave") {
+            TrackRegistry.caveAmbienceTrack(excludeTrackId)
+        } else {
+            TrackRegistry.ambienceTrackFor(
+                biomeId = biomeId,
+                region = null,
+                excludeTrackId = excludeTrackId
+            )
+        }
+
+    private fun commitBiomeMemoryVisit(biomeId: String) {
+        val previousBiomeId = activeBiomeMemoryId
+        if (previousBiomeId == biomeId) {
+            biomeTrackMemory[biomeId]?.apply {
+                leftAtTick = null
+                expiryTicks = 0L
+                meaningfulTransitionsSinceExit = 0
+            }
+            return
+        }
+
+        if (previousBiomeId != null) {
+            biomeTrackMemory[previousBiomeId]?.let { previousMemory ->
+                previousMemory.leftAtTick = ambienceMemoryTick
+                previousMemory.expiryTicks = randomBiomeMemoryExpiryTicks()
+                previousMemory.meaningfulTransitionsSinceExit = 0
+                debugLog(
+                    "[Biome memory] Left $previousBiomeId; keeping ${previousMemory.track.id} for " +
+                        "${previousMemory.expiryTicks / 20L}s or $BIOME_MEMORY_TRANSITION_LIMIT transitions"
+                )
+            }
+
+            biomeTrackMemory.forEach { (rememberedBiomeId, memory) ->
+                if (rememberedBiomeId != biomeId && memory.leftAtTick != null) {
+                    memory.meaningfulTransitionsSinceExit++
+                }
+            }
+        }
+
+        biomeTrackMemory[biomeId]?.apply {
+            leftAtTick = null
+            expiryTicks = 0L
+            meaningfulTransitionsSinceExit = 0
+        }
+        activeBiomeMemoryId = biomeId
+    }
+
+    private fun randomBiomeMemoryExpiryTicks(): Long {
+        val range = BIOME_MEMORY_MAX_TICKS - BIOME_MEMORY_MIN_TICKS
+        return if (range > 0L) {
+            BIOME_MEMORY_MIN_TICKS + (Math.random() * (range + 1L).toDouble()).toLong()
+        } else {
+            BIOME_MEMORY_MIN_TICKS
+        }
     }
 
     private fun refreshPendingTrack(biomeId: String) {
@@ -690,6 +789,7 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
         }
         val biomeId = pendingBiomeId
         pendingTrack = null; pendingBiomeId = null
+        biomeId?.let(::commitBiomeMemoryVisit)
         currentBiomeId = biomeId; currentAmbienceTrack = track
 
         val budgetMillis = randomRotationBudgetMillis()

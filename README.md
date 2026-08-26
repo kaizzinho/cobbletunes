@@ -71,7 +71,7 @@ When a CobbleTunes server bridge is present, the client automatically stops its 
 - [x] **Victory + Cobblemon Loot Menu integration** with Victory starting on the decisive opponent faint, a normal short cue when no loot screen opens, extension while the loot screen is open, and current-zone resume afterward.
 - [x] **Capture Victory themes** for successful Pokémon captures, including captures made outside battle, using the captured Pokémon region and the existing wild Victory pool.
 - [x] **Battle Tower floor pools** with low, mid, high, and final tiers plus dedicated Battle Tower battle music.
-- [x] **Biome ambience memory and rotation** with silence windows and biome-transition debounce.
+- [x] **Biome ambience memory and rotation** with silence windows, biome-transition debounce, and visit memory that expires after a random 3–6 minutes or 3 meaningful biome transitions.
 - [x] **Underground ambience detection** using sky light and player height.
 - [x] **Cobbleverse exact structures**, **vanilla structures**, **Terralith structures**, **CobblemonAdditions/BCA villages**, **Repurposed Structures**, selected **Legendary Monuments**, and **Cobblemon Gimmighoul towers** using existing music.
 - [x] **Hand-placed music zones** for Poké Centers, Poké Marts, Gyms, Game Corners/Casinos, special locations, and Battle Tower floors.
@@ -275,7 +275,7 @@ Manual server zones use invisible vanilla marker entities within a 12-block radi
 
 Regional biome ambience is currently defined for Kanto, Johto, Hoenn, Sinnoh, and Unova. Tracks are mapped to vanilla and Terralith biome groups such as plains, forests, caves, oceans, mountains, snow, deserts, and volcanic areas.
 
-Biome tracks use memory, rotation budgets, silence ranges, and transition debounce. Crossing a tiny biome does not immediately force a new track if the biome changes again during the debounce window.
+Biome tracks use memory, rotation budgets, silence ranges, and transition debounce. Crossing a tiny biome does not immediately force a new track if the biome changes again during the debounce window. When a resolved biome is left, its current track is remembered for a random **3–6 minutes**. Returning before that timer expires keeps the remembered track, unless the player has already committed transitions through **3 other biomes**. Once either limit is reached, the biome picks a fresh track and avoids the previous one whenever that pool has another valid option.
 
 Structure music has higher priority than biome ambience. With the optional server bridge, supported exact sources include:
 
@@ -441,7 +441,7 @@ Quando uma ponte de servidor do CobbleTunes está disponível, o cliente desativ
 - [x] **Integração de vitória com Cobblemon Loot Menu** iniciando a Victory no desmaio decisivo do oponente, usando o cue curto normal quando não existe tela de loot, mantendo a música durante o menu e retornando para a zona atual depois.
 - [x] **Temas de vitória ao capturar Pokémon** em capturas dentro ou fora de batalha, usando a região do Pokémon capturado e o pool de vitória selvagem já existente.
 - [x] **Pools de Battle Tower** para andares baixos, médios, altos e finais com tema de batalha dedicado.
-- [x] **Memória e rotação de ambientação por bioma** com intervalos de silêncio e debounce.
+- [x] **Memória e rotação de ambientação por bioma** com intervalos de silêncio, debounce e memória de visita que expira após 3–6 minutos aleatórios ou 3 transições significativas de bioma.
 - [x] **Detecção subterrânea** usando luz do céu e altura do jogador.
 - [x] **Estruturas exatas do Cobbleverse**, **estruturas vanilla**, **estruturas do Terralith**, **vilas do CobblemonAdditions/BCA**, **Repurposed Structures**, estruturas selecionadas do **Legendary Monuments** e **torres de Gimmighoul do Cobblemon** usando músicas já existentes.
 - [x] **Zonas manuais de música** para Centros Pokémon, Poké Marts, Ginásios, Game Corners/Cassinos, locais especiais e andares da Battle Tower.
@@ -645,7 +645,7 @@ As zonas manuais do servidor usam entidades vanilla `minecraft:marker` invisíve
 
 A ambientação regional por bioma está definida para Kanto, Johto, Hoenn, Sinnoh e Unova. As faixas são agrupadas entre biomas vanilla e Terralith como planícies, florestas, cavernas, oceanos, montanhas, neve, desertos e regiões vulcânicas.
 
-As músicas de bioma usam memória, orçamento de rotação, intervalos de silêncio e debounce. Cruzar um bioma muito pequeno não força imediatamente uma nova música caso o bioma mude novamente durante a janela de debounce.
+As músicas de bioma usam memória, orçamento de rotação, intervalos de silêncio e debounce. Cruzar um bioma muito pequeno não força imediatamente uma nova música caso o bioma mude novamente durante a janela de debounce. Ao sair de um bioma resolvido, a música atual fica memorizada por **3–6 minutos** aleatórios. Voltar antes desse prazo mantém a música lembrada, a menos que o jogador já tenha confirmado transições por **3 outros biomas**. Quando qualquer um dos limites é atingido, o bioma escolhe uma nova música e evita repetir a anterior sempre que houver outra opção válida no pool.
 
 Música de estrutura tem prioridade sobre ambientação de bioma. Com a ponte opcional do servidor, as fontes exatas suportadas incluem:
 
