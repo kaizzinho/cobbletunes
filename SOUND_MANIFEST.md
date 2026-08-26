@@ -20,15 +20,15 @@ The current source audit resolves all 441 `sounds.json` keys from code. A resour
 
 - CobbleTunes is client-first. On a remote server without CobbleTunes, the client infers standard battle routes from Cobblemon's synchronized battle actors and rosters, observes capture success locally, and uses client-visible WildBosses/RCT/Raid Dens metadata when available. When the server bridge is present, its packets are authoritative and the local fallback is disabled.
 - Server packets are capability-gated and are only sent to clients that advertise the matching CobbleTunes payload. Public-server clients do not need a CobbleTunes server to use battle, Victory/capture, biome, menu, low-HP, and other client-owned music systems.
-- Evolution music is fully client-observed and never uses a CobbleTunes server packet. Nearby clients watch Cobblemon's synchronized `PokemonEntity.isEvolving` state, begin the suspense cue after 20 ticks to align with the visible animation, and stop it when the state returns to false. A regional completion sting plays from the Pokémon position only when the species actually changed, so an interrupted evolution does not produce a false congratulations cue. The cues use the Records/Jukebox category with 32-block attenuation; audible suspense ducks world ambience/structure music to `0.68x` without ducking battle, Victory, or menu music.
-- Client-only Raid Dens detection can promote a battle from the native `cobblemonraiddens:battle.raid.tier_*` sound and uses the same tier-weighted pool. The client also treats the raid boss reaching 0 HP as the clear point, so the five-second regional Victory cue does not wait for Raid Dens to close its battle/dimension state.
+- Evolution music is fully client-observed and never uses a CobbleTunes server packet. Nearby clients watch Cobblemon's synchronized `PokemonEntity.isEvolving` state, begin the suspense cue after 20 ticks to align with the visible animation, and stop it when the state returns to false. A regional completion sting plays from the Pokémon position only when the species actually changed, so an interrupted evolution does not produce a false congratulations cue. The cues use the Records/Jukebox category with 32-block attenuation; any audible evolution cue, including congratulations, keeps world ambience/structure music ducked to `0.20x` without ducking battle, Victory, or menu music. After the final audible evolution cue ends, the world soundtrack fades back to normal over 2 seconds.
+- Client-only Raid Dens detection can promote a battle from the native `cobblemonraiddens:battle.raid.tier_*` sound and uses the same tier-weighted pool. The client also treats the raid boss reaching 0 HP as the clear point, so the five-second regional Victory base cue does not wait for Raid Dens to close its battle/dimension state, and it stays at full volume for another two seconds before fade-out begins.
 - Client-only structure routing is intentionally conservative. Gimmighoul towers, Poké Centers, Ruined Portals, villages, and nearby RCT Battle Tower floor trainers have local fingerprints; exact Cobbleverse/Terralith/BCA/Repurposed/Legendary Monuments `StructureStart` IDs and manual marker zones remain server-enhanced routing.
 - Battle routing keeps role and region separate, with RCT metadata preferred and opposing-roster voting as fallback.
 - The supplied RCT Tower datapack has exact overrides for its ten named `pokemon_trainer_*` encounters while all 90 `f1_trainer*` through `f9_trainer*` floor trainers remain on the normal Battle Tower route. Barry uses `sinnoh_rival_pvp`, Silver uses `johto_rival_pvp`, Steven uses `hoenn_champion_wallace`, Gold/Kris use `unova_pvp_champion_johto`, Green/Oak/Red use `unova_pvp_champion_kanto`, May uses `unova_pvp_champion_hoenn`, and Morimoto uses `tower_b2w2_pwt_final`. Exact matching also accepts the normalized `rctmod:`-namespaced form.
 - Alolan, Galarian, Hisuian, and Paldean forms override the base National Dex region for wild, trainer-roster, Boss, and Victory routing.
-- WildBosses and Cobblemon Raid Dens share the same tier-weighted regional battle pools. Raid Dens stays reflection-only, but detection checks the server-side `EntityBackedBattleActor` Pokémon first through `IRaidAccessor`, resolves `crd_getRaidBoss()` directly when available, falls back through `crd_getRaidId()` and `RaidHelper.ACTIVE_RAIDS`, and only then tries the battle-level `IRaidBattle` marker. Native `RaidTier.getStars()` drives the mapping: 1-star raids use Uncommon odds, 2-star Rare, 3–4-star Epic, 5–6-star Legendary, and 7-star Mythic. Raid battles reuse the regional rival/PvP, generic Legendary, and BW World Tournament pools with the same 80/15/5, 70/20/10, 60/30/10, 50/35/15, and 45/40/15 weights. Species-specific Legendary encounter tracks remain excluded from the generic pool. Raid completion is read from Raid Dens' reflected `RAID_END` event; a successful clear plays the regional wild Victory theme for 5 seconds, preserves that cue across the Raid Dens-to-overworld dimension transition, and a failed raid only releases the battle-music override.
+- WildBosses and Cobblemon Raid Dens share the same tier-weighted regional battle pools. Raid Dens stays reflection-only, but detection checks the server-side `EntityBackedBattleActor` Pokémon first through `IRaidAccessor`, resolves `crd_getRaidBoss()` directly when available, falls back through `crd_getRaidId()` and `RaidHelper.ACTIVE_RAIDS`, and only then tries the battle-level `IRaidBattle` marker. Native `RaidTier.getStars()` drives the mapping: 1-star raids use Uncommon odds, 2-star Rare, 3–4-star Epic, 5–6-star Legendary, and 7-star Mythic. Raid battles reuse the regional rival/PvP, generic Legendary, and BW World Tournament pools with the same 80/15/5, 70/20/10, 60/30/10, 50/35/15, and 45/40/15 weights. Species-specific Legendary encounter tracks remain excluded from the generic pool. Raid completion is read from Raid Dens' reflected `RAID_END` event; a successful clear plays the regional wild Victory theme for a 5-second base duration, holds it at full volume for another 2 seconds before fade-out, preserves that cue across the Raid Dens-to-overworld dimension transition, and a failed raid only releases the battle-music override.
 - Legendary routing includes species and form overrides for Kyurem, Necrozma, Eternatus, Calyrex, Terapagos, Galarian birds, and other dedicated encounters.
-- Standard Battle Victory music starts immediately on `BATTLE_VICTORY` when Cobblemon Loot Menu is installed, stays active while the loot screen is open, then restores the latest structure or biome target. Successful captures reuse the regional wild Victory pool for a brief ~3 second cue, including captures outside battle. Successful Raid Dens clears use Raid Dens' `RAID_END` event instead and play the same regional wild Victory resolver for a fixed 5 seconds before restoring the latest world target.
+- Standard Battle Victory starts on the decisive opponent faint by observing Cobblemon's client battle-log queue together with synchronized full-roster HP. The normal cue has a 3-second base duration and then remains at full volume for another 2 seconds before fade-out starts. When Cobblemon Loot Menu is installed, `LootSelectionScreen` extends that already-started Victory until the screen closes; after the screen closes, Victory stays at full volume for 2 seconds before fade-out begins. If the short cue ended before the screen appeared, the same Victory starts again immediately for the loot screen. Cobblemon's later `BATTLE_VICTORY` event remains a duplicate-safe fallback. Successful captures reuse the regional wild Victory pool with the same ~3-second base cue plus 2-second pre-fade tail, including captures outside battle. Successful Raid Dens clears use Raid Dens' `RAID_END` event instead and play the same regional wild Victory resolver for a 5-second base cue plus the same 2-second pre-fade tail before restoring the latest world target.
 - Hisui intentionally has no post-battle Victory file in this pack and falls back without creating a fake theme.
 - Battle Tower ambience uses low, mid, high, and final floor pools. Trainer battles started inside a Battle Tower zone use the Galar Battle Tower battle theme.
 - With the server bridge, all 71 registered structures across the supplied Cobbleverse main, Johto, Hoenn, and Sinnoh datapacks are recognized. Current nested IDs such as `cobbleverse:legendary/articuno`, `cobbleverse:legendary/groudon`, and `cobbleverse:mythical/manaphy` normalize to the existing CobbleTunes zone IDs; the older flattened IDs remain compatibility aliases.
@@ -342,7 +342,7 @@ The old `cobbletunes:music_trigger` custom block has been removed. It made a ser
 
 ## Victory music
 
-Victory files are used by the optional Cobblemon Loot Menu bridge, successful capture cues, and successful Raid Dens clears. Standard Battle Victory begins at the Cobblemon battle victory event rather than waiting for the GUI. A successful capture uses the captured Pokémon's regional wild Victory route for about three seconds even when the capture happens outside battle. A successful raid uses Raid Dens' own `RAID_END` event and the raid Pokémon's regional wild Victory route for five seconds, independent of the Raid Dens reward screen or dimension exit.
+Victory files are used by the optional Cobblemon Loot Menu bridge, successful capture cues, and successful Raid Dens clears. Normal Battle Victory starts as soon as the decisive opponent faint is observed from Cobblemon's client battle-log/HP state and uses a 3-second base cue followed by a 2-second full-volume tail before fade-out. With Cobblemon Loot Menu installed, opening `LootSelectionScreen` extends that Victory until the screen closes instead of delaying its start; closing the screen starts the same 2-second full-volume tail before fade-out. If the short cue has already ended when the loot screen appears, the same regional Victory starts immediately for the screen. Cobblemon's later `BATTLE_VICTORY` lifecycle event remains a fallback and duplicate events do not restart the theme. A successful capture uses the captured Pokémon's regional wild Victory route for a 3-second base cue plus the same 2-second tail even when the capture happens outside battle. A successful raid uses Raid Dens' own `RAID_END` event and the raid Pokémon's regional wild Victory route for a 5-second base cue plus the same 2-second tail, independent of the Raid Dens reward screen or dimension exit.
 
 | Key | File | Usage |
 |---|---|---|
@@ -787,36 +787,36 @@ This covers all 107 `data/repurposed_structures/worldgen/structure/*.json` entri
 
 ## Evolution music
 
-Evolution cues are fully client-side and do not need a server packet. Visible world evolutions are positional: suspense plays at `0.62x` the configured CobbleTunes music volume and completion at `0.78x`, both under Minecraft's Records/Jukebox slider with linear attenuation out to about 32 blocks. The watcher waits 20 ticks after `isEvolving` becomes true so suspense lines up with Cobblemon's visible animation. When `isEvolving` becomes false, any remaining suspense is stopped and the completion sting plays.
+Evolution cues are fully client-side and do not need a server packet. Visible world evolutions are positional: suspense plays at `0.62x` the configured CobbleTunes music volume and completion at `0.78x`, both under Minecraft's Records/Jukebox slider with linear attenuation out to about 32 blocks. The watcher waits 20 ticks after `isEvolving` becomes true so suspense lines up with Cobblemon's visible animation. When `isEvolving` becomes false, any remaining suspense is stopped and the completion sting plays. World ambience remains at `0.20x` for the complete audible sequence, including the congratulations cue, and starts a 2-second fade back to normal only after the last evolution sound has finished.
 
-When an evolution is completed from Cobblemon's Summary UI with no matching world `PokemonEntity`, CobbleTunes detects the synchronized species change shown by the screen and plays only the regional completion cue locally at `0.78x`. This fallback has no suspense and does not duck world music. A matching world entity or active spatial evolution suppresses it to avoid duplicate completion audio.
+When an evolution is completed from Cobblemon's Summary UI with no live matching world `PokemonEntity`, CobbleTunes snapshots `CobblemonClient.storage.party` when Summary opens and detects a same-UUID species change from that synchronized client party store. The watch remains active for 10 seconds after the Summary closes so the final storage sync is not lost. It does not depend on the Summary screen's own Pokémon references, which can stay stale during evolution. The completion cue plays from the player's position at `0.78x`; this fallback has no suspense, but it ducks world ambience/structure music to `0.20x` while the congratulations cue is audible and then restores it with the same 2-second fade. A live nearby world entity or active spatial evolution suppresses it to avoid duplicate completion audio.
 
-Alolan, Galarian, Hisuian, and Paldean forms override the base National Dex region. Alola and Galar each have two suspense variants and choose randomly between available files. If an evolution OGG is missing from the active resource packs, that cue stays silent; missing suspense also does not duck world music. Multiple nearby world evolutions can play at the same time from independent positions.
+Alolan, Galarian, Hisuian, and Paldean forms override the base National Dex region. Alola and Galar each have two suspense variants and choose randomly between available files. If an evolution OGG is missing from the active resource packs, that cue stays silent; missing suspense also does not duck world music. Multiple nearby world evolutions can play at the same time from independent positions. In a ZIP resource pack, these paths must resolve directly under `assets/cobbletunes/sounds/evolution/` at archive root, with no extra wrapper directory.
 
 | Key | File | Usage |
 |---|---|---|
-| `evolution.fr.evo` | `evolution/fr/_evo.ogg` | Kanto suspense |
-| `evolution.fr.congrat` | `evolution/fr/_congrat.ogg` | Kanto completion |
-| `evolution.hg.evo` | `evolution/hg/_evo.ogg` | Johto suspense |
-| `evolution.hg.congrat` | `evolution/hg/_congrat.ogg` | Johto completion |
-| `evolution.em.evo` | `evolution/em/_evo.ogg` | Hoenn suspense |
-| `evolution.em.congrat` | `evolution/em/_congrat.ogg` | Hoenn completion |
-| `evolution.plat.evo` | `evolution/plat/_evo.ogg` | Sinnoh suspense |
-| `evolution.plat.congrat` | `evolution/plat/_congrat.ogg` | Sinnoh completion |
-| `evolution.bl.evo` | `evolution/bl/_evo.ogg` | Unova suspense |
-| `evolution.bl.congrat` | `evolution/bl/_congrat.ogg` | Unova completion |
-| `evolution.xy.evo` | `evolution/xy/_evo.ogg` | Kalos suspense |
-| `evolution.xy.congrat` | `evolution/xy/_congrat.ogg` | Kalos completion |
-| `evolution.um.evo` | `evolution/um/_evo.ogg` | Alola suspense variant 1 |
-| `evolution.um.evo2` | `evolution/um/_evo2.ogg` | Alola suspense variant 2 |
-| `evolution.um.congrat` | `evolution/um/_congrat.ogg` | Alola completion |
-| `evolution.swsh.evo` | `evolution/swsh/_evo.ogg` | Galar suspense variant 1 |
-| `evolution.swsh.evo2` | `evolution/swsh/_evo2.ogg` | Galar suspense variant 2 |
-| `evolution.swsh.congrat` | `evolution/swsh/_congrat.ogg` | Galar completion |
-| `evolution.leg.evo` | `evolution/leg/_evo.ogg` | Hisui suspense |
-| `evolution.leg.congrat` | `evolution/leg/_congrat.ogg` | Hisui completion |
-| `evolution.sv.evo` | `evolution/sv/_evo.ogg` | Paldea suspense |
-| `evolution.sv.congrat` | `evolution/sv/_congrat.ogg` | Paldea completion |
+| `evolution.fr.evo` | `evolution/fr_evo.ogg` | Kanto suspense |
+| `evolution.fr.congrat` | `evolution/fr_congrat.ogg` | Kanto completion |
+| `evolution.hg.evo` | `evolution/hg_evo.ogg` | Johto suspense |
+| `evolution.hg.congrat` | `evolution/hg_congrat.ogg` | Johto completion |
+| `evolution.em.evo` | `evolution/em_evo.ogg` | Hoenn suspense |
+| `evolution.em.congrat` | `evolution/em_congrat.ogg` | Hoenn completion |
+| `evolution.plat.evo` | `evolution/plat_evo.ogg` | Sinnoh suspense |
+| `evolution.plat.congrat` | `evolution/plat_congrat.ogg` | Sinnoh completion |
+| `evolution.bl.evo` | `evolution/bl_evo.ogg` | Unova suspense |
+| `evolution.bl.congrat` | `evolution/bl_congrat.ogg` | Unova completion |
+| `evolution.xy.evo` | `evolution/xy_evo.ogg` | Kalos suspense |
+| `evolution.xy.congrat` | `evolution/xy_congrat.ogg` | Kalos completion |
+| `evolution.um.evo` | `evolution/um_evo.ogg` | Alola suspense variant 1 |
+| `evolution.um.evo2` | `evolution/um_evo2.ogg` | Alola suspense variant 2 |
+| `evolution.um.congrat` | `evolution/um_congrat.ogg` | Alola completion |
+| `evolution.swsh.evo` | `evolution/swsh_evo.ogg` | Galar suspense variant 1 |
+| `evolution.swsh.evo2` | `evolution/swsh_evo2.ogg` | Galar suspense variant 2 |
+| `evolution.swsh.congrat` | `evolution/swsh_congrat.ogg` | Galar completion |
+| `evolution.leg.evo` | `evolution/leg_evo.ogg` | Hisui suspense |
+| `evolution.leg.congrat` | `evolution/leg_congrat.ogg` | Hisui completion |
+| `evolution.sv.evo` | `evolution/sv_evo.ogg` | Paldea suspense |
+| `evolution.sv.congrat` | `evolution/sv_congrat.ogg` | Paldea completion |
 
 ## Effects
 

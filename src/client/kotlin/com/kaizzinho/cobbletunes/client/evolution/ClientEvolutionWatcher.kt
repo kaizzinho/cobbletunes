@@ -1,5 +1,6 @@
 package com.kaizzinho.cobbletunes.client.evolution
 
+import com.cobblemon.mod.common.client.CobblemonClient
 import com.cobblemon.mod.common.entity.pokemon.PokemonEntity
 import com.cobblemon.mod.common.pokemon.Pokemon
 import com.kaizzinho.cobbletunes.MOD_ID
@@ -14,9 +15,6 @@ import net.minecraft.client.MinecraftClient
 import net.minecraft.client.world.ClientWorld
 import net.minecraft.sound.SoundCategory
 import net.minecraft.util.Identifier
-import java.lang.reflect.Modifier
-import java.util.Collections
-import java.util.IdentityHashMap
 import java.util.UUID
 
 class ClientEvolutionWatcher(
@@ -42,8 +40,10 @@ class ClientEvolutionWatcher(
     private val active = mutableMapOf<UUID, ActiveEvolution>()
     private val playedSounds = mutableSetOf<EvolutionSoundInstance>()
     private val summarySnapshots = mutableMapOf<UUID, SummarySnapshot>()
+    private val summaryEligible = mutableSetOf<UUID>()
     private var lastWorld: ClientWorld? = null
     private var summaryScreenActive = false
+    private var summaryGraceTicks = 0
     private var ducking = false
 
     fun register() {
@@ -105,6 +105,12 @@ class ClientEvolutionWatcher(
         val region = resolveRegion(entity) ?: return
         val theme = TrackRegistry.evolutionThemeFor(region) ?: return
         val availableSuspense = theme.suspense.filter { resourceExists(client, it) }
+        if (availableSuspense.isEmpty()) {
+            debugLog(
+                "[Evolution] no suspense resource for ${entity.pokemon.species.name} " +
+                    "expected=${theme.suspense.joinToString { it.assetPath }}"
+            )
+        }
         val tracked = ActiveEvolution(
             entity = entity,
             region = region,
@@ -130,7 +136,7 @@ class ClientEvolutionWatcher(
 
         val sound = EvolutionSoundInstance(
             soundEvent = cue.soundEvent,
-            pokemon = tracked.entity,
+            sourceEntity = tracked.entity,
             baseVolume = SUSPENSE_VOLUME
         )
         sound.setVolumeScale(config.musicVolume)
@@ -151,11 +157,15 @@ class ClientEvolutionWatcher(
         }
 
         val cue = TrackRegistry.evolutionThemeFor(tracked.region)?.complete ?: return
-        if (!resourceExists(client, cue) || !canHearEvolution(client)) return
+        if (!resourceExists(client, cue)) {
+            debugLog("[Evolution] completion resource missing ${cue.assetPath}")
+            return
+        }
+        if (!canHearEvolution(client)) return
 
         val sound = EvolutionSoundInstance(
             soundEvent = cue.soundEvent,
-            pokemon = tracked.entity,
+            sourceEntity = tracked.entity,
             baseVolume = COMPLETE_VOLUME
         )
         sound.setVolumeScale(config.musicVolume)
@@ -169,41 +179,82 @@ class ClientEvolutionWatcher(
         nearby: List<PokemonEntity>
     ) {
         val screen = client.currentScreen
-        if (screen == null || !screen.javaClass.name.startsWith(SUMMARY_SCREEN_PACKAGE)) {
-            summaryScreenActive = false
-            summarySnapshots.clear()
-            return
-        }
+        val isSummaryScreen = screen != null &&
+            screen.javaClass.name.startsWith(SUMMARY_SCREEN_PACKAGE)
+        val observed = collectClientPartyPokemon()
 
-        val observed = collectSummaryPokemon(screen)
-        if (!summaryScreenActive) {
-            summaryScreenActive = true
-            observed.forEach { pokemon ->
-                summarySnapshots[pokemon.uuid] = snapshot(pokemon)
+        if (isSummaryScreen) {
+            summaryGraceTicks = SUMMARY_GRACE_TICKS
+            if (!summaryScreenActive) {
+                summaryScreenActive = true
+                summarySnapshots.clear()
+                summaryEligible.clear()
+                observed.forEach { (uuid, pokemon) ->
+                    summarySnapshots[uuid] = snapshot(pokemon)
+                    summaryEligible += uuid
+                }
+                debugLog(
+                    "[Evolution] summary fallback armed ${observed.size} party pokemon " +
+                        "for direct storage sync"
+                )
+                return
             }
-            debugLog("[Evolution] summary fallback watching ${observed.size} pokemon")
-            return
+
+            observed.keys.forEach(summaryEligible::add)
+        } else {
+            if (summaryScreenActive) {
+                summaryScreenActive = false
+                debugLog(
+                    "[Evolution] summary screen closed, keeping party watch for " +
+                        "${SUMMARY_GRACE_TICKS / 20}s"
+                )
+            }
+
+            if (summaryGraceTicks <= 0) {
+                summarySnapshots.clear()
+                summaryEligible.clear()
+                return
+            }
+            summaryGraceTicks--
         }
 
-        for (pokemon in observed) {
-            val previous = summarySnapshots[pokemon.uuid]
+        for ((pokemonUuid, pokemon) in observed) {
+            val previous = summarySnapshots[pokemonUuid]
             val current = snapshot(pokemon)
-            if (previous != null &&
-                !previous.speciesName.equals(current.speciesName, ignoreCase = true)
+
+            if (
+                previous != null &&
+                !previous.speciesName.equals(current.speciesName, ignoreCase = true) &&
+                pokemonUuid in summaryEligible
             ) {
-                val hasWorldEntity = pokemon.entity != null ||
-                    nearby.any { entity -> entity.pokemon.uuid == pokemon.uuid } ||
-                    active.values.any { tracked -> tracked.entity.pokemon.uuid == pokemon.uuid }
+                val hasWorldEntity = nearby.any { entity ->
+                    entity.pokemon.uuid == pokemonUuid && !entity.isRemoved
+                } || active.values.any { tracked ->
+                    tracked.entity.pokemon.uuid == pokemonUuid && !tracked.entity.isRemoved
+                }
+
                 if (!hasWorldEntity) {
+                    debugLog(
+                        "[Evolution] summary party transition ${previous.speciesName} -> " +
+                            "${current.speciesName} using player position"
+                    )
                     playSummaryCompletion(
                         client = client,
-                        pokemonUuid = pokemon.uuid,
+                        pokemonUuid = pokemonUuid,
                         previous = previous,
+                        previousSpeciesName = previous.speciesName,
                         currentSpeciesName = current.speciesName
                     )
+                } else {
+                    debugLog(
+                        "[Evolution] summary party transition suppressed by live world entity " +
+                            "${previous.speciesName} -> ${current.speciesName}"
+                    )
                 }
+
+                summaryEligible.remove(pokemonUuid)
             }
-            summarySnapshots[pokemon.uuid] = current
+            summarySnapshots[pokemonUuid] = current
         }
     }
 
@@ -211,97 +262,43 @@ class ClientEvolutionWatcher(
         client: MinecraftClient,
         pokemonUuid: UUID,
         previous: SummarySnapshot,
+        previousSpeciesName: String,
         currentSpeciesName: String
     ) {
         val region = previous.region ?: return
         val cue = TrackRegistry.evolutionThemeFor(region)?.complete ?: return
-        if (!resourceExists(client, cue) || !canHearEvolution(client)) return
+        if (!resourceExists(client, cue)) {
+            debugLog("[Evolution] summary completion resource missing ${cue.assetPath}")
+            return
+        }
+        if (!canHearEvolution(client)) {
+            debugLog("[Evolution] summary completion muted by CobbleTunes/Records/Master volume")
+            return
+        }
 
+        val player = client.player ?: return
         val sound = EvolutionSoundInstance(
             soundEvent = cue.soundEvent,
-            pokemon = null,
-            baseVolume = COMPLETE_VOLUME,
-            local = true
+            sourceEntity = player,
+            baseVolume = COMPLETE_VOLUME
         )
         sound.setVolumeScale(config.musicVolume)
         client.soundManager.play(sound)
         playedSounds += sound
         debugLog(
             "[Evolution] summary complete ${cue.id} for $pokemonUuid " +
-                "${previous.speciesName} -> $currentSpeciesName"
+                "$previousSpeciesName -> $currentSpeciesName at player position"
         )
     }
 
-    private fun collectSummaryPokemon(screen: Any): List<Pokemon> {
+    private fun collectClientPartyPokemon(): Map<UUID, Pokemon> {
         val found = linkedMapOf<UUID, Pokemon>()
-        val ambiguous = mutableSetOf<UUID>()
-        val visited = Collections.newSetFromMap(IdentityHashMap<Any, Boolean>())
-        var inspectedObjects = 0
-
-        fun inspect(value: Any?, depth: Int) {
-            if (value == null || depth > SUMMARY_REFLECTION_DEPTH) return
-            if (value is Pokemon) {
-                val existing = found[value.uuid]
-                if (existing == null) {
-                    found[value.uuid] = value
-                } else if (!existing.species.name.equals(value.species.name, ignoreCase = true)) {
-                    ambiguous += value.uuid
-                }
-                return
-            }
-            if (!visited.add(value)) return
-
-            when (value) {
-                is Iterable<*> -> {
-                    value.take(SUMMARY_COLLECTION_LIMIT).forEach { inspect(it, depth + 1) }
-                    return
-                }
-                is Array<*> -> {
-                    value.take(SUMMARY_COLLECTION_LIMIT).forEach { inspect(it, depth + 1) }
-                    return
-                }
-                is Map<*, *> -> {
-                    value.values.take(SUMMARY_COLLECTION_LIMIT).forEach { inspect(it, depth + 1) }
-                    return
-                }
-                is java.util.Optional<*> -> {
-                    inspect(value.orElse(null), depth + 1)
-                    return
-                }
-                is Pair<*, *> -> {
-                    inspect(value.first, depth + 1)
-                    inspect(value.second, depth + 1)
-                    return
-                }
-                is Triple<*, *, *> -> {
-                    inspect(value.first, depth + 1)
-                    inspect(value.second, depth + 1)
-                    inspect(value.third, depth + 1)
-                    return
-                }
-            }
-
-            val className = value.javaClass.name
-            if (!className.startsWith("com.cobblemon.")) return
-            if (inspectedObjects++ >= SUMMARY_REFLECTION_OBJECT_LIMIT) return
-
-            var type: Class<*>? = value.javaClass
-            while (type != null && type.name.startsWith("com.cobblemon.")) {
-                for (field in type.declaredFields) {
-                    if (Modifier.isStatic(field.modifiers) || field.isSynthetic) continue
-                    runCatching {
-                        if (field.trySetAccessible()) {
-                            inspect(field.get(value), depth + 1)
-                        }
-                    }
-                }
-                type = type.superclass
+        for (pokemon in CobblemonClient.storage.party) {
+            if (pokemon != null) {
+                found[pokemon.uuid] = pokemon
             }
         }
-
-        inspect(screen, 0)
-        ambiguous.forEach { uuid -> found.remove(uuid) }
-        return found.values.toList()
+        return found
     }
 
     private fun snapshot(pokemon: Pokemon): SummarySnapshot =
@@ -320,14 +317,22 @@ class ClientEvolutionWatcher(
 
     private fun syncDucking(client: MinecraftClient) {
         val player = client.player
-        val shouldDuck = player != null && canHearEvolution(client) && active.values.any { tracked ->
-            val sound = tracked.suspenseSound
-            sound != null && client.soundManager.isPlaying(sound) &&
-                tracked.entity.squaredDistanceTo(player) <= MAX_DISTANCE_SQUARED
+        val shouldDuck = player != null && canHearEvolution(client) && playedSounds.any { sound ->
+            client.soundManager.isPlaying(sound) && sound.isAudibleTo(player, MAX_DISTANCE_SQUARED)
         }
-        if (shouldDuck == ducking) return
-        ducking = shouldDuck
-        musicPlayer.setEvolutionDucking(ducking)
+
+        if (shouldDuck) {
+            if (!ducking) {
+                ducking = true
+                musicPlayer.setEvolutionDucking(true)
+            }
+            return
+        }
+
+        if (!ducking) return
+
+        ducking = false
+        musicPlayer.setEvolutionDucking(false, DUCK_RESTORE_FADE_SECONDS)
     }
 
     private fun cleanupFinishedSounds(client: MinecraftClient) {
@@ -338,7 +343,9 @@ class ClientEvolutionWatcher(
         active.values.forEach { stopSuspense(client, it) }
         active.clear()
         summarySnapshots.clear()
+        summaryEligible.clear()
         summaryScreenActive = false
+        summaryGraceTicks = 0
         playedSounds.forEach { sound ->
             sound.finish()
             client.soundManager.stop(sound)
@@ -346,7 +353,7 @@ class ClientEvolutionWatcher(
         playedSounds.clear()
         if (ducking) {
             ducking = false
-            musicPlayer.setEvolutionDucking(false)
+            musicPlayer.setEvolutionDucking(false, transitionSeconds = 0f)
         }
     }
 
@@ -389,11 +396,10 @@ class ClientEvolutionWatcher(
 
     companion object {
         private const val SUMMARY_SCREEN_PACKAGE = "com.cobblemon.mod.common.client.gui.summary."
-        private const val SUMMARY_REFLECTION_DEPTH = 3
-        private const val SUMMARY_REFLECTION_OBJECT_LIMIT = 96
-        private const val SUMMARY_COLLECTION_LIMIT = 16
+        private const val SUMMARY_GRACE_TICKS = 200
         private const val MAX_DISTANCE = 32.0
         private const val MAX_DISTANCE_SQUARED = MAX_DISTANCE * MAX_DISTANCE
+        private const val DUCK_RESTORE_FADE_SECONDS = 2.0f
         private const val SUSPENSE_VOLUME = 0.62f
         private const val COMPLETE_VOLUME = 0.78f
     }

@@ -51,9 +51,9 @@ Lower-priority world detection keeps running while battle or Victory music owns 
 
 ### Client-only and server-enhanced modes
 
-CobbleTunes can be installed on the **client only** and used on public Cobblemon servers that do not run the mod. In that mode it infers standard wild, trainer, PvP, Legendary/Mythical, regional-form, Victory, capture, WildBosses, Raid Dens, and observable RCT routes from client-visible Cobblemon/mod state. Raid Dens can also be identified from its native tier battle sound, and successful client-only raids trigger the same five-second regional Victory cue when the raid boss faints.
+CobbleTunes can be installed on the **client only** and used on public Cobblemon servers that do not run the mod. In that mode it infers standard wild, trainer, PvP, Legendary/Mythical, regional-form, Victory, capture, WildBosses, Raid Dens, and observable RCT routes from client-visible Cobblemon/mod state. Raid Dens can also be identified from its native tier battle sound, and successful client-only raids trigger the same five-second regional Victory cue when the raid boss faints, followed by a two-second full-volume tail before fade-out begins.
 
-World biome ambience, menu music, low-HP handling, spatial evolution music, volume suspension, and other purely client-side systems work normally. Evolution never needs a CobbleTunes server packet: visible world evolutions are observed from Cobblemon's synchronized `PokemonEntity.isEvolving` state, while an evolution completed directly from Cobblemon's Summary UI with no world entity is detected from the synchronized Pokémon data and plays only the regional congratulation cue locally. For structures, standalone mode uses conservative fingerprints for locations the client can recognize reliably, currently including Gimmighoul towers, Poké Centers, Ruined Portals, and villages. Exact `StructureStart` identities for the full Cobbleverse/Terralith/BCA/Repurposed/Legendary Monuments mapping and manual marker zones remain server-enhanced features because vanilla chunk networking does not provide those authoritative structure identities to a normal remote client.
+World biome ambience, menu music, low-HP handling, spatial evolution music, volume suspension, and other purely client-side systems work normally. Evolution never needs a CobbleTunes server packet: visible world evolutions are observed from Cobblemon's synchronized `PokemonEntity.isEvolving` state, while an evolution completed directly from Cobblemon's Summary UI with no live world entity is detected from Cobblemon's synchronized client party storage and plays only the regional congratulation cue from the player's position. The Summary watch remains armed briefly after the screen closes so the final party sync is not missed. For structures, standalone mode uses conservative fingerprints for locations the client can recognize reliably, currently including Gimmighoul towers, Poké Centers, Ruined Portals, and villages. Exact `StructureStart` identities for the full Cobbleverse/Terralith/BCA/Repurposed/Legendary Monuments mapping and manual marker zones remain server-enhanced features because vanilla chunk networking does not provide those authoritative structure identities to a normal remote client.
 
 When a CobbleTunes server bridge is present, the client automatically stops its fallback classifier and prefers the existing server-authoritative packets. Server packets are sent only to clients that advertise the matching CobbleTunes payload channel, so the fallback and enhanced paths do not compete. The server side registers no CobbleTunes block, item, or entity content, so installing the same JAR on a server does not make CobbleTunes mandatory for other players.
 
@@ -66,9 +66,9 @@ When a CobbleTunes server bridge is present, the client automatically stops its 
 - [x] **Dynamic RCT classification** with role, region, faction, rank, trainer ID, progression-aware routing, and exact themes for named custom trainers.
 - [x] **Villain faction themes** for Rocket, Aqua, Magma, Galactic, Plasma, Flare, Skull, Aether Foundation, Lusamine, and Ultra Recon Squad routes.
 - [x] **Frontier Brain music** with a dedicated battle context.
-- [x] **WildBosses and Cobblemon Raid Dens integrations** with tier-weighted regional PvP, generic Legendary, and BW World Tournament pools, actor-entity Raid Dens detection, and a dedicated 5-second regional Victory cue when a raid is cleared.
+- [x] **WildBosses and Cobblemon Raid Dens integrations** with tier-weighted regional PvP, generic Legendary, and BW World Tournament pools, actor-entity Raid Dens detection, and a dedicated 5-second regional Victory cue plus a 2-second full-volume tail before fade-out when a raid is cleared.
 - [x] **Species-safe Boss pools** that keep unique Legendary encounter themes out of unrelated Boss fights.
-- [x] **Victory + Cobblemon Loot Menu integration** with instant Victory start, fast battle-to-Victory fade, menu confirmation grace, looping while the loot screen is open, and current-zone resume afterward.
+- [x] **Victory + Cobblemon Loot Menu integration** with Victory starting on the decisive opponent faint, a normal short cue when no loot screen opens, extension while the loot screen is open, and current-zone resume afterward.
 - [x] **Capture Victory themes** for successful Pokémon captures, including captures made outside battle, using the captured Pokémon region and the existing wild Victory pool.
 - [x] **Battle Tower floor pools** with low, mid, high, and final tiers plus dedicated Battle Tower battle music.
 - [x] **Biome ambience memory and rotation** with silence windows and biome-transition debounce.
@@ -216,25 +216,26 @@ WildBosses and Cobblemon Raid Dens are optional. Actual WildBoss encounters and 
 
 The raid Pokémon roster determines the regional pool in the same way as WildBosses. Species-specific Legendary themes are excluded from the generic Legendary pool, and immediate track repeats are avoided when another valid choice exists.
 
-With server debug logging enabled, Raid Dens probes emit compact `[RaidDensCompat] candidate` and `resolved` lines showing whether the actor entity, active raid map, or battle fallback supplied the tier. A successful `RAID_END` sends the normal regional wild Victory resolver to the client for a fixed **5-second** cue, then CobbleTunes resumes the latest valid world ambience. The cue survives the Raid Dens dimension transition back to the overworld, so world-join silence cannot cut it short. Failed raids stop the battle theme without playing Victory.
+With server debug logging enabled, Raid Dens probes emit compact `[RaidDensCompat] candidate` and `resolved` lines showing whether the actor entity, active raid map, or battle fallback supplied the tier. A successful `RAID_END` sends the normal regional wild Victory resolver to the client for a fixed **5-second** base cue, keeps it at full volume for another **2 seconds**, then starts the fade back to the latest valid world ambience. The cue survives the Raid Dens dimension transition back to the overworld, so world-join silence cannot cut it short. Failed raids stop the battle theme without playing Victory.
 
 ### Victory, captures, and Cobblemon Loot Menu
 
 Battle Victory music keeps its soft integration with `cobblemon_loot_menu`. Successful Pokémon captures also trigger the regional wild Victory theme even when the capture happens outside battle.
 
-When a supported battle is won:
+When a supported battle is won and Cobblemon Loot Menu is installed:
 
 ```text
 battle victory
-→ Victory track starts immediately
-→ battle fades out in about 0.25 s
-→ Victory fades in in about 0.20 s
-→ CobbleTunes waits up to 3 s for the loot screen to appear
+→ final opposing Pokémon faints
+→ Victory starts immediately
+→ no loot screen: Victory uses the normal brief cue
+→ loot screen appears: the same Victory keeps playing
+→ Victory continues until the loot screen closes
 ```
 
-The three-second window does **not** delay the music. Victory is already playing during that time. If the Loot Menu opens, Victory keeps looping until the screen closes. If no loot screen appears, Victory ends and world music resumes.
+CobbleTunes no longer delays Battle Victory while waiting to discover whether loot exists. The client watches Cobblemon's battle-log updates and synchronized roster HP, so the regional Victory cue starts as soon as the decisive opponent faint is reported. The normal cue has a three-second base duration, then stays at full volume for another two seconds before fade-out begins. If `LootSelectionScreen` appears during the post-battle transition, the current Victory is promoted into a held cue and continues until that screen closes. After the loot screen closes, Victory also remains at full volume for two seconds before fade-out begins. If the brief cue already ended before the loot screen appears, CobbleTunes restarts the same Victory immediately for the loot screen. If Cobblemon Loot Menu is not installed, the same decisive-faint trigger is used, with Cobblemon's later battle Victory event retained as a fallback.
 
-A successful capture uses the same regional wild Victory resolver and plays briefly for about three seconds. This applies to captures that end a wild battle and to direct overworld captures. Regional forms still override the base National Dex region. Capture Victory never waits for the Loot Menu. Successful Raid Dens clears also reuse the regional wild Victory resolver, but play it for **five seconds** because raids are treated as a more distinct encounter. With the server bridge, Raid Victory uses Raid Dens' `RAID_END` event. In client-only mode, the synchronized raid boss reaching 0 HP is the clear point, so the cue still starts immediately without waiting for Raid Dens to close the battle or return the player to the overworld.
+A successful capture uses the same regional wild Victory resolver with a three-second base cue followed by a two-second full-volume tail before fade-out. This applies to captures that end a wild battle and to direct overworld captures. Regional forms still override the base National Dex region. Capture Victory never waits for the Loot Menu. Successful Raid Dens clears also reuse the regional wild Victory resolver with a **five-second** base cue followed by the same **two-second** full-volume tail before fade-out. With the server bridge, Raid Victory uses Raid Dens' `RAID_END` event. In client-only mode, the synchronized raid boss reaching 0 HP is the clear point, so the cue still starts immediately without waiting for Raid Dens to close the battle or return the player to the overworld.
 
 Biome and structure detection continue while Victory owns playback. When Victory ends, CobbleTunes restores the **latest** valid structure, Battle Tower floor, or biome instead of returning to stale pre-battle ambience.
 
@@ -301,11 +302,11 @@ The effect uses `0.80x` the configured music volume, so the low-HP cue plays at 
 
 Evolution music is fully client-side. For visible world evolutions, every CobbleTunes client watches nearby synchronized `PokemonEntity` instances and reacts to `isEvolving` without a custom server packet. The suspense cue begins after a 20-tick delay so it lines up with Cobblemon's visible evolution animation, then stops when the synchronized evolution state returns to false and the regional completion sting plays from the same Pokémon position.
 
-If an evolution is completed from Cobblemon's Summary UI while that Pokémon has no world entity, CobbleTunes watches the synchronized Pokémon shown by the Summary screen for a species change. In that fallback path it skips suspense entirely and plays only the regional `_congrat.ogg` locally for the player using the screen. A matching world entity or already tracked spatial evolution suppresses the fallback so the congratulation cue is not duplicated.
+If an evolution is completed from Cobblemon's Summary UI while that Pokémon has no live world entity, CobbleTunes snapshots `CobblemonClient.storage.party` when the Summary opens and watches that synchronized party store for a same-UUID species change. It does not depend on the Summary screen's own Pokémon objects, which can remain stale during evolution. The watcher stays armed for 10 seconds after the Summary closes so a slightly delayed party sync is still caught. In that fallback path it skips suspense entirely and plays only the regional completion cue from the player's position. A live nearby world entity or already tracked spatial evolution suppresses the fallback to avoid duplicate completion audio.
 
-World evolution sounds are positional under Minecraft's **Records/Jukebox** category instead of the global Music category. Suspense uses `0.62x` and completion uses `0.78x` the configured CobbleTunes music volume, with linear attenuation out to about 32 blocks. Multiple nearby evolutions can play independently from different directions. While at least one audible suspense cue is active, world ambience/structure music smoothly ducks to `0.68x`; battle, Victory, and menu music are not ducked. The Summary fallback completion is listener-local, uses the same `0.78x` completion volume, and does not duck world music. If a visible evolving state ends without the Pokémon species changing, CobbleTunes treats it as an interrupted evolution and does not play the congratulation sting.
+World evolution sounds are positional under Minecraft's **Records/Jukebox** category instead of the global Music category. Suspense uses `0.62x` and completion uses `0.78x` the configured CobbleTunes music volume, with linear attenuation out to about 32 blocks. Multiple nearby evolutions can play independently from different directions. While any audible evolution cue is playing, including the completion sting, world ambience/structure music smoothly ducks to `0.20x` and stays there for the whole evolution sequence. Only after the final congratulations cue ends does the world soundtrack fade back to normal over 2 seconds. Battle, Victory, and menu music are not ducked. The Summary fallback completion is emitted from the player's position at the same `0.78x` completion volume, ducks world ambience to `0.20x` for the duration of the cue, and then uses the same 2-second restore fade. If a visible evolving state ends without the Pokémon species changing, CobbleTunes treats it as an interrupted evolution and does not play the congratulation sting.
 
-Regional routing uses the evolving Pokémon's National Dex region, with Alolan, Galarian, Hisuian, and Paldean forms overriding the base species region. Alola randomly chooses `um/_evo.ogg` or `um/_evo2.ogg`, and Galar randomly chooses `swsh/_evo.ogg` or `swsh/_evo2.ogg`. The completion cue always uses that region's `_congrat.ogg`. Missing evolution files are detected directly in the active resource packs, so a missing cue stays silent and does not duck the world soundtrack.
+Regional routing uses the evolving Pokémon's National Dex region, with Alolan, Galarian, Hisuian, and Paldean forms overriding the base species region. Alola randomly chooses `um_evo.ogg` or `um_evo2.ogg`, and Galar randomly chooses `swsh_evo.ogg` or `swsh_evo2.ogg`. The completion cue always uses that region's flat `<prefix>_congrat.ogg` file. Evolution assets are expected directly under `assets/cobbletunes/sounds/evolution/`, matching the resource pack filenames such as `fr_evo.ogg`, `bl_congrat.ogg`, and `sv_evo.ogg`. Missing evolution files are detected directly in the active resource packs, so a missing cue stays silent and does not duck the world soundtrack.
 
 ### Configuration
 
@@ -347,7 +348,7 @@ assets/cobbletunes/sounds/
 
 The included `sounds.json` defines all 441 expected sound events. [`SOUND_MANIFEST.md`](./SOUND_MANIFEST.md) mirrors those entries and explains their routing.
 
-Missing audio is handled as silence instead of crashing the music system. Evolution files are expected under the regional `evolution/` folders listed in the sound manifest, while `gamecorner/` entries remain empty slots until the matching OGG files are added to the resource pack.
+Missing audio is handled as silence instead of crashing the music system. Evolution files are expected directly under `assets/cobbletunes/sounds/evolution/` using the flat filenames listed in the sound manifest, while `gamecorner/` entries remain empty slots until the matching OGG files are added to the resource pack.
 
 ### Project layout
 
@@ -420,9 +421,9 @@ As detecções de prioridade menor continuam atualizando em segundo plano enquan
 
 ### Modos somente cliente e com servidor
 
-O CobbleTunes pode ser instalado **somente no cliente** e usado em servidores públicos de Cobblemon que não possuem o mod. Nesse modo ele infere batalhas selvagens, treinadores, PvP, lendários/míticos, formas regionais, Victory, capturas, WildBosses, Raid Dens e dados observáveis do RCT a partir do estado que o cliente já recebe. Raid Dens também pode ser reconhecido pelo som nativo do tier da raid, e uma raid concluída no modo somente cliente dispara a mesma Victory regional de cinco segundos quando o boss desmaia.
+O CobbleTunes pode ser instalado **somente no cliente** e usado em servidores públicos de Cobblemon que não possuem o mod. Nesse modo ele infere batalhas selvagens, treinadores, PvP, lendários/míticos, formas regionais, Victory, capturas, WildBosses, Raid Dens e dados observáveis do RCT a partir do estado que o cliente já recebe. Raid Dens também pode ser reconhecido pelo som nativo do tier da raid, e uma raid concluída no modo somente cliente dispara a mesma Victory regional de cinco segundos quando o boss desmaia, seguida por dois segundos em volume cheio antes do início do fade-out.
 
-Ambientação de bioma, menu, HP baixo, música espacial de evolução, suspensão por volume e outros sistemas puramente locais continuam funcionando normalmente. A evolução nunca exige pacote do servidor do CobbleTunes: evoluções visíveis no mundo são observadas pelo estado sincronizado `PokemonEntity.isEvolving`, enquanto uma evolução concluída diretamente pela tela Summary do Cobblemon sem uma entidade próxima no mundo é detectada pelos dados sincronizados do Pokémon e toca somente o cue regional de congratulação localmente. Para estruturas, o modo standalone usa fingerprints conservadores para locais que o cliente consegue reconhecer com segurança, atualmente torres de Gimmighoul, Poké Centers, Ruined Portals e vilas. Os IDs exatos de `StructureStart` usados por Cobbleverse/Terralith/BCA/Repurposed/Legendary Monuments e as zonas manuais com markers continuam como recursos melhorados pelo servidor, pois o cliente remoto normal não recebe essas identidades autoritativas de estrutura.
+Ambientação de bioma, menu, HP baixo, música espacial de evolução, suspensão por volume e outros sistemas puramente locais continuam funcionando normalmente. A evolução nunca exige pacote do servidor do CobbleTunes: evoluções visíveis no mundo são observadas pelo estado sincronizado `PokemonEntity.isEvolving`, enquanto uma evolução concluída diretamente pela tela Summary do Cobblemon sem uma entidade viva próxima no mundo é detectada pelo armazenamento sincronizado da party no cliente e toca somente o cue regional de congratulação na posição do jogador. O watcher da Summary continua armado por alguns segundos depois que a tela fecha para não perder a sincronização final. Para estruturas, o modo standalone usa fingerprints conservadores para locais que o cliente consegue reconhecer com segurança, atualmente torres de Gimmighoul, Poké Centers, Ruined Portals e vilas. Os IDs exatos de `StructureStart` usados por Cobbleverse/Terralith/BCA/Repurposed/Legendary Monuments e as zonas manuais com markers continuam como recursos melhorados pelo servidor, pois o cliente remoto normal não recebe essas identidades autoritativas de estrutura.
 
 Quando uma ponte de servidor do CobbleTunes está disponível, o cliente desativa automaticamente o classificador fallback e prefere os pacotes autoritativos já existentes. O servidor só envia esses pacotes para clientes que anunciam o canal correspondente do CobbleTunes, evitando disputa entre os dois caminhos. O lado servidor não registra blocos, itens ou entidades do CobbleTunes, então instalar o mesmo JAR no servidor não torna o mod obrigatório para os outros jogadores.
 
@@ -435,9 +436,9 @@ Quando uma ponte de servidor do CobbleTunes está disponível, o cliente desativ
 - [x] **Classificação dinâmica do RCT** usando função, região, facção, rank, ID do treinador, progressão e temas exatos para treinadores personalizados nomeados.
 - [x] **Temas de facções** para Rocket, Aqua, Magma, Galactic, Plasma, Flare, Skull, Aether Foundation, Lusamine e Ultra Recon Squad.
 - [x] **Música de Frontier Brain** com contexto próprio.
-- [x] **Integrações com WildBosses e Cobblemon Raid Dens** usando pools regionais ponderados por tier, detecção pelo Pokémon original do actor e Victory regional dedicado por 5 segundos ao concluir uma raid.
+- [x] **Integrações com WildBosses e Cobblemon Raid Dens** usando pools regionais ponderados por tier, detecção pelo Pokémon original do actor e Victory regional dedicado por 5 segundos, seguido por 2 segundos em volume cheio antes do fade-out ao concluir uma raid.
 - [x] **Pools seguros para Bosses** sem usar temas lendários específicos em encontros aleatórios.
-- [x] **Integração de vitória com Cobblemon Loot Menu** com início imediato, fade rápido, janela de confirmação, loop durante o menu e retorno para a zona atual.
+- [x] **Integração de vitória com Cobblemon Loot Menu** iniciando a Victory no desmaio decisivo do oponente, usando o cue curto normal quando não existe tela de loot, mantendo a música durante o menu e retornando para a zona atual depois.
 - [x] **Temas de vitória ao capturar Pokémon** em capturas dentro ou fora de batalha, usando a região do Pokémon capturado e o pool de vitória selvagem já existente.
 - [x] **Pools de Battle Tower** para andares baixos, médios, altos e finais com tema de batalha dedicado.
 - [x] **Memória e rotação de ambientação por bioma** com intervalos de silêncio e debounce.
@@ -585,25 +586,26 @@ WildBosses e Cobblemon Raid Dens são opcionais. Encontros reais do WildBosses e
 
 A equipe do Pokémon da raid determina o pool regional da mesma forma que no WildBosses. Temas lendários específicos ficam fora do pool genérico de Lendários e o mod evita repetição imediata quando existe outra faixa válida.
 
-Com o debug do servidor ativado, a integração escreve linhas compactas `[RaidDensCompat] candidate` e `resolved` indicando se o tier veio da entidade ligada ao actor, do mapa de raids ativas ou do fallback da batalha. Um `RAID_END` bem-sucedido usa o resolvedor regional de vitória selvagem por **5 segundos** e depois volta para a ambientação válida mais recente. O tema continua durante a transição da dimensão da raid de volta ao overworld, sem ser cortado pelo silêncio de entrada no mundo. Raids perdidas apenas liberam a música de batalha, sem tocar Victory.
+Com o debug do servidor ativado, a integração escreve linhas compactas `[RaidDensCompat] candidate` e `resolved` indicando se o tier veio da entidade ligada ao actor, do mapa de raids ativas ou do fallback da batalha. Um `RAID_END` bem-sucedido usa o resolvedor regional de vitória selvagem por **5 segundos**, mantém o tema em volume cheio por mais **2 segundos** e então inicia o fade de volta para a ambientação válida mais recente. O tema continua durante a transição da dimensão da raid de volta ao overworld, sem ser cortado pelo silêncio de entrada no mundo. Raids perdidas apenas liberam a música de batalha, sem tocar Victory.
 
 ### Vitória, capturas e Cobblemon Loot Menu
 
 A música de vitória de batalha mantém a integração leve com `cobblemon_loot_menu`. Capturas bem-sucedidas também ativam o tema regional de vitória selvagem mesmo quando a captura acontece fora de batalha.
 
-Quando uma batalha suportada é vencida:
+Quando uma batalha suportada é vencida e o Cobblemon Loot Menu está instalado:
 
 ```text
 vitória da batalha
-→ música de vitória começa na hora
-→ batalha sai em cerca de 0.25 s
-→ vitória entra em cerca de 0.20 s
-→ CobbleTunes espera até 3 s pela tela de loot
+→ último Pokémon oponente desmaia
+→ Victory começa imediatamente
+→ sem tela de loot: Victory usa o cue curto normal
+→ tela de loot aparece: a mesma Victory continua tocando
+→ Victory continua até a tela de loot fechar
 ```
 
-Os três segundos **não** atrasam a música. O tema de vitória já está tocando durante esse período. Se o Loot Menu abrir, a música continua em loop até a tela fechar. Se nenhuma tela aparecer, o tema termina e a música do mundo volta.
+O CobbleTunes não atrasa mais a Victory esperando descobrir se existe loot. O cliente observa as mensagens de batalha do Cobblemon e o HP sincronizado da equipe, então o cue regional de Victory começa assim que o desmaio decisivo do oponente é reportado. O cue normal tem duração base de cerca de três segundos e depois permanece em volume cheio por mais dois segundos antes do início do fade-out. Se a `LootSelectionScreen` aparecer durante a transição pós-batalha, a Victory atual passa a ser mantida até a tela fechar. Depois que a tela de loot fecha, a Victory também permanece em volume cheio por dois segundos antes do início do fade-out. Se o cue curto já tiver terminado antes de a tela de loot aparecer, o CobbleTunes reinicia imediatamente a mesma Victory para o menu. Sem o Cobblemon Loot Menu, o mesmo gatilho de desmaio decisivo é usado, mantendo o evento posterior de vitória do Cobblemon como fallback.
 
-Uma captura bem-sucedida usa o mesmo roteamento regional de vitória selvagem e toca brevemente por cerca de três segundos. Isso vale tanto para capturas que encerram uma batalha selvagem quanto para capturas diretas no mundo. Formas regionais continuam sobrescrevendo a região baseada na National Dex. A vitória de captura nunca espera pelo Loot Menu. Uma raid concluída com sucesso também usa o tema regional de vitória selvagem, mas por **cinco segundos**. Com a ponte do servidor, a Victory da raid usa o `RAID_END` do Raid Dens. No modo somente cliente, o boss sincronizado chegando a 0 HP marca a conclusão, então o tema começa imediatamente sem esperar o fechamento da batalha ou o retorno ao overworld.
+Uma captura bem-sucedida usa o mesmo roteamento regional de vitória selvagem com um cue base de cerca de três segundos, seguido por dois segundos em volume cheio antes do fade-out. Isso vale tanto para capturas que encerram uma batalha selvagem quanto para capturas diretas no mundo. Formas regionais continuam sobrescrevendo a região baseada na National Dex. A vitória de captura nunca espera pelo Loot Menu. Uma raid concluída com sucesso também usa o tema regional de vitória selvagem com um cue base de **cinco segundos**, seguido pelos mesmos **dois segundos** em volume cheio antes do fade-out. Com a ponte do servidor, a Victory da raid usa o `RAID_END` do Raid Dens. No modo somente cliente, o boss sincronizado chegando a 0 HP marca a conclusão, então o tema começa imediatamente sem esperar o fechamento da batalha ou o retorno ao overworld.
 
 A detecção de bioma e estrutura continua funcionando durante a vitória. Quando a vitória termina, o CobbleTunes volta para a **última** estrutura, andar da Battle Tower ou bioma válido em vez de usar uma ambientação antiga salva antes da batalha.
 
@@ -670,11 +672,11 @@ O efeito usa `0.80x` o volume configurado para música, fazendo o alerta tocar a
 
 A música de evolução é totalmente do cliente. Para evoluções visíveis no mundo, cada cliente com CobbleTunes observa os `PokemonEntity` sincronizados próximos e reage ao estado `isEvolving` sem pacote customizado do servidor. O suspense começa após 20 ticks para alinhar com o início da animação visual de evolução do Cobblemon, para quando o estado sincronizado volta para false e então toca o sting regional de conclusão na mesma posição do Pokémon.
 
-Se uma evolução for concluída pela tela Summary do Cobblemon enquanto esse Pokémon não possui uma entidade próxima no mundo, o CobbleTunes observa o Pokémon sincronizado mostrado pela tela e detecta a mudança de espécie. Nesse fallback ele não toca suspense e reproduz somente o `_congrat.ogg` regional de forma local para o jogador que está usando a tela. Uma entidade correspondente no mundo ou uma evolução espacial já rastreada bloqueia o fallback para evitar duplicar a congratulação.
+Se uma evolução for concluída pela tela Summary do Cobblemon enquanto esse Pokémon não possui uma entidade viva no mundo, o CobbleTunes cria um snapshot de `CobblemonClient.storage.party` quando a Summary abre e observa esse armazenamento sincronizado da party por uma mudança de espécie no mesmo UUID. Ele não depende dos objetos de Pokémon guardados pela própria tela Summary, que podem continuar desatualizados durante a evolução. O watcher permanece armado por 10 segundos após a Summary fechar para capturar uma sincronização final atrasada. Nesse fallback ele não toca suspense e reproduz somente o cue regional de conclusão na posição do jogador. Uma entidade viva próxima ou uma evolução espacial já rastreada bloqueia o fallback para evitar áudio duplicado.
 
-Os sons de evolução no mundo são posicionais e usam a categoria **Discos/Jukebox** do Minecraft em vez da categoria global de Música. O suspense usa `0.62x` e a conclusão `0.78x` do volume de música configurado no CobbleTunes, com atenuação linear até aproximadamente 32 blocos. Várias evoluções próximas podem tocar ao mesmo tempo em direções diferentes. Enquanto houver pelo menos um suspense audível, a música de ambiente/estrutura do mundo reduz suavemente para `0.68x`; batalha, vitória e menu não recebem esse ducking. A conclusão fallback da Summary é local ao ouvinte, usa o mesmo volume de `0.78x` e não reduz a música do mundo. Se o estado de evolução visível terminar sem a espécie do Pokémon mudar, o CobbleTunes trata como uma evolução interrompida e não toca o sting de congratulação.
+Os sons de evolução no mundo são posicionais e usam a categoria **Discos/Jukebox** do Minecraft em vez da categoria global de Música. O suspense usa `0.62x` e a conclusão `0.78x` do volume de música configurado no CobbleTunes, com atenuação linear até aproximadamente 32 blocos. Várias evoluções próximas podem tocar ao mesmo tempo em direções diferentes. Enquanto qualquer cue de evolução audível estiver tocando, incluindo a congratulação, a música de ambiente/estrutura do mundo reduz suavemente para `0.20x` e permanece nesse nível durante toda a sequência. Somente depois que o cue final de congratulação termina a música do mundo retorna ao volume normal com um fade de 2 segundos. Batalha, vitória e menu não recebem esse ducking. A conclusão fallback da Summary é emitida na posição do jogador com o mesmo volume de `0.78x`, reduz o ambiente para `0.20x` durante o cue e usa o mesmo fade de retorno de 2 segundos. Se o estado de evolução visível terminar sem a espécie do Pokémon mudar, o CobbleTunes trata como uma evolução interrompida e não toca o sting de congratulação.
 
-O roteamento regional usa a região da Pokédex Nacional do Pokémon em evolução, com formas de Alola, Galar, Hisui e Paldea substituindo a região da espécie base. Alola escolhe aleatoriamente entre `um/_evo.ogg` e `um/_evo2.ogg`, e Galar entre `swsh/_evo.ogg` e `swsh/_evo2.ogg`. A conclusão sempre usa o `_congrat.ogg` da mesma região. Arquivos de evolução ausentes são verificados diretamente nos resource packs ativos, então um cue ausente fica em silêncio e não reduz a música do mundo.
+O roteamento regional usa a região da Pokédex Nacional do Pokémon em evolução, com formas de Alola, Galar, Hisui e Paldea substituindo a região da espécie base. Alola escolhe aleatoriamente entre `um_evo.ogg` e `um_evo2.ogg`, e Galar entre `swsh_evo.ogg` e `swsh_evo2.ogg`. A conclusão sempre usa o arquivo plano `<prefix>_congrat.ogg` da mesma região. Os arquivos de evolução são esperados diretamente em `assets/cobbletunes/sounds/evolution/`, seguindo nomes como `fr_evo.ogg`, `bl_congrat.ogg` e `sv_evo.ogg`. Arquivos ausentes ficam em silêncio e não reduzem a música do mundo.
 
 ### Configuração
 
@@ -716,7 +718,7 @@ assets/cobbletunes/sounds/
 
 O `sounds.json` incluído define todos os 441 eventos esperados. [`SOUND_MANIFEST.md`](./SOUND_MANIFEST.md) espelha essas entradas e explica o roteamento.
 
-Áudio ausente vira silêncio sem derrubar o sistema de música. Os arquivos de evolução são esperados nas pastas regionais de `evolution/` listadas no sound manifest, enquanto as entradas de `gamecorner/` continuam como espaços vazios até os OGGs correspondentes serem adicionados ao resource pack.
+Áudio ausente vira silêncio sem derrubar o sistema de música. Os arquivos de evolução são esperados diretamente em `assets/cobbletunes/sounds/evolution/` com os nomes planos listados no sound manifest, enquanto as entradas de `gamecorner/` continuam como espaços vazios até os OGGs correspondentes serem adicionados ao resource pack.
 
 ### Organização do projeto
 

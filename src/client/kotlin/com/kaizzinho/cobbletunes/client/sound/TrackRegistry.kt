@@ -353,7 +353,7 @@ object TrackRegistry {
         EvolutionCue(
             id = "evolution.$prefix.$suffix",
             soundEvent = soundEvent("evolution.$prefix.$suffix"),
-            assetPath = "sounds/evolution/$prefix/_$suffix.ogg"
+            assetPath = "sounds/evolution/${prefix}_${suffix}.ogg"
         )
 
     private val evolutionThemes: Map<RegionOfOrigin, EvolutionTheme> by lazy {

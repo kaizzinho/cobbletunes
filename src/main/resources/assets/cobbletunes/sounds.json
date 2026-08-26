@@ -3774,7 +3774,7 @@
     "category": "record",
     "sounds": [
       {
-        "name": "cobbletunes:evolution/fr/_evo",
+        "name": "cobbletunes:evolution/fr_evo",
         "stream": true,
         "attenuation_distance": 32
       }
@@ -3784,7 +3784,7 @@
     "category": "record",
     "sounds": [
       {
-        "name": "cobbletunes:evolution/fr/_congrat",
+        "name": "cobbletunes:evolution/fr_congrat",
         "stream": true,
         "attenuation_distance": 32
       }
@@ -3794,7 +3794,7 @@
     "category": "record",
     "sounds": [
       {
-        "name": "cobbletunes:evolution/hg/_evo",
+        "name": "cobbletunes:evolution/hg_evo",
         "stream": true,
         "attenuation_distance": 32
       }
@@ -3804,7 +3804,7 @@
     "category": "record",
     "sounds": [
       {
-        "name": "cobbletunes:evolution/hg/_congrat",
+        "name": "cobbletunes:evolution/hg_congrat",
         "stream": true,
         "attenuation_distance": 32
       }
@@ -3814,7 +3814,7 @@
     "category": "record",
     "sounds": [
       {
-        "name": "cobbletunes:evolution/em/_evo",
+        "name": "cobbletunes:evolution/em_evo",
         "stream": true,
         "attenuation_distance": 32
       }
@@ -3824,7 +3824,7 @@
     "category": "record",
     "sounds": [
       {
-        "name": "cobbletunes:evolution/em/_congrat",
+        "name": "cobbletunes:evolution/em_congrat",
         "stream": true,
         "attenuation_distance": 32
       }
@@ -3834,7 +3834,7 @@
     "category": "record",
     "sounds": [
       {
-        "name": "cobbletunes:evolution/plat/_evo",
+        "name": "cobbletunes:evolution/plat_evo",
         "stream": true,
         "attenuation_distance": 32
       }
@@ -3844,7 +3844,7 @@
     "category": "record",
     "sounds": [
       {
-        "name": "cobbletunes:evolution/plat/_congrat",
+        "name": "cobbletunes:evolution/plat_congrat",
         "stream": true,
         "attenuation_distance": 32
       }
@@ -3854,7 +3854,7 @@
     "category": "record",
     "sounds": [
       {
-        "name": "cobbletunes:evolution/bl/_evo",
+        "name": "cobbletunes:evolution/bl_evo",
         "stream": true,
         "attenuation_distance": 32
       }
@@ -3864,7 +3864,7 @@
     "category": "record",
     "sounds": [
       {
-        "name": "cobbletunes:evolution/bl/_congrat",
+        "name": "cobbletunes:evolution/bl_congrat",
         "stream": true,
         "attenuation_distance": 32
       }
@@ -3874,7 +3874,7 @@
     "category": "record",
     "sounds": [
       {
-        "name": "cobbletunes:evolution/xy/_evo",
+        "name": "cobbletunes:evolution/xy_evo",
         "stream": true,
         "attenuation_distance": 32
       }
@@ -3884,7 +3884,7 @@
     "category": "record",
     "sounds": [
       {
-        "name": "cobbletunes:evolution/xy/_congrat",
+        "name": "cobbletunes:evolution/xy_congrat",
         "stream": true,
         "attenuation_distance": 32
       }
@@ -3894,7 +3894,7 @@
     "category": "record",
     "sounds": [
       {
-        "name": "cobbletunes:evolution/um/_evo",
+        "name": "cobbletunes:evolution/um_evo",
         "stream": true,
         "attenuation_distance": 32
       }
@@ -3904,7 +3904,7 @@
     "category": "record",
     "sounds": [
       {
-        "name": "cobbletunes:evolution/um/_evo2",
+        "name": "cobbletunes:evolution/um_evo2",
         "stream": true,
         "attenuation_distance": 32
       }
@@ -3914,7 +3914,7 @@
     "category": "record",
     "sounds": [
       {
-        "name": "cobbletunes:evolution/um/_congrat",
+        "name": "cobbletunes:evolution/um_congrat",
         "stream": true,
         "attenuation_distance": 32
       }
@@ -3924,7 +3924,7 @@
     "category": "record",
     "sounds": [
       {
-        "name": "cobbletunes:evolution/swsh/_evo",
+        "name": "cobbletunes:evolution/swsh_evo",
         "stream": true,
         "attenuation_distance": 32
       }
@@ -3934,7 +3934,7 @@
     "category": "record",
     "sounds": [
       {
-        "name": "cobbletunes:evolution/swsh/_evo2",
+        "name": "cobbletunes:evolution/swsh_evo2",
         "stream": true,
         "attenuation_distance": 32
       }
@@ -3944,7 +3944,7 @@
     "category": "record",
     "sounds": [
       {
-        "name": "cobbletunes:evolution/swsh/_congrat",
+        "name": "cobbletunes:evolution/swsh_congrat",
         "stream": true,
         "attenuation_distance": 32
       }
@@ -3954,7 +3954,7 @@
     "category": "record",
     "sounds": [
       {
-        "name": "cobbletunes:evolution/leg/_evo",
+        "name": "cobbletunes:evolution/leg_evo",
         "stream": true,
         "attenuation_distance": 32
       }
@@ -3964,7 +3964,7 @@
     "category": "record",
     "sounds": [
       {
-        "name": "cobbletunes:evolution/leg/_congrat",
+        "name": "cobbletunes:evolution/leg_congrat",
         "stream": true,
         "attenuation_distance": 32
       }
@@ -3974,7 +3974,7 @@
     "category": "record",
     "sounds": [
       {
-        "name": "cobbletunes:evolution/sv/_evo",
+        "name": "cobbletunes:evolution/sv_evo",
         "stream": true,
         "attenuation_distance": 32
       }
@@ -3984,7 +3984,7 @@
     "category": "record",
     "sounds": [
       {
-        "name": "cobbletunes:evolution/sv/_congrat",
+        "name": "cobbletunes:evolution/sv_congrat",
         "stream": true,
         "attenuation_distance": 32
       }

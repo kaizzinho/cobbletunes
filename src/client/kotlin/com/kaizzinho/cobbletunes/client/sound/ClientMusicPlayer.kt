@@ -50,7 +50,7 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
 
     private val VILLAGE_COOLDOWN_MIN_SECONDS = 5f
     private val VILLAGE_COOLDOWN_MAX_SECONDS = 60f
-    private val EVOLUTION_DUCK_MULTIPLIER = 0.68f
+    private val EVOLUTION_DUCK_MULTIPLIER = 0.20f
 
 
     fun playBattleContext(
@@ -735,12 +735,15 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
 
     fun isVolumeSuspended(): Boolean = isMusicMutedNow()
 
-    fun setEvolutionDucking(active: Boolean) {
+    fun setEvolutionDucking(active: Boolean, transitionSeconds: Float = 0.35f) {
         if (evolutionDucking == active) return
         evolutionDucking = active
         val multiplier = evolutionVolumeMultiplierFor(currentContext)
-        currentSound?.setExternalVolumeMultiplier(multiplier)
-        debugLog("[Evolution] world music duck=${if (active) "on" else "off"}")
+        currentSound?.setExternalVolumeMultiplier(multiplier, transitionSeconds)
+        debugLog(
+            "[Evolution] world music duck=${if (active) "on" else "off"} " +
+                "fade=${transitionSeconds}s"
+        )
     }
 
     private fun evolutionVolumeMultiplierFor(context: MusicContext): Float =

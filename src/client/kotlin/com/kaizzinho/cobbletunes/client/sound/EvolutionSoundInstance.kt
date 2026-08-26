@@ -1,6 +1,6 @@
 package com.kaizzinho.cobbletunes.client.sound
 
-import com.cobblemon.mod.common.entity.pokemon.PokemonEntity
+import net.minecraft.entity.Entity
 import net.minecraft.client.sound.AbstractSoundInstance
 import net.minecraft.client.sound.SoundInstance
 import net.minecraft.client.sound.TickableSoundInstance
@@ -10,7 +10,7 @@ import net.minecraft.util.math.random.Random
 
 class EvolutionSoundInstance(
     soundEvent: SoundEvent,
-    private val pokemon: PokemonEntity?,
+    private val sourceEntity: Entity?,
     private val baseVolume: Float,
     private val local: Boolean = false
 ) : AbstractSoundInstance(soundEvent, SoundCategory.RECORDS, Random.create()),
@@ -39,12 +39,18 @@ class EvolutionSoundInstance(
         done = true
     }
 
+    fun isAudibleTo(listener: Entity, maxDistanceSquared: Double): Boolean {
+        if (local) return true
+        val source = sourceEntity ?: return false
+        return !source.isRemoved && source.squaredDistanceTo(listener) <= maxDistanceSquared
+    }
+
     override fun tick() {
         updatePosition()
     }
 
     private fun updatePosition() {
-        val entity = pokemon ?: return
+        val entity = sourceEntity ?: return
         x = entity.x
         y = entity.y
         z = entity.z

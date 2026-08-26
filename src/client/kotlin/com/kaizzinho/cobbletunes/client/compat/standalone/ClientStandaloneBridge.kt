@@ -29,6 +29,7 @@ class ClientStandaloneBridge(
     private val onBattleStart: (BattleMusicStartPayload) -> Unit,
     private val onBattleEnd: () -> Unit,
     private val onBattleVictory: () -> Unit,
+    private val shouldUseEarlyFaintVictory: () -> Boolean,
     private val onCapture: (Int, String) -> Unit,
     private val onZone: (String) -> Unit
 ) {
@@ -86,6 +87,10 @@ class ClientStandaloneBridge(
     }
 
     private var currentBattleId: UUID? = null
+    private var observedBattleId: UUID? = null
+    private var earlyVictoryTriggered = false
+    private val observedOpponentFaints = mutableSetOf<UUID>()
+    private val observedPlayerFaints = mutableSetOf<UUID>()
     private var battleStartDelay = 0
     private var currentPayload: BattleMusicStartPayload? = null
     private var pendingRaidTier: String? = null
@@ -97,26 +102,39 @@ class ClientStandaloneBridge(
     private var pokemonSnapshotCounter = 0
     private var lastLocalZone = ""
     private var lastBridgeAvailable = false
+    private var soundListenerRegistered = false
     private val nearbyPokemon = mutableListOf<PokemonSnapshot>()
     private val handledCaptureBalls = mutableSetOf<UUID>()
+    private val raidSoundListener = SoundInstanceListener { sound, _, _ ->
+        val client = MinecraftClient.getInstance()
+        client.execute {
+            handleSound(
+                sound.id.toString(),
+                sound.x,
+                sound.y,
+                sound.z
+            )
+        }
+    }
 
     fun register() {
-        val client = MinecraftClient.getInstance()
-        client.soundManager.registerListener(
-            SoundInstanceListener { sound, _, _ ->
-                client.execute {
-                    handleSound(
-                        sound.id.toString(),
-                        sound.x,
-                        sound.y,
-                        sound.z
-                    )
-                }
-            }
-        )
-
         ClientTickEvents.END_CLIENT_TICK.register { tickClient ->
+            registerSoundListenerIfReady(tickClient)
             tick(tickClient)
+        }
+    }
+
+    private fun registerSoundListenerIfReady(client: MinecraftClient) {
+        if (soundListenerRegistered) return
+
+        val registered = runCatching {
+            client.soundManager.registerListener(raidSoundListener)
+            true
+        }.getOrDefault(false)
+
+        if (registered) {
+            soundListenerRegistered = true
+            debugLog("client standalone sound listener registered")
         }
     }
 
@@ -142,6 +160,8 @@ class ClientStandaloneBridge(
             resetLocalState(clearZone = false)
             return
         }
+
+        observeBattleOutcome(client)
         if (bridgeAvailable) return
 
         pokemonSnapshotCounter++
@@ -158,6 +178,61 @@ class ClientStandaloneBridge(
             structureCheckCounter = 0
             updateLocalZone(client)
         }
+    }
+
+    private fun observeBattleOutcome(client: MinecraftClient) {
+        val battle = CobblemonClient.battle
+        if (battle == null) {
+            observedBattleId = null
+            earlyVictoryTriggered = false
+            observedOpponentFaints.clear()
+            observedPlayerFaints.clear()
+            return
+        }
+
+        if (observedBattleId == battle.battleId) return
+
+        observedBattleId = battle.battleId
+        earlyVictoryTriggered = false
+        observedOpponentFaints.clear()
+        observedPlayerFaints.clear()
+
+        // Use Cobblemon's battle-log queue as the synchronization point. We intentionally
+        // avoid parsing localized text and instead check the synchronized full roster HP
+        // whenever a new battle-log line is pushed to the client.
+        battle.messages.subscribe {
+            client.execute {
+                tryTriggerEarlyVictory(client, battle.battleId)
+            }
+        }
+
+        debugLog("[Victory] armed client battle-log faint observer battle=${battle.battleId}")
+    }
+
+    private fun tryTriggerEarlyVictory(client: MinecraftClient, battleId: UUID) {
+        if (earlyVictoryTriggered || observedBattleId != battleId) return
+        if (!shouldUseEarlyFaintVictory()) return
+
+        val battle = CobblemonClient.battle ?: return
+        if (battle.battleId != battleId) return
+
+        val playerUuid = client.player?.uuid ?: return
+        val playerSide = battle.sides.firstOrNull { side ->
+            side.actors.any { it.uuid == playerUuid }
+        } ?: return
+        val opposingSide = battle.sides.firstOrNull { it !== playerSide } ?: return
+
+        updateObservedFaints(opposingSide.actors, observedOpponentFaints)
+        updateObservedFaints(playerSide.actors, observedPlayerFaints)
+
+        if (
+            !sideIsDefeated(opposingSide.actors, observedOpponentFaints) ||
+            sideIsDefeated(playerSide.actors, observedPlayerFaints)
+        ) return
+
+        earlyVictoryTriggered = true
+        debugLog("[Victory] decisive opponent faint observed from battle log; starting Victory now")
+        onBattleVictory()
     }
 
     private fun updateBattle(client: MinecraftClient) {
@@ -304,6 +379,32 @@ class ClientStandaloneBridge(
         val active = actors.flatMap { actor -> actor.activePokemon.mapNotNull { it.battlePokemon } }
         if (active.isEmpty()) return false
         return active.all { pokemon -> hpRatio(pokemon) <= 0.0001f }
+    }
+
+    private fun updateObservedFaints(
+        actors: List<ClientBattleActor>,
+        faintedPokemon: MutableSet<UUID>
+    ) {
+        actors.flatMap { actor -> actor.activePokemon.mapNotNull { it.battlePokemon } }
+            .filter { hpRatio(it) <= 0.0001f }
+            .forEach { faintedPokemon += it.uuid }
+
+        // Seed Pokémon that entered the battle already fainted. Active battle HP remains
+        // the authoritative source for normal battle damage and adds to this set above.
+        actors.flatMap { it.pokemon }
+            .filter { it.currentHealth <= 0 }
+            .forEach { faintedPokemon += it.uuid }
+    }
+
+    private fun sideIsDefeated(
+        actors: List<ClientBattleActor>,
+        faintedPokemon: Set<UUID>
+    ): Boolean {
+        val rosterUuids = actors.flatMap { it.pokemon }.map { it.uuid }.toSet()
+        if (rosterUuids.isNotEmpty()) {
+            return rosterUuids.all { it in faintedPokemon }
+        }
+        return sideIsFainted(actors)
     }
 
     private fun hpRatio(pokemon: ClientBattlePokemon): Float =
@@ -670,6 +771,10 @@ class ClientStandaloneBridge(
 
     private fun resetLocalState(clearZone: Boolean) {
         currentBattleId = null
+        observedBattleId = null
+        earlyVictoryTriggered = false
+        observedOpponentFaints.clear()
+        observedPlayerFaints.clear()
         battleStartDelay = 0
         currentPayload = null
         pendingRaidTier = null
