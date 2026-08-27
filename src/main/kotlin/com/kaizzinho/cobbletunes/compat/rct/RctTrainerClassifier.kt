@@ -55,7 +55,8 @@ data class TrainerOverride(
     val faction: TrainerFaction? = null,
     val factionRank: FactionRank? = null,
     val factionTheme: String? = null,
-    val battleTrackId: String? = null
+    val battleTrackId: String? = null,
+    val battlePoolId: String? = null
 )
 
 data class TrainerClassification(
@@ -68,9 +69,15 @@ data class TrainerClassification(
     val faction: TrainerFaction? = null,
     val factionRank: FactionRank? = null,
     val factionTheme: String? = null,
-    val battleTrackId: String? = null
+    val battleTrackId: String? = null,
+    val battlePoolId: String? = null
 ) {
     fun route(): String {
+        battlePoolId?.takeIf { it.isNotBlank() }?.let { poolId ->
+            val route = "specialpool:$poolId:${role.routeId}"
+            return region?.let { "$route|$it" } ?: route
+        }
+
         battleTrackId?.takeIf { it.isNotBlank() }?.let { trackId ->
             val route = "special:$trackId:${role.routeId}"
             return region?.let { "$route|$it" } ?: route
@@ -105,6 +112,18 @@ object RctTrainerClassifier {
     ): TrainerClassification {
         val trainerId = normalize(raw.trainerId)
         val typeId = normalize(raw.typeId)
+
+        // Repetitive Battle Tower floor trainers intentionally use the ordinary
+        // trainer route so the opposing roster votes for the regional theme.
+        if (isGenericBattleTowerFloorTrainer(trainerId)) {
+            return result(
+                raw = raw,
+                role = TrainerRole.NORMAL,
+                region = null,
+                source = TrainerDetectionSource.ORDINARY
+            )
+        }
+
         val override = exactOverrides[trainerId]
             ?: trainerId.removePrefix("rctmod_").takeIf { it != trainerId }?.let(exactOverrides::get)
 
@@ -117,7 +136,8 @@ object RctTrainerClassifier {
                 faction = override.faction,
                 factionRank = override.factionRank,
                 factionTheme = override.factionTheme,
-                battleTrackId = override.battleTrackId
+                battleTrackId = override.battleTrackId,
+                battlePoolId = override.battlePoolId
             )
         }
 
@@ -482,7 +502,8 @@ object RctTrainerClassifier {
         faction: TrainerFaction? = null,
         factionRank: FactionRank? = null,
         factionTheme: String? = null,
-        battleTrackId: String? = null
+        battleTrackId: String? = null,
+        battlePoolId: String? = null
     ) = TrainerClassification(
         role = role,
         region = region,
@@ -493,11 +514,17 @@ object RctTrainerClassifier {
         faction = faction,
         factionRank = factionRank,
         factionTheme = factionTheme,
-        battleTrackId = battleTrackId
+        battleTrackId = battleTrackId,
+        battlePoolId = battlePoolId
     )
 
     private fun regionFrom(value: String): String? =
         regions.firstOrNull { value == it || value.startsWith("${it}_") }
+
+    private fun isGenericBattleTowerFloorTrainer(trainerId: String): Boolean {
+        val localId = trainerId.removePrefix("rctmod_")
+        return Regex("^f(?:10|[1-9])_trainer\\d+$").matches(localId)
+    }
 
     private fun normalizeRegion(value: String?): String? =
         value?.let(::normalize)?.takeIf { it in regions }

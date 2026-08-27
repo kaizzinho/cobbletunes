@@ -32,6 +32,24 @@ object TrackRegistry {
 
     private val victoryTracks = mutableMapOf<String, MusicTrack>()
     private val battleTowerTracks = mutableMapOf<String, MutableList<MusicTrack>>()
+    private val lastSpecialTrainerTrackByPool = mutableMapOf<String, String>()
+
+    private val specialTrainerPools: Map<String, List<Pair<String, Int>>> = mapOf(
+        "red" to listOf("johto_champion" to 60, "unova_pvp_champion_johto" to 40),
+        "green" to listOf("kanto_champion" to 60, "unova_pvp_champion_kanto" to 40),
+        "oak" to listOf("kanto_champion" to 60, "unova_pvp_champion_kanto" to 40),
+        "gold" to listOf("johto_champion" to 60, "unova_pvp_champion_johto" to 40),
+        "kris" to listOf("johto_champion" to 60, "unova_pvp_champion_johto" to 40),
+        "may" to listOf(
+            "hoenn_rival_pvp" to 50,
+            "hoenn_champion_wallace" to 25,
+            "unova_pvp_champion_hoenn" to 25
+        ),
+        "steven" to listOf("hoenn_champion_wallace" to 60, "unova_pvp_champion_hoenn" to 40),
+        "barry" to listOf("sinnoh_rival_pvp" to 80, "unova_pvp_champion_sinnoh" to 20),
+        "silver" to listOf("johto_rival_pvp" to 100),
+        "morimoto" to listOf("tower_b2w2_pwt_final" to 100)
+    )
 
     fun register(context: MusicContext, track: MusicTrack) {
         tracks.getValue(context).add(track)
@@ -41,6 +59,36 @@ object TrackRegistry {
 
     fun trackById(trackId: String): MusicTrack? =
         tracks.values.asSequence().flatten().firstOrNull { it.id == trackId }
+
+    fun specialTrainerTrackFor(poolId: String): MusicTrack? {
+        val weighted = specialTrainerPools[poolId]
+            .orEmpty()
+            .mapNotNull { (trackId, weight) ->
+                trackById(trackId)?.let { track -> track to weight.coerceAtLeast(0) }
+            }
+            .filter { (_, weight) -> weight > 0 }
+
+        if (weighted.isEmpty()) return null
+
+        val previousId = lastSpecialTrainerTrackByPool[poolId]
+        val candidates = if (weighted.size > 1 && previousId != null) {
+            weighted.filter { (track, _) -> track.id != previousId }.ifEmpty { weighted }
+        } else {
+            weighted
+        }
+
+        val totalWeight = candidates.sumOf { (_, weight) -> weight }
+        if (totalWeight <= 0) return candidates.randomOrNull()?.first
+
+        var roll = (0 until totalWeight).random()
+        val selected = candidates.firstOrNull { (_, weight) ->
+            roll -= weight
+            roll < 0
+        }?.first ?: candidates.last().first
+
+        lastSpecialTrainerTrackByPool[poolId] = selected.id
+        return selected
+    }
 
     fun legendaryTrackFor(
         dexNumber: Int,
@@ -351,8 +399,8 @@ object TrackRegistry {
 
         return when (floor) {
             in 1..3 -> "cobbletunes:battle_tower_low"
-            in 4..7 -> "cobbletunes:battle_tower_mid"
-            in 8..9 -> "cobbletunes:battle_tower_high"
+            in 4..6 -> "cobbletunes:battle_tower_mid"
+            in 7..9 -> "cobbletunes:battle_tower_high"
             10 -> "cobbletunes:battle_tower_final"
             else -> null
         }

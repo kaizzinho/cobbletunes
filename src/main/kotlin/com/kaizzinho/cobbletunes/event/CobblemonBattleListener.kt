@@ -254,6 +254,7 @@ object CobblemonBattleListener {
                                 "rank='${result.factionRank?.name?.lowercase(Locale.ROOT).orEmpty()}' " +
                                 "theme='${result.factionTheme.orEmpty()}' " +
                                 "battleTrack='${result.battleTrackId.orEmpty()}' " +
+                                "battlePool='${result.battlePoolId.orEmpty()}' " +
                                 "region='${result.region ?: "unknown"}' source=$source route='$route'"
                         )
                     }

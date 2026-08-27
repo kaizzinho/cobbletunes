@@ -53,7 +53,7 @@ Lower-priority world detection keeps running while battle or Victory music owns 
 
 CobbleTunes can be installed on the **client only** and used on public Cobblemon servers that do not run the mod. In that mode it infers standard wild, trainer, PvP, Legendary/Mythical, regional-form, Victory, capture, WildBosses, Raid Dens, and observable RCT routes from client-visible Cobblemon/mod state. Raid Dens can also be identified from its native tier battle sound, and successful client-only raids trigger the same five-second regional Victory cue when the raid boss faints, followed by a two-second full-volume tail before fade-out begins.
 
-World biome ambience, menu music, low-HP handling, spatial evolution music, volume suspension, and other purely client-side systems work normally. Evolution never needs a CobbleTunes server packet: visible world evolutions are observed from Cobblemon's synchronized `PokemonEntity.isEvolving` state, while an evolution completed directly from Cobblemon's Summary UI with no live world entity is detected from Cobblemon's synchronized client party storage and plays only the regional congratulation cue from the player's position. The Summary watch remains armed briefly after the screen closes so the final party sync is not missed. For structures, standalone mode uses conservative fingerprints for locations the client can recognize reliably, currently including Gimmighoul towers, Poké Centers, Ruined Portals, and villages. Exact `StructureStart` identities for the full Cobbleverse/Terralith/BCA/Repurposed/Legendary Monuments mapping and manual marker zones remain server-enhanced features because vanilla chunk networking does not provide those authoritative structure identities to a normal remote client.
+World biome ambience, menu music, low-HP handling, spatial evolution music, volume suspension, and other purely client-side systems work normally. Evolution never needs a CobbleTunes server packet: visible world evolutions are observed from Cobblemon's synchronized `PokemonEntity.isEvolving` state, while an evolution completed directly from Cobblemon's Summary UI with no live world entity is detected from Cobblemon's synchronized client party storage and plays only the regional congratulation cue from the player's position. The Summary watch remains armed briefly after the screen closes so the final party sync is not missed. Client-only structure routing deliberately does **not** infer worldgen structures from ordinary player-placeable blocks. Bells do not identify villages, healing machines plus PCs do not identify Poké Centers, Gilded/Gimmighoul chests do not identify Gimmighoul towers, and portal-like obsidian/netherrack builds do not identify Ruined Portals. Exact `StructureStart` identities and manual marker zones remain server-enhanced features because vanilla chunk networking does not provide those authoritative structure identities to a normal remote client. This favors a safe biome fallback on public servers over false structure music inside player bases.
 
 When a CobbleTunes server bridge is present, the client automatically stops its fallback classifier and prefers the existing server-authoritative packets. Server packets are sent only to clients that advertise the matching CobbleTunes payload channel, so the fallback and enhanced paths do not compete. The server side registers no CobbleTunes block, item, or entity content, so installing the same JAR on a server does not make CobbleTunes mandatory for other players.
 
@@ -63,14 +63,14 @@ When a CobbleTunes server bridge is present, the client automatically stops its 
 - [x] **Wild, trainer, Gym Leader, Elite Four, Champion, rival, PvP, faction, Frontier Brain, Battle Tower, and Legendary/Mythical contexts.**
 - [x] **Regional form routing** so Alolan, Galarian, Hisuian, and Paldean forms use their form region instead of the base species region.
 - [x] **Form-aware Legendary routing** for encounters such as Kyurem, Necrozma, Eternatus, Calyrex, Terapagos, and the Galarian birds.
-- [x] **Dynamic RCT classification** with role, region, faction, rank, trainer ID, progression-aware routing, and exact themes for named custom trainers.
+- [x] **Dynamic RCT classification** with role, region, faction, rank, trainer ID, progression-aware routing, roster-majority routing for generic Battle Tower floor trainers, and lore-specific weighted pools for named custom trainers.
 - [x] **Villain faction themes** for Rocket, Aqua, Magma, Galactic, Plasma, Flare, Skull, Aether Foundation, Lusamine, and Ultra Recon Squad routes.
 - [x] **Frontier Brain music** with a dedicated battle context.
 - [x] **WildBosses and Cobblemon Raid Dens integrations** with tier-weighted regional PvP, generic Legendary, and BW World Tournament pools, actor-entity Raid Dens detection, and a dedicated 5-second regional Victory cue plus a 2-second full-volume tail before fade-out when a raid is cleared.
 - [x] **Species-safe Boss pools** that keep unique Legendary encounter themes out of unrelated Boss fights.
 - [x] **Victory + Cobblemon Loot Menu integration** with Victory starting on the decisive opponent faint, a normal short cue when no loot screen opens, extension while the loot screen is open, and current-zone resume afterward.
 - [x] **Capture Victory themes** for successful Pokémon captures, including captures made outside battle, using the captured Pokémon region and the existing wild Victory pool.
-- [x] **Battle Tower floor pools** with low, mid, high, and final tiers plus dedicated Battle Tower battle music.
+- [x] **Battle Tower floor pools** with low, mid, high, and final marker-driven ambience tiers; generic floor-trainer battles keep normal roster-based regional routing.
 - [x] **Biome ambience memory and rotation** with silence windows, biome-transition debounce, and visit memory that expires after a random 3–6 minutes or 3 meaningful biome transitions.
 - [x] **Underground ambience detection** using sky light and player height.
 - [x] **Cobbleverse exact structures**, **vanilla structures**, **Terralith structures**, **CobblemonAdditions/BCA villages**, **Repurposed Structures**, selected **Legendary Monuments**, and **Cobblemon Gimmighoul towers** using existing music.
@@ -97,14 +97,16 @@ When a CobbleTunes server bridge is present, the client automatically stops its 
 
 For multiplayer, installing CobbleTunes on the **client is enough** for the standalone experience on a public Cobblemon server. Installing the same CobbleTunes JAR on the server is optional and enables exact server-only structure/manual-zone routing and authoritative compatibility metadata for CobbleTunes clients. Players without CobbleTunes can still join because the server bridge registers no custom gameplay content and only sends CobbleTunes payloads to clients that advertise support.
 
+Poké Center and Poké Mart music is **manual-zone-only**. Generated Center/Mart buildings inside villages keep the village soundtrack unless a CobbleTunes marker is deliberately placed there; player-built healers, PCs, counters, bells, chests, or portal-like builds never create automatic structure zones.
+
 #### Optional integrations
 
 - **Mod Menu** — opens a native CobbleTunes configuration screen for client music settings.
-- **Radical Cobblemon Trainers** — trainer role, region, faction, progression-aware routing, and exact theme overrides for supported named custom trainers.
+- **Radical Cobblemon Trainers** — trainer role, region, faction, progression-aware routing, roster-majority regional themes for generic Battle Tower floor trainers, and lore-specific weighted pools for supported named custom trainers.
 - **WildBosses** — Boss-specific weighted regional battle pools.
 - **Cobblemon Raid Dens** — raid battles reuse the same regional weighted pools. Client-only mode can recognize the native tier battle sound; server-enhanced mode keeps the actor-backed Raid Dens metadata, raid ID/active raid map, and battle-marker fallbacks.
 - **Cobblemon Loot Menu** — post-battle Victory music while the loot screen is active.
-- **CobblemonAdditions / BCA structures** — maps the current `4.1.6` dark, default, and fighting village variants into the existing small/mid/large pools, with the BCA Witch Hut reusing the Swamp Hut pool. Legacy generic BCA village IDs remain supported.
+- **CobblemonAdditions / BCA structures** — maps the current `4.3.0` dark, default, fighting, fairy, and ice village variants into the existing small/mid/large pools, with the BCA Witch Hut reusing the Swamp Hut pool. Legacy generic BCA village IDs remain supported.
 - **Terralith datapack** — maps all 26 structures referenced by the supplied Terralith structure sets into existing vanilla/BCA music pools.
 - **Repurposed Structures** — reuses the existing vanilla/BCA music pools for all 107 worldgen structure IDs present in `7.5.21+1.21.1`.
 - **Legendary Monuments** — reuses existing Sinnoh and structure tracks for Distortion Portal, Giratina Island, Turnback Cave, the three Sinnoh lakes, and Stark Mountain.
@@ -170,22 +172,22 @@ Recognized faction families include Team Rocket, Team Aqua, Team Magma, Team Gal
 
 Faction matching runs before broad role matching. This keeps cases such as Rocket Giovanni separate from a normal regional Gym Leader Giovanni route.
 
-The supplied RCT Tower datapack also has exact battle-theme overrides for its ten named `pokemon_trainer_*` encounters. Floor trainers such as `f1_trainer1` through `f9_trainer10` are intentionally untouched and continue using the normal Battle Tower trainer route.
+The supplied RCT Tower datapack has lore-specific weighted pools for its ten named `pokemon_trainer_*` encounters. Generic floor trainers matching `f1_trainer*` through `f10_trainer*` are deliberately forced back to the ordinary trainer route: their opposing roster votes by Pokémon region and the majority region selects the normal regional trainer theme. This keeps repeated XP-farming battles varied instead of forcing a Battle Tower battle song.
 
-| Trainer | Exact battle theme |
+| Trainer | Lore pool |
 |---|---|
-| Barry | Sinnoh rival |
-| Gold | Johto BW World Tournament Champion remix |
-| Green | Kanto BW World Tournament Champion remix |
-| Kris | Johto BW World Tournament Champion remix |
-| May | Hoenn BW World Tournament Champion remix |
-| Morimoto | B2W2 PWT Final |
-| Oak | Kanto BW World Tournament Champion remix |
-| Red | Kanto BW World Tournament Champion remix |
-| Silver | Johto rival |
-| Steven | Hoenn Champion |
+| Barry | 80% Sinnoh Rival, 20% Sinnoh BW World Tournament Champion remix |
+| Gold | 60% Johto Champion, 40% Johto BW World Tournament Champion remix |
+| Green | 60% Kanto Champion/Rival, 40% Kanto BW World Tournament Champion remix |
+| Kris | 60% Johto Champion, 40% Johto BW World Tournament Champion remix |
+| May | 50% Hoenn Rival, 25% Hoenn Champion, 25% Hoenn BW World Tournament Champion remix |
+| Morimoto | 100% B2W2 PWT Final |
+| Oak | 60% Kanto Champion/Rival, 40% Kanto BW World Tournament Champion remix |
+| Red | 60% Johto Champion, 40% Johto BW World Tournament Champion remix |
+| Silver | 100% Johto Rival |
+| Steven | 60% Hoenn Champion, 40% Hoenn BW World Tournament Champion remix |
 
-The override matches the exact trainer ID, including the equivalent `rctmod:`-namespaced form when RCT exposes it that way. Barry and Silver keep rival Victory routing, Steven keeps Champion Victory routing, and the other named trainers keep normal regional trainer Victory routing.
+The override matches the exact trainer ID, including the equivalent `rctmod:`-namespaced form when RCT exposes it that way. Pools avoid an immediate repeat when another valid track exists. Barry and Silver keep rival Victory routing, Steven keeps Champion Victory routing, and the other named trainers keep normal regional trainer Victory routing.
 
 ### Legendary and Mythical routing
 
@@ -252,9 +254,9 @@ battle_tower_high
 battle_tower_final
 ```
 
-Floor trigger IDs such as `cobbletunes:battle_tower_floor_1` through `cobbletunes:battle_tower_floor_10` resolve into those pools. Nearby floor triggers are checked nearest-first so vertically overlapping floors do not steal each other's music.
+Floor trigger IDs such as `cobbletunes:battle_tower_floor_1` through `cobbletunes:battle_tower_floor_10` resolve as **1–3 low, 4–6 mid, 7–9 high, and 10 final**. Nearby floor triggers are checked nearest-first so vertically overlapping floors do not steal each other's ambience.
 
-A trainer battle that begins while the current zone is `BATTLE_TOWER` is routed to the dedicated Galar Battle Tower battle theme. In client-only mode, RCT floor trainer IDs such as `f1_trainer1` through the tower floor pattern also resolve directly to that same Battle Tower battle theme without turning them into named special-trainer overrides.
+Battle Tower floor zones control **world ambience only**. They no longer force trainer battles to use the Galar Battle Tower battle theme. Generic `f*_trainer*` RCT floor trainers use ordinary roster-majority regional trainer routing, while the ten exact named `pokemon_trainer_*` encounters use their lore-specific weighted pools.
 
 ### Game Corner and Casino zones
 
@@ -282,13 +284,13 @@ Structure music has higher priority than biome ambience. With the optional serve
 - all 71 registered Cobbleverse structures across the main, Johto, Hoenn, and Sinnoh datapacks, including the current nested `legendary/` and `mythical/` registry paths;
 - vanilla structures such as Ancient Cities, Strongholds, Mansions, Trial Chambers, Villages, Shipwrecks, Ruined Portals, and more;
 - all 26 Terralith structures referenced by its active structure sets, aliased into the closest existing vanilla/BCA pools;
-- CobblemonAdditions `4.1.6` dark, default, and fighting villages mapped into the existing BCA small/mid/large pools, plus its Witch Hut mapped to the Swamp Hut pool;
+- CobblemonAdditions `4.3.0` dark, default, fighting, fairy, and ice villages mapped into the existing BCA small/mid/large pools, plus its Witch Hut mapped to the Swamp Hut pool;
 - Repurposed Structures variants mapped back into the closest existing vanilla/BCA pool;
 - selected Legendary Monuments structures mapped to existing Sinnoh/structure tracks;
 - all six Cobblemon Gimmighoul tower worldgen structures (`deserted`, `frozen`, `lush`, `rooted`, `sunscorched`, and `temperate`) mapped to a creepy three-track pool built from the existing Pokémon Tower, Lavender Town, and Pokégear Unown themes;
 - manual zones anchored by vanilla `minecraft:marker` entities tagged with `cobbletunes_zone:<zoneId>`.
 
-In server-enhanced mode, structure detection resolves the real `StructureStart` from nearby chunk references instead of asking only whether the player is already inside the structure. Compact structures up to 16×16 blocks now receive a 4-block margin on every horizontal side and 4 blocks vertically; larger structures keep a 1-block horizontal and 2-block vertical margin. This gives Ruined Portals, small ruins, huts, and similar landmarks a stable music zone around the visible build instead of dropping back to biome ambience when the player takes one or two steps past the exact structure box.
+In server-enhanced mode, structure detection resolves the real registered `StructureStart` from nearby chunk references, matching the same worldgen identity concept used by commands such as `/locate structure`. Compact structures up to 16×16 blocks receive a 4-block margin on every horizontal side and 4 blocks vertically; larger structures keep a 1-block horizontal and 2-block vertical margin. When mapped structures overlap, special structures beat generic structures, generic structures beat villages, and equal-priority overlaps prefer the smaller structure before falling back to registry-ID order. Debug logging reports the authoritative registry ID and selected CobbleTunes zone. This gives structures stable, deterministic routing without using player-placeable blocks as evidence.
 
 Most fixed zone music loops until the player leaves the zone. Villages are intentionally different: the selected village theme plays once, waits a random **5–60 seconds**, then replays the same theme while the player remains inside. Leaving and re-entering selects another theme when the pool has an alternative. Game Corner and Casino zones also remain non-looping and advance through their shuffled 15-track playlist. Battle and Victory music temporarily take priority without discarding the current zone state. Current Cobbleverse legendary and mythical registry IDs are normalized back to the existing CobbleTunes zone IDs, while the older flattened IDs remain valid as compatibility aliases. Terralith adds no new sound events: villages, huts, rubble, Mage structures, Spire, and underground landmarks reuse existing Village, Igloo, Trail Ruins, Mansion, End City, Stronghold, Jungle Pyramid, Mineshaft, Ocean Ruin, and related pools. Repurposed Structures likewise reuses existing pools. Legendary Monuments adds no new audio: Distortion Portal, Giratina Island, and Turnback Cave reuse the Sinnoh Distortion World theme, Lake Acuity, Lake Valor, and Lake Verity reuse Lake Caverns, and Stark Mountain reuses the existing Stark Mountain structure track.
 
@@ -353,7 +355,7 @@ Missing audio is handled as silence instead of crashing the music system. Evolut
 ### Project layout
 
 - **`src/main/kotlin`** — common/server entrypoint, battle events, RCT classification, WildBosses and Raid Dens bridges, structure detection including Cobbleverse compatibility aliases, Terralith, CobblemonAdditions, Repurposed Structures, and Legendary Monuments mappings, manual zone markers, configs, and networking.
-- **`src/client/kotlin`** — packet routing plus the client-only fallback classifier, region selection, Victory/Loot Menu bridge, local Raid Dens/WildBosses/RCT inference, the client-observed spatial evolution watcher, conservative structure fingerprints, ambience watching, music state, fades, menu music, low-HP handling, and the optional Mod Menu config screen.
+- **`src/client/kotlin`** — packet routing plus the client-only battle classifier, region selection, Victory/Loot Menu bridge, local Raid Dens/WildBosses/RCT inference, the client-observed spatial evolution watcher, biome ambience watching, music state, fades, menu music, low-HP handling, and the optional Mod Menu config screen. Worldgen structure identity is intentionally server-authoritative.
 - **`src/main/resources/assets/cobbletunes/sounds.json`** — all sound keys and resource-pack paths.
 
 ### Building
@@ -423,7 +425,7 @@ As detecções de prioridade menor continuam atualizando em segundo plano enquan
 
 O CobbleTunes pode ser instalado **somente no cliente** e usado em servidores públicos de Cobblemon que não possuem o mod. Nesse modo ele infere batalhas selvagens, treinadores, PvP, lendários/míticos, formas regionais, Victory, capturas, WildBosses, Raid Dens e dados observáveis do RCT a partir do estado que o cliente já recebe. Raid Dens também pode ser reconhecido pelo som nativo do tier da raid, e uma raid concluída no modo somente cliente dispara a mesma Victory regional de cinco segundos quando o boss desmaia, seguida por dois segundos em volume cheio antes do início do fade-out.
 
-Ambientação de bioma, menu, HP baixo, música espacial de evolução, suspensão por volume e outros sistemas puramente locais continuam funcionando normalmente. A evolução nunca exige pacote do servidor do CobbleTunes: evoluções visíveis no mundo são observadas pelo estado sincronizado `PokemonEntity.isEvolving`, enquanto uma evolução concluída diretamente pela tela Summary do Cobblemon sem uma entidade viva próxima no mundo é detectada pelo armazenamento sincronizado da party no cliente e toca somente o cue regional de congratulação na posição do jogador. O watcher da Summary continua armado por alguns segundos depois que a tela fecha para não perder a sincronização final. Para estruturas, o modo standalone usa fingerprints conservadores para locais que o cliente consegue reconhecer com segurança, atualmente torres de Gimmighoul, Poké Centers, Ruined Portals e vilas. Os IDs exatos de `StructureStart` usados por Cobbleverse/Terralith/BCA/Repurposed/Legendary Monuments e as zonas manuais com markers continuam como recursos melhorados pelo servidor, pois o cliente remoto normal não recebe essas identidades autoritativas de estrutura.
+Ambientação de bioma, menu, HP baixo, música espacial de evolução, suspensão por volume e outros sistemas puramente locais continuam funcionando normalmente. A evolução nunca exige pacote do servidor do CobbleTunes: evoluções visíveis no mundo são observadas pelo estado sincronizado `PokemonEntity.isEvolving`, enquanto uma evolução concluída diretamente pela tela Summary do Cobblemon sem uma entidade viva próxima no mundo é detectada pelo armazenamento sincronizado da party no cliente e toca somente o cue regional de congratulação na posição do jogador. O watcher da Summary continua armado por alguns segundos depois que a tela fecha para não perder a sincronização final. No modo somente cliente, o roteamento de estruturas deliberadamente **não** infere estruturas worldgen a partir de blocos comuns colocáveis pelo jogador. Sinos não identificam vilas, healing machines com PCs não identificam Poké Centers, Gilded/Gimmighoul chests não identificam torres de Gimmighoul e construções de obsidian/netherrack não identificam Ruined Portals. Os IDs exatos de `StructureStart` e as zonas manuais com markers continuam como recursos melhorados pelo servidor, pois um cliente remoto normal não recebe essas identidades autoritativas. Em servidores públicos, o CobbleTunes prefere cair para a música do bioma em vez de tocar uma estrutura falsa dentro da base de um jogador.
 
 Quando uma ponte de servidor do CobbleTunes está disponível, o cliente desativa automaticamente o classificador fallback e prefere os pacotes autoritativos já existentes. O servidor só envia esses pacotes para clientes que anunciam o canal correspondente do CobbleTunes, evitando disputa entre os dois caminhos. O lado servidor não registra blocos, itens ou entidades do CobbleTunes, então instalar o mesmo JAR no servidor não torna o mod obrigatório para os outros jogadores.
 
@@ -433,14 +435,14 @@ Quando uma ponte de servidor do CobbleTunes está disponível, o cliente desativ
 - [x] **Contextos de selvagem, treinador, Líder de Ginásio, Elite Four, Campeão, rival, PvP, facção, Frontier Brain, Battle Tower e Lendário/Mítico.**
 - [x] **Roteamento de formas regionais** para que formas de Alola, Galar, Hisui e Paldea usem a região da forma em vez da região da espécie base.
 - [x] **Roteamento de lendários por forma** para casos como Kyurem, Necrozma, Eternatus, Calyrex, Terapagos e as aves de Galar.
-- [x] **Classificação dinâmica do RCT** usando função, região, facção, rank, ID do treinador, progressão e temas exatos para treinadores personalizados nomeados.
+- [x] **Classificação dinâmica do RCT** usando função, região, facção, rank, ID do treinador, progressão, maioria regional do time para treinadores genéricos da Battle Tower e pools ponderados baseados no lore para treinadores personalizados nomeados.
 - [x] **Temas de facções** para Rocket, Aqua, Magma, Galactic, Plasma, Flare, Skull, Aether Foundation, Lusamine e Ultra Recon Squad.
 - [x] **Música de Frontier Brain** com contexto próprio.
 - [x] **Integrações com WildBosses e Cobblemon Raid Dens** usando pools regionais ponderados por tier, detecção pelo Pokémon original do actor e Victory regional dedicado por 5 segundos, seguido por 2 segundos em volume cheio antes do fade-out ao concluir uma raid.
 - [x] **Pools seguros para Bosses** sem usar temas lendários específicos em encontros aleatórios.
 - [x] **Integração de vitória com Cobblemon Loot Menu** iniciando a Victory no desmaio decisivo do oponente, usando o cue curto normal quando não existe tela de loot, mantendo a música durante o menu e retornando para a zona atual depois.
 - [x] **Temas de vitória ao capturar Pokémon** em capturas dentro ou fora de batalha, usando a região do Pokémon capturado e o pool de vitória selvagem já existente.
-- [x] **Pools de Battle Tower** para andares baixos, médios, altos e finais com tema de batalha dedicado.
+- [x] **Pools de Battle Tower** para ambientação de andares baixos, médios, altos e finais controlados por markers; batalhas contra treinadores genéricos continuam usando roteamento regional pelo time adversário.
 - [x] **Memória e rotação de ambientação por bioma** com intervalos de silêncio, debounce e memória de visita que expira após 3–6 minutos aleatórios ou 3 transições significativas de bioma.
 - [x] **Detecção subterrânea** usando luz do céu e altura do jogador.
 - [x] **Estruturas exatas do Cobbleverse**, **estruturas vanilla**, **estruturas do Terralith**, **vilas do CobblemonAdditions/BCA**, **Repurposed Structures**, estruturas selecionadas do **Legendary Monuments** e **torres de Gimmighoul do Cobblemon** usando músicas já existentes.
@@ -467,14 +469,16 @@ Quando uma ponte de servidor do CobbleTunes está disponível, o cliente desativ
 
 Em multiplayer, instalar o CobbleTunes **somente no cliente já é suficiente** para a experiência standalone em um servidor público de Cobblemon. Instalar o mesmo JAR do CobbleTunes no servidor é opcional e habilita roteamento exato de estruturas/zonas manuais e metadados autoritativos para clientes que também possuem o mod. Jogadores sem CobbleTunes continuam podendo entrar porque a ponte não registra conteúdo próprio de gameplay e só envia payloads para clientes que anunciam suporte.
 
+Música de Poké Center e Poké Mart é **exclusiva de zonas manuais**. Centros/Marts gerados dentro de vilas mantêm a música da vila, a menos que um marker do CobbleTunes seja colocado de propósito; healers, PCs, balcões, sinos, chests ou construções parecidas com portais feitas pelo jogador nunca criam zonas automáticas de estrutura.
+
 #### Integrações opcionais
 
 - **Mod Menu** — abre uma tela nativa do CobbleTunes para as configurações de música do cliente.
-- **Radical Cobblemon Trainers** — melhora a detecção de função, região, facção e progressão e permite temas exatos para treinadores personalizados suportados.
+- **Radical Cobblemon Trainers** — melhora a detecção de função, região, facção e progressão, usa a maioria regional do time para treinadores genéricos da Battle Tower e pools ponderados baseados no lore para treinadores personalizados suportados.
 - **WildBosses** — ativa pools musicais próprios para Bosses.
 - **Cobblemon Raid Dens** — batalhas de raid reutilizam os mesmos pools regionais ponderados. O modo somente cliente pode reconhecer o som nativo do tier da raid; o modo com servidor mantém os fallbacks pelos metadados do Pokémon ligado ao actor, ID/mapa de raids ativas e marcador da batalha.
 - **Cobblemon Loot Menu** — ativa temas de vitória enquanto a tela de loot está aberta.
-- **CobblemonAdditions / estruturas BCA** — mapeia as variantes atuais `4.1.6` dark, default e fighting para os pools pequenos, médios e grandes já existentes, e reutiliza o pool de Swamp Hut para a Witch Hut do BCA. Os IDs genéricos antigos continuam suportados.
+- **CobblemonAdditions / estruturas BCA** — mapeia as variantes atuais `4.3.0` dark, default, fighting, fairy e ice para os pools pequenos, médios e grandes já existentes, e reutiliza o pool de Swamp Hut para a Witch Hut do BCA. Os IDs genéricos antigos continuam suportados.
 - **Datapack Terralith** — mapeia todas as 26 estruturas referenciadas pelos structure sets fornecidos do Terralith para pools vanilla/BCA já existentes.
 - **Repurposed Structures** — reaproveita os pools vanilla/BCA existentes para todos os 107 IDs de estruturas de worldgen presentes na versão `7.5.21+1.21.1`.
 - **Legendary Monuments** — reutiliza músicas já existentes de Sinnoh e de estruturas para Distortion Portal, Giratina Island, Turnback Cave, os três lagos de Sinnoh e Stark Mountain.
@@ -540,22 +544,22 @@ As famílias de facção reconhecidas incluem Team Rocket, Team Aqua, Team Magma
 
 A detecção de facção acontece antes das regras amplas de função. Isso mantém Giovanni da Rocket separado de uma rota normal de Líder de Ginásio regional.
 
-O datapack RCT Tower fornecido também possui overrides exatos de tema de batalha para os dez encontros nomeados `pokemon_trainer_*`. Os treinadores de andar como `f1_trainer1` até `f9_trainer10` ficam intencionalmente intactos e continuam usando a rota normal de treinador da Battle Tower.
+O datapack RCT Tower fornecido usa pools ponderados baseados no lore para os dez encontros nomeados `pokemon_trainer_*`. Treinadores genéricos de andar que seguem `f1_trainer*` até `f10_trainer*` são forçados para a rota de treinador comum: o time adversário vota pela região de cada Pokémon e a região majoritária escolhe o tema regional normal. Isso mantém as batalhas repetidas de farm de XP variadas em vez de forçar uma música única da Battle Tower.
 
-| Treinador | Tema de batalha exato |
+| Treinador | Pool baseado no lore |
 |---|---|
-| Barry | Rival de Sinnoh |
-| Gold | Remix de Campeão de Johto do BW World Tournament |
-| Green | Remix de Campeão de Kanto do BW World Tournament |
-| Kris | Remix de Campeão de Johto do BW World Tournament |
-| May | Remix de Campeão de Hoenn do BW World Tournament |
-| Morimoto | B2W2 PWT Final |
-| Oak | Remix de Campeão de Kanto do BW World Tournament |
-| Red | Remix de Campeão de Kanto do BW World Tournament |
-| Silver | Rival de Johto |
-| Steven | Campeão de Hoenn |
+| Barry | 80% Rival de Sinnoh, 20% remix de Campeão de Sinnoh do BW World Tournament |
+| Gold | 60% Campeão de Johto, 40% remix de Campeão de Johto do BW World Tournament |
+| Green | 60% Campeão/Rival de Kanto, 40% remix de Campeão de Kanto do BW World Tournament |
+| Kris | 60% Campeão de Johto, 40% remix de Campeão de Johto do BW World Tournament |
+| May | 50% Rival de Hoenn, 25% Campeão de Hoenn, 25% remix de Campeão de Hoenn do BW World Tournament |
+| Morimoto | 100% B2W2 PWT Final |
+| Oak | 60% Campeão/Rival de Kanto, 40% remix de Campeão de Kanto do BW World Tournament |
+| Red | 60% Campeão de Johto, 40% remix de Campeão de Johto do BW World Tournament |
+| Silver | 100% Rival de Johto |
+| Steven | 60% Campeão de Hoenn, 40% remix de Campeão de Hoenn do BW World Tournament |
 
-O override usa o ID exato do treinador e também aceita a forma equivalente com namespace `rctmod:` quando o RCT expõe o ID dessa maneira. Barry e Silver mantêm a rota de vitória de rival, Steven mantém a rota de vitória de Campeão e os outros treinadores nomeados mantêm a rota regional normal de vitória de treinador.
+O override usa o ID exato do treinador e também aceita a forma equivalente com namespace `rctmod:` quando o RCT expõe o ID dessa maneira. Os pools evitam repetir imediatamente a mesma faixa quando existe outra opção válida. Barry e Silver mantêm a rota de vitória de rival, Steven mantém a rota de vitória de Campeão e os outros treinadores nomeados mantêm a rota regional normal de vitória de treinador.
 
 ### Lendários e míticos
 
@@ -622,9 +626,9 @@ battle_tower_high
 battle_tower_final
 ```
 
-IDs de trigger como `cobbletunes:battle_tower_floor_1` até `cobbletunes:battle_tower_floor_10` são convertidos nesses pools. Triggers próximos são verificados do mais próximo para o mais distante para evitar conflito vertical entre andares.
+IDs de trigger como `cobbletunes:battle_tower_floor_1` até `cobbletunes:battle_tower_floor_10` são convertidos em **1–3 low, 4–6 mid, 7–9 high e 10 final**. Triggers próximos são verificados do mais próximo para o mais distante para evitar conflito vertical entre andares.
 
-Uma batalha de treinador iniciada enquanto a zona atual é `BATTLE_TOWER` usa o tema de batalha da Battle Tower de Galar. No modo somente cliente, IDs de treinadores de andar do RCT como `f1_trainer1` e o restante do padrão da torre também usam diretamente esse mesmo tema sem serem tratados como overrides de treinadores especiais nomeados.
+As zonas de andar da Battle Tower controlam **somente a ambientação do mundo**. Elas não forçam mais batalhas de treinador para o tema da Battle Tower de Galar. Treinadores genéricos `f*_trainer*` usam a rota regional comum por maioria do time, enquanto os dez encontros exatos `pokemon_trainer_*` usam seus pools especiais baseados no lore.
 
 ### Game Corner e zonas de Cassino
 
@@ -652,13 +656,13 @@ Música de estrutura tem prioridade sobre ambientação de bioma. Com a ponte op
 - todas as 71 estruturas registradas do Cobbleverse entre os datapacks principal, Johto, Hoenn e Sinnoh, incluindo os caminhos atuais `legendary/` e `mythical/`;
 - estruturas vanilla como Ancient Cities, Strongholds, Mansions, Trial Chambers, Villages, Shipwrecks, Ruined Portals e outras;
 - todas as 26 estruturas do Terralith referenciadas pelos structure sets ativos, redirecionadas para os pools vanilla/BCA mais próximos;
-- vilas dark, default e fighting do CobblemonAdditions `4.1.6` redirecionadas para os pools BCA pequenos, médios e grandes, além da Witch Hut reutilizando o pool de Swamp Hut;
+- vilas dark, default, fighting, fairy e ice do CobblemonAdditions `4.3.0` redirecionadas para os pools BCA pequenos, médios e grandes, além da Witch Hut reutilizando o pool de Swamp Hut;
 - variantes do Repurposed Structures redirecionadas para o pool vanilla/BCA mais próximo;
 - estruturas selecionadas do Legendary Monuments redirecionadas para músicas de Sinnoh/estruturas já existentes;
 - as seis estruturas worldgen das torres de Gimmighoul do Cobblemon (`deserted`, `frozen`, `lush`, `rooted`, `sunscorched` e `temperate`) redirecionadas para um pool sombrio com Pokémon Tower, Lavender Town e Pokégear Unown já existentes;
 - zonas manuais ancoradas por entidades vanilla `minecraft:marker` com a tag `cobbletunes_zone:<zoneId>`.
 
-No modo com servidor, a detecção de estruturas resolve o `StructureStart` real pelas referências dos chunks próximos em vez de depender de o jogador já estar dentro da estrutura. Estruturas compactas de até 16×16 blocos agora recebem uma margem de 4 blocos em cada lado horizontal e 4 blocos na vertical; estruturas maiores mantêm 1 bloco horizontal e 2 blocos verticais. Assim, Ruined Portals, ruínas pequenas, cabanas e estruturas parecidas mantêm uma zona musical estável ao redor da construção visível em vez de voltar para a música do bioma depois de apenas um ou dois passos além da bounding box exata.
+No modo com servidor, a detecção resolve o `StructureStart` registrado real pelas referências dos chunks próximos, usando o mesmo conceito de identidade worldgen de comandos como `/locate structure`. Estruturas compactas de até 16×16 blocos recebem 4 blocos de margem horizontal por lado e 4 na vertical; estruturas maiores mantêm 1 bloco horizontal e 2 na vertical. Quando estruturas mapeadas se sobrepõem, estruturas especiais vencem estruturas genéricas, estruturas genéricas vencem vilas e empates de prioridade preferem a menor estrutura antes de usar a ordem do ID de registro. O debug informa o ID de registro autoritativo e a zona escolhida. Assim, o roteamento fica estável e determinístico sem usar blocos colocáveis pelo jogador como evidência.
 
 A maioria das músicas fixas de zona fica em loop até o jogador sair. Vilas funcionam de forma diferente: o tema escolhido toca uma vez, espera entre **5 e 60 segundos** e repete a mesma faixa enquanto o jogador continuar dentro da vila. Ao sair e entrar novamente o mod escolhe outra faixa quando o pool possui uma alternativa. Game Corner e Cassino também continuam sem loop individual e avançam pela playlist embaralhada de 15 faixas. Batalha e vitória assumem temporariamente o áudio sem apagar o estado atual da zona. Os IDs atuais de lendários e míticos do Cobbleverse são normalizados para os IDs de zona já existentes no CobbleTunes, enquanto os IDs achatados antigos continuam válidos como aliases de compatibilidade. Terralith não adiciona novos eventos de som: vilas, huts, rubble, estruturas Mage, Spire e locais subterrâneos reutilizam pools já existentes de Village, Igloo, Trail Ruins, Mansion, End City, Stronghold, Jungle Pyramid, Mineshaft, Ocean Ruin e outros. Repurposed Structures também reutiliza pools existentes. Legendary Monuments não adiciona novos áudios: Distortion Portal, Giratina Island e Turnback Cave reutilizam o tema Distortion World de Sinnoh, Lake Acuity, Lake Valor e Lake Verity reutilizam Lake Caverns, e Stark Mountain usa a faixa de estrutura Stark Mountain já existente.
 
@@ -723,7 +727,7 @@ O `sounds.json` incluído define todos os 441 eventos esperados. [`SOUND_MANIFES
 ### Organização do projeto
 
 - **`src/main/kotlin`** — inicialização comum/servidor, eventos de batalha, classificação do RCT, pontes com WildBosses e Raid Dens, detecção de estruturas incluindo aliases de compatibilidade do Cobbleverse e mapeamentos do Terralith, CobblemonAdditions, Repurposed Structures e Legendary Monuments, markers de zonas manuais, configs e rede.
-- **`src/client/kotlin`** — roteamento dos pacotes e classificador fallback somente cliente, região, ponte de Victory/Loot Menu, inferência local de Raid Dens/WildBosses/RCT, watcher espacial de evolução observado pelo cliente, fingerprints conservadores de estruturas, observação de biomas, estado musical, fades, menu, HP baixo e a tela opcional de configuração do Mod Menu.
+- **`src/client/kotlin`** — roteamento dos pacotes e classificador de batalha somente cliente, região, ponte de Victory/Loot Menu, inferência local de Raid Dens/WildBosses/RCT, watcher espacial de evolução observado pelo cliente, observação de biomas, estado musical, fades, menu, HP baixo e a tela opcional de configuração do Mod Menu. A identidade de estruturas worldgen é intencionalmente autoritativa no servidor.
 - **`src/main/resources/assets/cobbletunes/sounds.json`** — todas as chaves e caminhos do resource pack.
 
 ### Compilação

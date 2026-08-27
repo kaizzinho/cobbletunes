@@ -23,6 +23,9 @@ object StructureZoneDetector {
     private const val STRUCTURE_VERTICAL_PADDING = 2
     private const val MANUAL_ZONE_RADIUS = 12
     private const val MANUAL_ZONE_TAG_PREFIX = "cobbletunes_zone:"
+    private const val PRIORITY_VILLAGE = 100
+    private const val PRIORITY_GENERIC_STRUCTURE = 200
+    private const val PRIORITY_SPECIAL_STRUCTURE = 300
 
     private val GYM_STRUCTURES: Map<Identifier, String> = mapOf(
         Identifier.of("cobbleverse", "brock")             to "cobbleverse:brock",
@@ -171,6 +174,11 @@ object StructureZoneDetector {
         Identifier.of("bca", "village/fighting_mid")   to "cobbletunes:vanilla_structure:bca_village_mid",
         Identifier.of("bca", "village/default_large")  to "cobbletunes:vanilla_structure:bca_village_large",
         Identifier.of("bca", "village/fighting_large") to "cobbletunes:vanilla_structure:bca_village_large",
+        Identifier.of("bca", "village/fairy_small")    to "cobbletunes:vanilla_structure:bca_village_small",
+        Identifier.of("bca", "village/fairy_mid")      to "cobbletunes:vanilla_structure:bca_village_mid",
+        Identifier.of("bca", "village/ice_small")      to "cobbletunes:vanilla_structure:bca_village_small",
+        Identifier.of("bca", "village/ice_mid")        to "cobbletunes:vanilla_structure:bca_village_mid",
+        Identifier.of("bca", "village/ice_large")      to "cobbletunes:vanilla_structure:bca_village_large",
         Identifier.of("bca", "village/witch_hut")      to "cobbletunes:vanilla_structure:swamp_hut",
     )
 
@@ -253,8 +261,29 @@ object StructureZoneDetector {
     }
 
 
-    // only send real zone changes
+    private data class ZoneDetection(
+        val zoneId: String,
+        val source: String,
+        val structureId: Identifier? = null
+    ) {
+        fun debugSignature(): String =
+            "$source|${structureId?.toString().orEmpty()}|$zoneId"
+    }
+
+    private data class StructureRoute(
+        val structureId: Identifier,
+        val zoneId: String,
+        val priority: Int
+    )
+
+    private data class StructureCandidate(
+        val route: StructureRoute,
+        val volume: Long
+    )
+
+    // only send real zone changes; debug signatures also track same-zone structure changes
     private val playerZoneCache: MutableMap<java.util.UUID, String> = mutableMapOf()
+    private val playerDetectionDebugCache: MutableMap<java.util.UUID, String> = mutableMapOf()
     private var tickCounter = 0
 
     fun register() {
@@ -264,36 +293,49 @@ object StructureZoneDetector {
             tickCounter = 0
 
             for (player in server.playerManager.playerList) {
-                // public clients can use local fallback without server packets
+                // public clients can use client-only battle/biome routing without server packets
                 if (!ServerPlayNetworking.canSend(player, StructureZonePayload.ID)) {
                     playerZoneCache.remove(player.uuid)
+                    playerDetectionDebugCache.remove(player.uuid)
                     continue
                 }
 
                 val world = player.serverWorld
-                val zone = detectZone(player, world)
+                val detection = detectZone(player, world)
+                val zone = detection.zoneId
                 val previous = playerZoneCache[player.uuid] ?: ""
+
                 if (zone != previous) {
                     playerZoneCache[player.uuid] = zone
                     ServerPlayNetworking.send(player, StructureZonePayload(zone))
-                    if (CobbleTunesServerConfig.current.debugLogging) {
-                        LOGGER.info("[$MOD_ID] [Debug] Zone change for ${player.name.string}: '$previous' → '$zone'")
+                }
+
+                if (CobbleTunesServerConfig.current.debugLogging) {
+                    val signature = detection.debugSignature()
+                    if (playerDetectionDebugCache[player.uuid] != signature) {
+                        playerDetectionDebugCache[player.uuid] = signature
+                        val registry = detection.structureId?.toString() ?: "-"
+                        LOGGER.info(
+                            "[$MOD_ID] [Debug] [Structure] player=${player.name.string} " +
+                                "source=${detection.source} registry=$registry zone='${detection.zoneId}'"
+                        )
                     }
                 }
             }
         }
     }
 
-
-    private fun detectZone(player: ServerPlayerEntity, world: ServerWorld): String {
-        // manual zones win first
+    private fun detectZone(player: ServerPlayerEntity, world: ServerWorld): ZoneDetection {
+        // manual zones always win
         val triggerZone = scanForManualZone(player, world)
-        if (triggerZone != null) return triggerZone
+        if (triggerZone != null) {
+            return ZoneDetection(triggerZone, "manual")
+        }
 
-        // worldgen zones come next
-        return locateNearbyStructure(player, world) ?: ""
+        // authoritative worldgen StructureStart identity comes next
+        return locateNearbyStructure(player, world)
+            ?: ZoneDetection("", "none")
     }
-
 
     private fun scanForManualZone(player: ServerPlayerEntity, world: ServerWorld): String? {
         val box = player.boundingBox.expand(MANUAL_ZONE_RADIUS.toDouble())
@@ -311,48 +353,58 @@ object StructureZoneDetector {
             }
     }
 
-    private fun locateNearbyStructure(player: ServerPlayerEntity, world: ServerWorld): String? {
+    private fun locateNearbyStructure(
+        player: ServerPlayerEntity,
+        world: ServerWorld
+    ): ZoneDetection? {
         val structureRegistry = world.registryManager.get(RegistryKeys.STRUCTURE)
 
-        // reverse map keeps chunk lookups cheap
-        val structureToZone = mutableMapOf<net.minecraft.world.gen.structure.Structure, String>()
-        for ((structureId, zoneId) in GYM_STRUCTURES) {
-            val structure = structureRegistry.get(structureId) ?: continue
-            structureToZone[structure] = zoneId
-        }
-        for ((structureId, zoneId) in COBBLEMON_STRUCTURES) {
-            val structure = structureRegistry.get(structureId) ?: continue
-            structureToZone[structure] = zoneId
-        }
-        for ((structureId, zoneId) in VANILLA_AND_BCA_STRUCTURES) {
-            val structure = structureRegistry.get(structureId) ?: continue
-            structureToZone[structure] = zoneId
-        }
-        for ((structureId, zoneId) in TERRALITH_STRUCTURES) {
-            val structure = structureRegistry.get(structureId) ?: continue
-            structureToZone[structure] = zoneId
-        }
-        if (legendaryMonumentsAvailable) {
-            for ((structureId, zoneId) in LEGENDARY_MONUMENT_STRUCTURES) {
-                val structure = structureRegistry.get(structureId) ?: continue
-                structureToZone[structure] = zoneId
+        // Reverse map keeps chunk lookups cheap while retaining registry IDs for diagnostics.
+        val structureToRoute =
+            mutableMapOf<net.minecraft.world.gen.structure.Structure, StructureRoute>()
+
+        fun routePriority(zoneId: String, defaultPriority: Int): Int =
+            if (
+                "village_" in zoneId ||
+                "bca_village_" in zoneId
+            ) {
+                PRIORITY_VILLAGE
+            } else {
+                defaultPriority
             }
+
+        fun addRoutes(
+            mappings: Map<Identifier, String>,
+            defaultPriority: Int
+        ) {
+            for ((structureId, zoneId) in mappings) {
+                val structure = structureRegistry.get(structureId) ?: continue
+                structureToRoute[structure] = StructureRoute(
+                    structureId = structureId,
+                    zoneId = zoneId,
+                    priority = routePriority(zoneId, defaultPriority)
+                )
+            }
+        }
+
+        addRoutes(GYM_STRUCTURES, PRIORITY_SPECIAL_STRUCTURE)
+        addRoutes(COBBLEMON_STRUCTURES, PRIORITY_SPECIAL_STRUCTURE)
+        addRoutes(VANILLA_AND_BCA_STRUCTURES, PRIORITY_GENERIC_STRUCTURE)
+        addRoutes(TERRALITH_STRUCTURES, PRIORITY_GENERIC_STRUCTURE)
+
+        if (legendaryMonumentsAvailable) {
+            addRoutes(LEGENDARY_MONUMENT_STRUCTURES, PRIORITY_SPECIAL_STRUCTURE)
         }
         if (repurposedStructuresAvailable) {
-            for ((structureId, zoneId) in REPURPOSED_STRUCTURES) {
-                val structure = structureRegistry.get(structureId) ?: continue
-                structureToZone[structure] = zoneId
-            }
+            addRoutes(REPURPOSED_STRUCTURES, PRIORITY_GENERIC_STRUCTURE)
         }
-        if (structureToZone.isEmpty()) return null
+        if (structureToRoute.isEmpty()) return null
 
         val playerChunk = player.chunkPos
         val playerPos = player.blockPos
         val accessor = world.structureAccessor
-
-        var nearestZoneId: String? = null
-        var nearestDistSq = Double.MAX_VALUE
         val seenStarts = mutableSetOf<net.minecraft.structure.StructureStart>()
+        val candidates = mutableListOf<StructureCandidate>()
 
         for (dx in -CHUNK_SCAN_RADIUS..CHUNK_SCAN_RADIUS) {
             for (dz in -CHUNK_SCAN_RADIUS..CHUNK_SCAN_RADIUS) {
@@ -364,47 +416,55 @@ object StructureZoneDetector {
                 ) ?: continue
 
                 val starts = accessor.getStructureStarts(chunk.pos) { structure ->
-                    structure in structureToZone
+                    structure in structureToRoute
                 }
 
                 for (start in starts) {
                     if (!start.hasChildren() || !seenStarts.add(start)) continue
-                    val zoneId = structureToZone[start.structure] ?: continue
+                    val route = structureToRoute[start.structure] ?: continue
                     val box = start.boundingBox
                     val width = box.maxX - box.minX + 1
+                    val height = box.maxY - box.minY + 1
                     val depth = box.maxZ - box.minZ + 1
-                    val isSmallStructure = width <= SMALL_STRUCTURE_MAX_SPAN && depth <= SMALL_STRUCTURE_MAX_SPAN
-                    val horizontalPadding = if (isSmallStructure) SMALL_STRUCTURE_PADDING else STRUCTURE_PADDING
+                    val isSmallStructure =
+                        width <= SMALL_STRUCTURE_MAX_SPAN && depth <= SMALL_STRUCTURE_MAX_SPAN
+                    val horizontalPadding =
+                        if (isSmallStructure) SMALL_STRUCTURE_PADDING else STRUCTURE_PADDING
                     val verticalPadding = if (isSmallStructure) {
                         SMALL_STRUCTURE_VERTICAL_PADDING
                     } else {
                         STRUCTURE_VERTICAL_PADDING
                     }
 
-                    val closestX = playerPos.x.coerceIn(
-                        box.minX - horizontalPadding,
-                        box.maxX + horizontalPadding
-                    )
-                    val closestY = playerPos.y.coerceIn(
-                        box.minY - verticalPadding,
-                        box.maxY + verticalPadding
-                    )
-                    val closestZ = playerPos.z.coerceIn(
-                        box.minZ - horizontalPadding,
-                        box.maxZ + horizontalPadding
-                    )
-                    val ddx = (playerPos.x - closestX).toDouble()
-                    val ddy = (playerPos.y - closestY).toDouble()
-                    val ddz = (playerPos.z - closestZ).toDouble()
-                    val distSq = ddx * ddx + ddy * ddy + ddz * ddz
+                    val inside =
+                        playerPos.x in (box.minX - horizontalPadding)..(box.maxX + horizontalPadding) &&
+                            playerPos.y in (box.minY - verticalPadding)..(box.maxY + verticalPadding) &&
+                            playerPos.z in (box.minZ - horizontalPadding)..(box.maxZ + horizontalPadding)
 
-                    if (distSq < nearestDistSq) {
-                        nearestDistSq = distSq
-                        nearestZoneId = zoneId
-                    }
+                    if (!inside) continue
+
+                    val volume = width.toLong().coerceAtLeast(1L) *
+                        height.toLong().coerceAtLeast(1L) *
+                        depth.toLong().coerceAtLeast(1L)
+
+                    candidates += StructureCandidate(route, volume)
                 }
             }
         }
-        return nearestZoneId?.takeIf { nearestDistSq == 0.0 }
+
+        val selected = candidates
+            .sortedWith(
+                compareByDescending<StructureCandidate> { it.route.priority }
+                    .thenBy { it.volume }
+                    .thenBy { it.route.structureId.toString() }
+            )
+            .firstOrNull()
+            ?: return null
+
+        return ZoneDetection(
+            zoneId = selected.route.zoneId,
+            source = "server-structure",
+            structureId = selected.route.structureId
+        )
     }
 }

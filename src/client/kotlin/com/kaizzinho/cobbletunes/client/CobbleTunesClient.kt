@@ -150,8 +150,7 @@ class CobbleTunesClient : ClientModInitializer {
             onBattleEnd = { handleBattleEnd("client") },
             onBattleVictory = { handleBattleVictory("client") },
             shouldUseEarlyFaintVictory = { !lastBattleWasRaid },
-            onCapture = { dex, regional -> handlePokemonCaptured(dex, regional, "client") },
-            onZone = { handleStructureZone(it, "client") }
+            onCapture = { dex, regional -> handlePokemonCaptured(dex, regional, "client") }
         )
         standaloneBridge.register()
         evolutionWatcher = ClientEvolutionWatcher(
@@ -229,6 +228,23 @@ class CobbleTunesClient : ClientModInitializer {
                 )
             }
             return
+        }
+
+        val specialPoolRoute = parseSpecialTrainerPoolRoute(routeHead)
+        if (specialPoolRoute != null) {
+            val track = TrackRegistry.specialTrainerTrackFor(specialPoolRoute.poolId)
+            if (track != null) {
+                debugLog(
+                    "[Special trainer pool] source=$source raw='${payload.trainerTier}' " +
+                        "pool='${specialPoolRoute.poolId}' track='${track.id}' " +
+                        "role='${specialPoolRoute.roleId}' region='${routeValue.ifBlank { "unknown" }}'"
+                )
+                musicPlayer.playExactTrainerBattle(track)
+                return
+            }
+            debugLog(
+                "[Special trainer pool] Missing/empty pool '${specialPoolRoute.poolId}' using normal trainer fallback"
+            )
         }
 
         val specialRoute = parseSpecialTrainerRoute(routeHead)
@@ -766,7 +782,8 @@ class CobbleTunesClient : ClientModInitializer {
             ?.substringAfter("faction:")
             ?.takeIf { it.isNotBlank() }
 
-        val specialRole = parseSpecialTrainerRoute(routeHead)?.roleId
+        val specialRole = parseSpecialTrainerPoolRoute(routeHead)?.roleId
+            ?: parseSpecialTrainerRoute(routeHead)?.roleId
         val kind = when {
             factionTheme != null -> VictoryKind.FACTION
             specialRole == "leader" || routeHead == "leader" -> VictoryKind.GYM_LEADER
@@ -778,6 +795,19 @@ class CobbleTunesClient : ClientModInitializer {
         }
 
         return VictoryRequest(region, kind, factionTheme)
+    }
+
+    private data class SpecialTrainerPoolRoute(
+        val poolId: String,
+        val roleId: String
+    )
+
+    private fun parseSpecialTrainerPoolRoute(routeHead: String): SpecialTrainerPoolRoute? {
+        if (!routeHead.startsWith("specialpool:")) return null
+        val parts = routeHead.removePrefix("specialpool:").split(':', limit = 2)
+        val poolId = parts.firstOrNull()?.takeIf { it.isNotBlank() } ?: return null
+        val roleId = parts.getOrNull(1).orEmpty()
+        return SpecialTrainerPoolRoute(poolId, roleId)
     }
 
     private data class SpecialTrainerRoute(

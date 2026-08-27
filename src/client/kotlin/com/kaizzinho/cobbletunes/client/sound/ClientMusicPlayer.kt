@@ -77,11 +77,10 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
     ) {
         if (!config.replaceBattleMusic) return
 
-        // keep zone state for battle resume
-        val routedContext = if (
-            context == MusicContext.TRAINER_BATTLE &&
-            activeZoneContext == MusicContext.BATTLE_TOWER
-        ) MusicContext.BATTLE_TOWER_BATTLE else context
+        // World-zone ambience and battle classification are intentionally separate.
+        // Battle Tower floor markers control ambience only; trainer battles keep their
+        // normal role/region routing unless an exact named-trainer override applies.
+        val routedContext = context
 
         val track = when (routedContext) {
             MusicContext.LEGENDARY_BATTLE -> {

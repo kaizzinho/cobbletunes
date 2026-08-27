@@ -17,8 +17,6 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking
 import net.fabricmc.loader.api.FabricLoader
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.sound.SoundInstanceListener
-import net.minecraft.registry.Registries
-import net.minecraft.util.math.BlockPos
 import java.lang.reflect.Modifier
 import java.util.Locale
 import java.util.UUID
@@ -30,16 +28,12 @@ class ClientStandaloneBridge(
     private val onBattleEnd: () -> Unit,
     private val onBattleVictory: () -> Unit,
     private val shouldUseEarlyFaintVictory: () -> Boolean,
-    private val onCapture: (Int, String) -> Unit,
-    private val onZone: (String) -> Unit
+    private val onCapture: (Int, String) -> Unit
 ) {
     companion object {
         private const val BATTLE_START_DELAY_TICKS = 6
-        private const val STRUCTURE_CHECK_INTERVAL_TICKS = 40
         private const val POKEMON_SNAPSHOT_INTERVAL_TICKS = 5
         private const val POKEMON_SNAPSHOT_LIFETIME_MILLIS = 5_000L
-        private const val STRUCTURE_RADIUS = 20
-        private const val STRUCTURE_VERTICAL_RADIUS = 10
 
         private val RAID_SOUND_TIERS = mapOf(
             "cobblemonraiddens:battle.raid.tier_one" to "uncommon",
@@ -98,9 +92,7 @@ class ClientStandaloneBridge(
     private var playerFaintedAtLastTick = false
     private var raidVictoryTriggered = false
     private var recentCaptureAtMillis = 0L
-    private var structureCheckCounter = 0
     private var pokemonSnapshotCounter = 0
-    private var lastLocalZone = ""
     private var lastBridgeAvailable = false
     private var soundListenerRegistered = false
     private val nearbyPokemon = mutableListOf<PokemonSnapshot>()
@@ -150,14 +142,14 @@ class ClientStandaloneBridge(
                 "[Standalone] mode=${if (bridgeAvailable) "server-bridge" else "client-only"}"
             )
             if (bridgeAvailable) {
-                resetLocalState(clearZone = false)
+                resetLocalState()
             }
         }
 
         val world = client.world
         val player = client.player
         if (world == null || player == null) {
-            resetLocalState(clearZone = false)
+            resetLocalState()
             return
         }
 
@@ -173,11 +165,6 @@ class ClientStandaloneBridge(
         updateBattle(client)
         updateCaptureState(client)
 
-        structureCheckCounter++
-        if (structureCheckCounter >= STRUCTURE_CHECK_INTERVAL_TICKS) {
-            structureCheckCounter = 0
-            updateLocalZone(client)
-        }
     }
 
     private fun observeBattleOutcome(client: MinecraftClient) {
@@ -488,9 +475,6 @@ class ClientStandaloneBridge(
     ): String {
         val exact = findRctTrainer(client, actors)?.let { (trainerId, typeId) ->
             val normalizedId = trainerId.substringAfter(':').lowercase(Locale.ROOT)
-            if (normalizedId.matches(Regex("f(?:[1-9]|10)_trainer\\d+"))) {
-                return@let "special:galar_battle_tower:normal|galar"
-            }
             RctTrainerClassifier.classify(
                 RawRctTrainer(trainerId, typeId, optional = false),
                 exactOverrides = RctTrainerOverrides.exact
@@ -680,96 +664,7 @@ class ClientStandaloneBridge(
         }
     }
 
-    private fun updateLocalZone(client: MinecraftClient) {
-        val zone = detectLocalZone(client)
-        if (zone == lastLocalZone) return
-        val previous = lastLocalZone
-        lastLocalZone = zone
-        debugLog("[Standalone zone] '$previous' -> '$zone'")
-        onZone(zone)
-    }
-
-    private fun detectLocalZone(client: MinecraftClient): String {
-        val player = client.player ?: return ""
-        val world = client.world ?: return ""
-
-        resolveRctTowerZone(client)?.let { return it }
-
-        val center = player.blockPos
-        val min = center.add(-STRUCTURE_RADIUS, -STRUCTURE_VERTICAL_RADIUS, -STRUCTURE_RADIUS)
-        val max = center.add(STRUCTURE_RADIUS, STRUCTURE_VERTICAL_RADIUS, STRUCTURE_RADIUS)
-
-        var hasGildedChest = false
-        var hasHealingMachine = false
-        var hasPc = false
-        var hasBell = false
-        var obsidianCount = 0
-        var portalDecayCount = 0
-
-        for (pos in BlockPos.iterate(min, max)) {
-            val id = Registries.BLOCK.getId(world.getBlockState(pos).block).toString()
-            when (id) {
-                "cobblemon:gilded_chest", "cobblemon:gimmighoul_chest" -> hasGildedChest = true
-                "cobblemon:healing_machine" -> hasHealingMachine = true
-                "cobblemon:pc" -> hasPc = true
-                "minecraft:bell" -> hasBell = true
-                "minecraft:obsidian", "minecraft:crying_obsidian" -> obsidianCount++
-                "minecraft:netherrack", "minecraft:magma_block" -> portalDecayCount++
-            }
-        }
-
-        if (hasGildedChest) return "cobbletunes:gimmighoul_tower"
-        if (hasHealingMachine && hasPc) return "cobbletunes:pokecenter"
-        if (obsidianCount >= 4 && portalDecayCount >= 3) {
-            return "cobbletunes:vanilla_structure:ruined_portal"
-        }
-        if (hasBell) {
-            return "cobbletunes:vanilla_structure:${villageCategory(client)}"
-        }
-        return ""
-    }
-
-    private fun resolveRctTowerZone(client: MinecraftClient): String? {
-        if (!FabricLoader.getInstance().isModLoaded("rctmod")) return null
-        val player = client.player ?: return null
-        val world = client.world ?: return null
-
-        val trainers = world.getOtherEntities(
-            player,
-            player.boundingBox.expand(24.0)
-        ) { entity ->
-            invokeNoArg(entity, "getTrainerId") is String
-        }
-
-        for (entity in trainers.sortedBy { it.squaredDistanceTo(player) }) {
-            val trainerId = (invokeNoArg(entity, "getTrainerId") as? String)
-                ?.substringAfter(':')
-                ?.lowercase(Locale.ROOT)
-                ?: continue
-            val match = Regex("^f(10|[1-9])_trainer\\d+$").matchEntire(trainerId) ?: continue
-            val floor = match.groupValues[1].toIntOrNull() ?: continue
-            return "cobbletunes:battle_tower_floor_$floor"
-        }
-        return null
-    }
-
-    private fun villageCategory(client: MinecraftClient): String {
-        val player = client.player ?: return "village_plains"
-        val world = client.world ?: return "village_plains"
-        val biome = world.getBiome(player.blockPos).key
-            .map { it.value.toString() }
-            .orElse("")
-            .lowercase(Locale.ROOT)
-        return when {
-            "desert" in biome || "badlands" in biome -> "village_desert"
-            "savanna" in biome -> "village_savanna"
-            "snow" in biome || "ice" in biome || "frozen" in biome -> "village_snowy"
-            "taiga" in biome -> "village_taiga"
-            else -> "village_plains"
-        }
-    }
-
-    private fun resetLocalState(clearZone: Boolean) {
+    private fun resetLocalState() {
         currentBattleId = null
         observedBattleId = null
         earlyVictoryTriggered = false
@@ -784,8 +679,6 @@ class ClientStandaloneBridge(
         recentCaptureAtMillis = 0L
         nearbyPokemon.clear()
         handledCaptureBalls.clear()
-        if (clearZone && lastLocalZone.isNotBlank()) onZone("")
-        lastLocalZone = ""
     }
 
     private fun invokeNoArg(target: Any, methodName: String): Any? = runCatching {
