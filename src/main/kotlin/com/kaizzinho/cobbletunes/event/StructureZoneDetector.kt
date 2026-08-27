@@ -215,13 +215,20 @@ object StructureZoneDetector {
     private val legendaryMonumentsAvailable by lazy { FabricLoader.getInstance().isModLoaded("legendarymonuments") }
 
     private val LEGENDARY_MONUMENT_STRUCTURES: Map<Identifier, String> = mapOf(
-        Identifier.of("legendarymonuments", "distortion_portal") to "legendarymonuments:distortion_portal",
-        Identifier.of("legendarymonuments", "giratina_island")   to "legendarymonuments:giratina_island",
-        Identifier.of("legendarymonuments", "turnback_cave")     to "legendarymonuments:turnback_cave",
-        Identifier.of("legendarymonuments", "lake_acuity")       to "legendarymonuments:lake_acuity",
-        Identifier.of("legendarymonuments", "lake_valor")        to "legendarymonuments:lake_valor",
-        Identifier.of("legendarymonuments", "lake_verity")       to "legendarymonuments:lake_verity",
-        Identifier.of("legendarymonuments", "stark_mountain")    to "legendarymonuments:stark_mountain",
+        // LegendaryMonuments-Cobbleverse (light): all 13 registered structures.
+        Identifier.of("legendarymonuments", "distortion_portal")   to "legendarymonuments:distortion_portal",
+        Identifier.of("legendarymonuments", "eternatus_cocoon")    to "legendarymonuments:eternatus_cocoon",
+        Identifier.of("legendarymonuments", "firescourge_shrine")  to "legendarymonuments:firescourge_shrine",
+        Identifier.of("legendarymonuments", "giratina_island")     to "legendarymonuments:giratina_island",
+        Identifier.of("legendarymonuments", "grasswither_shrine")  to "legendarymonuments:grasswither_shrine",
+        Identifier.of("legendarymonuments", "groundblight_shrine") to "legendarymonuments:groundblight_shrine",
+        Identifier.of("legendarymonuments", "icerend_shrine")      to "legendarymonuments:icerend_shrine",
+        Identifier.of("legendarymonuments", "lake_acuity")         to "legendarymonuments:lake_acuity",
+        Identifier.of("legendarymonuments", "lake_valor")          to "legendarymonuments:lake_valor",
+        Identifier.of("legendarymonuments", "lake_verity")         to "legendarymonuments:lake_verity",
+        Identifier.of("legendarymonuments", "outskirt_stand")      to "legendarymonuments:outskirt_stand",
+        Identifier.of("legendarymonuments", "stark_mountain")      to "legendarymonuments:stark_mountain",
+        Identifier.of("legendarymonuments", "turnback_cave")       to "legendarymonuments:turnback_cave",
     )
 
     private val repurposedStructuresAvailable by lazy { FabricLoader.getInstance().isModLoaded("repurposed_structures") }

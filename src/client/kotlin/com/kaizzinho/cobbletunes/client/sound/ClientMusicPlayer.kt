@@ -44,6 +44,7 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
     )
 
     private val biomeTrackMemory: MutableMap<String, BiomeTrackMemory> = mutableMapOf()
+    private val warnedMissingBiomes = mutableSetOf<String>()
     private var activeBiomeMemoryId: String? = null
     private var ambienceMemoryTick: Long = 0L
     private val trackBudgetStartMillis: MutableMap<String, Long> = mutableMapOf()
@@ -284,6 +285,7 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
         overrideBiomeId = null
         overrideBiomeTrack = null
         biomeTrackMemory.clear()
+        warnedMissingBiomes.clear()
         activeBiomeMemoryId = null
         trackBudgetStartMillis.clear()
         trackBudgetDurationMillis.clear()
@@ -300,6 +302,7 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
     }
 
     fun beginWorldJoinSilence() {
+        warnedMissingBiomes.clear()
         stopCurrent()
         ambienceSegmentStartedAtMillis = null
         worldJoinReadyTicks = 0
@@ -689,7 +692,9 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
         }
 
         val fresh = selectFreshTrackForBiome(biomeId, excludeTrackId = null) ?: run {
-            LOGGER.warn("[$MOD_ID] No ambience track for biome: $biomeId")
+            if (warnedMissingBiomes.add(biomeId)) {
+                LOGGER.warn("[$MOD_ID] No ambience track for biome: $biomeId")
+            }
             return null
         }
         biomeTrackMemory[biomeId] = BiomeTrackMemory(track = fresh)

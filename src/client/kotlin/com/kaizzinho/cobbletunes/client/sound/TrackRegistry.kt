@@ -678,6 +678,9 @@ object TrackRegistry {
         "minecraft:the_end", "minecraft:end_highlands", "minecraft:end_midlands",
         "minecraft:end_barrens", "minecraft:small_end_islands"
     )
+    private val LEGENDARY_MONUMENTS_DISTORTION = setOf(
+        "legendarymonuments:distortion_world_biome"
+    )
 
     fun bootstrap() {
         registerKantoAmbience(); registerKantoBattle()
@@ -900,6 +903,7 @@ object TrackRegistry {
         register(MusicContext.AMBIENCE, MusicTrack("sinnoh_cave_oreburgh_mine", soundEvent("ambience.sinnoh.cave_oreburgh_mine"), biomeKeys = SINNOH_CAVE_MINE, regions = setOf(RegionOfOrigin.SINNOH), loop = false))
         register(MusicContext.AMBIENCE, MusicTrack("sinnoh_ocean_lake", soundEvent("ambience.sinnoh.ocean_lake"), biomeKeys = SINNOH_OCEAN, regions = setOf(RegionOfOrigin.SINNOH), loop = false))
         register(MusicContext.AMBIENCE, MusicTrack("sinnoh_end_distortion_world", soundEvent("ambience.sinnoh.end_distortion_world"), biomeKeys = THE_END, regions = setOf(RegionOfOrigin.SINNOH), loop = false))
+        register(MusicContext.AMBIENCE, MusicTrack("legendarymonuments_distortion_world", soundEvent("ambience.sinnoh.end_distortion_world"), biomeKeys = LEGENDARY_MONUMENTS_DISTORTION, loop = false))
         register(MusicContext.AMBIENCE, MusicTrack("sinnoh_snowy_snowpoint_city", soundEvent("ambience.sinnoh.snowy_snowpoint_city"), biomeKeys = SINNOH_SNOWY, regions = setOf(RegionOfOrigin.SINNOH), loop = false))
     }
 
@@ -1317,13 +1321,20 @@ object TrackRegistry {
             MusicTrack("legendarymonuments_$structureId", soundEvent(trackName), loop = true)
         )
 
-        lm("distortion_portal", "ambience.sinnoh.end_distortion_world")
-        lm("giratina_island",   "ambience.sinnoh.end_distortion_world")
-        lm("turnback_cave",     "ambience.sinnoh.end_distortion_world")
-        lm("lake_acuity",       "ambience.sinnoh.cave_lake_caverns")
-        lm("lake_valor",        "ambience.sinnoh.cave_lake_caverns")
-        lm("lake_verity",       "ambience.sinnoh.cave_lake_caverns")
-        lm("stark_mountain",    "ambience.vanilla.fortress.stark_mountain")
+        // LegendaryMonuments-Cobbleverse (light) exact StructureStart routes.
+        lm("distortion_portal",    "ambience.sinnoh.end_distortion_world")
+        lm("eternatus_cocoon",     "ambience.sinnoh.end_distortion_world")
+        lm("firescourge_shrine",   "ambience.hoenn.volcanic_mt_chimney")
+        lm("giratina_island",      "ambience.sinnoh.end_distortion_world")
+        lm("grasswither_shrine",   "ambience.johto.forest_ecruteak")
+        lm("groundblight_shrine",  "ambience.unova.cave_underground_ruins")
+        lm("icerend_shrine",       "ambience.johto.cave_ice_path")
+        lm("lake_acuity",          "ambience.sinnoh.cave_lake_caverns")
+        lm("lake_valor",           "ambience.sinnoh.cave_lake_caverns")
+        lm("lake_verity",          "ambience.sinnoh.cave_lake_caverns")
+        lm("outskirt_stand",       "ambience.hoenn.desert_route_111")
+        lm("stark_mountain",       "ambience.vanilla.fortress.stark_mountain")
+        lm("turnback_cave",        "ambience.sinnoh.end_distortion_world")
 
         registerSpecialStructurePool(
             "cobbletunes:gimmighoul_tower",
