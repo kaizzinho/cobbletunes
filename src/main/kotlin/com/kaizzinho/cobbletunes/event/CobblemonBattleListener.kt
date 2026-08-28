@@ -4,6 +4,8 @@ import com.cobblemon.mod.common.api.battles.model.PokemonBattle
 import com.cobblemon.mod.common.api.battles.model.actor.BattleActor
 import com.cobblemon.mod.common.api.battles.model.actor.EntityBackedBattleActor
 import com.cobblemon.mod.common.api.events.CobblemonEvents
+import com.cobblemon.mod.common.api.battles.interpreter.BattleMessage
+import com.cobblemon.mod.common.battles.BattleSide
 import com.kaizzinho.cobbletunes.LOGGER
 import com.kaizzinho.cobbletunes.MOD_ID
 import com.kaizzinho.cobbletunes.compat.rct.RawRctTrainer
@@ -16,6 +18,7 @@ import com.kaizzinho.cobbletunes.network.BattleVictoryPayload
 import com.kaizzinho.cobbletunes.network.PlayerDeathPayload
 import com.kaizzinho.cobbletunes.network.PokemonCapturedPayload
 import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents
 import com.kaizzinho.cobbletunes.network.CobbleTunesNetworking
 import net.fabricmc.loader.api.FabricLoader
 import java.lang.reflect.Modifier
@@ -23,7 +26,29 @@ import java.util.Locale
 
 object CobblemonBattleListener {
 
+    // Cobblemon emits one BATTLE_FAINTED event per faint. Use it only to arm a
+    // short outcome watch: early Victory is sent after Showdown has declared the
+    // winner and the complete server-side opposing roster is actually defeated.
+    private data class PendingDecisiveFaintCheck(
+        val battle: PokemonBattle,
+        var ticksRemaining: Int = 40
+    )
+
+    private val pendingDecisiveFaintChecks = linkedMapOf<java.util.UUID, PendingDecisiveFaintCheck>()
+    private val earlyVictorySentBattles = mutableSetOf<java.util.UUID>()
+
     fun register() {
+        ServerTickEvents.END_SERVER_TICK.register {
+            val iterator = pendingDecisiveFaintChecks.entries.iterator()
+            while (iterator.hasNext()) {
+                val (_, pending) = iterator.next()
+                val finished = sendEarlyVictoryIfDecided(pending.battle)
+                pending.ticksRemaining--
+                if (finished || pending.ticksRemaining <= 0) {
+                    iterator.remove()
+                }
+            }
+        }
         RaidDensBridge.registerRaidEndListener { player, won ->
             CobbleTunesNetworking.sendIfSupported(
                 player,
@@ -48,10 +73,17 @@ object CobblemonBattleListener {
                     continue
                 }
 
-                // side is hidden so use every actor except us
-                val opposingActors: List<BattleActor> = battle.actors
-                    .filter { it != playerActor }
-                    .toList()
+                // In doubles/2v2/team battles, only actors on the opposite BattleSide
+                // contribute to the opponent roster and regional/theme vote.
+                val playerSide = sideForActor(battle, playerActor)
+                if (playerSide == null) {
+                    LOGGER.warn(
+                        "[$MOD_ID] Could not resolve BattleSide for ${player.name.string}, skipping"
+                    )
+                    continue
+                }
+                val opposingSide = if (playerSide === battle.side1) battle.side2 else battle.side1
+                val opposingActors: List<BattleActor> = opposingSide.actors.toList()
 
                 val opposingPokemon = opposingActors
                     .flatMap { it.pokemonList }
@@ -119,6 +151,13 @@ object CobblemonBattleListener {
             }
         }
 
+        CobblemonEvents.BATTLE_FAINTED.subscribe { event ->
+            if (!RaidDensBridge.isRaidBattle(event.battle) && event.battle.battleId !in earlyVictorySentBattles) {
+                pendingDecisiveFaintChecks[event.battle.battleId] =
+                    PendingDecisiveFaintCheck(event.battle)
+            }
+        }
+
         CobblemonEvents.POKEMON_CAPTURED.subscribe { event ->
             val pokemon = event.pokemon
             val dexNumber = pokemon.species.nationalPokedexNumber
@@ -145,6 +184,9 @@ object CobblemonBattleListener {
         }
 
         CobblemonEvents.BATTLE_VICTORY.subscribe { event ->
+            pendingDecisiveFaintChecks.remove(event.battle.battleId)
+            val earlyVictoryAlreadySent = earlyVictorySentBattles.remove(event.battle.battleId)
+
             if (RaidDensBridge.isRaidBattle(event.battle)) {
                 if (CobbleTunesServerConfig.current.debugLogging) {
                     LOGGER.info(
@@ -152,7 +194,7 @@ object CobblemonBattleListener {
                             "because Raid Dens RAID_END owns completion"
                     )
                 }
-            } else {
+            } else if (!earlyVictoryAlreadySent) {
                 val winnerActors = event.winners.toSet()
                 for (player in event.battle.players) {
                     val playerActor = event.battle.getActor(player)
@@ -162,10 +204,17 @@ object CobblemonBattleListener {
                         if (actuallyWon) BattleVictoryPayload else BattleMusicEndPayload
                     )
                 }
+            } else if (CobbleTunesServerConfig.current.debugLogging) {
+                LOGGER.info(
+                    "[$MOD_ID] [Debug] [Victory] Ignoring later Cobblemon BATTLE_VICTORY " +
+                        "because decisive-faint Victory was already sent for battle=${event.battle.battleId}"
+                )
             }
         }
 
         CobblemonEvents.BATTLE_FLED.subscribe { event ->
+            pendingDecisiveFaintChecks.remove(event.battle.battleId)
+            earlyVictorySentBattles.remove(event.battle.battleId)
             for (player in event.battle.players) {
                 CobbleTunesNetworking.sendIfSupported(player, BattleMusicEndPayload)
             }
@@ -182,6 +231,83 @@ object CobblemonBattleListener {
         }
 
         LOGGER.info("[$MOD_ID] CobblemonBattleListener registered (server-side battle classification).")
+    }
+
+    private fun sendEarlyVictoryIfDecided(battle: PokemonBattle): Boolean {
+        if (battle.battleId in earlyVictorySentBattles) return true
+        if (RaidDensBridge.isRaidBattle(battle)) return true
+
+        // The Showdown interpreter receives the authoritative `win` instruction before
+        // Cobblemon finishes its visual dispatch queue. Requiring that declaration keeps
+        // early Victory safe for spread moves, recoil, Explosion/double-KO resolutions,
+        // PvP, doubles and 2v2 battles. If `win` is not available yet, do nothing and let
+        // Cobblemon's normal BATTLE_VICTORY event remain the final authority.
+        val declaredWinners = showdownWinnerActorUuids(battle) ?: return false
+
+        val declaredWinningPlayers = battle.players.filter { player ->
+            battle.getActor(player)?.uuid?.let { it in declaredWinners } == true
+        }
+        if (declaredWinningPlayers.isEmpty()) return true
+
+        val winningPlayers = declaredWinningPlayers.filter { player ->
+            val actor = battle.getActor(player) ?: return@filter false
+
+            // Also verify the complete server-side opposing roster. A forfeit may produce
+            // a winner while healthy opponents remain; that case is intentionally left to
+            // the official BATTLE_VICTORY event instead of pretending it was a final faint.
+            val playerSide = sideForActor(battle, actor) ?: return@filter false
+            val opposingSide = if (playerSide === battle.side1) battle.side2 else battle.side1
+            sideIsCompletelyDefeated(opposingSide)
+        }
+        if (winningPlayers.isEmpty()) return false
+
+        earlyVictorySentBattles += battle.battleId
+        for (player in battle.players) {
+            CobbleTunesNetworking.sendIfSupported(
+                player,
+                if (player in winningPlayers) BattleVictoryPayload else BattleMusicEndPayload
+            )
+        }
+
+        if (CobbleTunesServerConfig.current.debugLogging) {
+            LOGGER.info(
+                "[$MOD_ID] [Debug] [Victory] decisive side defeat battle=${battle.battleId} " +
+                    "winnerPlayers=${winningPlayers.joinToString { it.name.string }} " +
+                    "source=server-showdown-win+full-roster"
+            )
+        }
+        return true
+    }
+
+    private fun showdownWinnerActorUuids(battle: PokemonBattle): Set<java.util.UUID>? {
+        for (rawUpdate in battle.showdownMessages.asReversed()) {
+            for (line in rawUpdate.lineSequence().toList().asReversed()) {
+                if (line.isBlank()) continue
+                val message = BattleMessage(line)
+                if (message.id.replace("|", "").trim() != "win") continue
+
+                val rawWinners = message.argumentAt(0) ?: return emptySet()
+                return rawWinners.split('&')
+                    .mapNotNull { value ->
+                        runCatching { java.util.UUID.fromString(value.trim()) }.getOrNull()
+                    }
+                    .toSet()
+            }
+        }
+        return null
+    }
+
+    private fun sideForActor(battle: PokemonBattle, actor: BattleActor): BattleSide? {
+        return when {
+            battle.side1.actors.any { it.uuid == actor.uuid } -> battle.side1
+            battle.side2.actors.any { it.uuid == actor.uuid } -> battle.side2
+            else -> null
+        }
+    }
+
+    private fun sideIsCompletelyDefeated(side: BattleSide): Boolean {
+        val roster = side.actors.flatMap { it.pokemonList }
+        return roster.isNotEmpty() && roster.all { it.health <= 0 }
     }
 
     private fun resolveRegionalVariant(

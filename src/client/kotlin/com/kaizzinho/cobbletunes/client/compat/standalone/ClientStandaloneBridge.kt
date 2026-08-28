@@ -83,8 +83,6 @@ class ClientStandaloneBridge(
     private var currentBattleId: UUID? = null
     private var observedBattleId: UUID? = null
     private var earlyVictoryTriggered = false
-    private val observedOpponentFaints = mutableSetOf<UUID>()
-    private val observedPlayerFaints = mutableSetOf<UUID>()
     private var battleStartDelay = 0
     private var currentPayload: BattleMusicStartPayload? = null
     private var pendingRaidTier: String? = null
@@ -153,7 +151,7 @@ class ClientStandaloneBridge(
             return
         }
 
-        observeBattleOutcome(client)
+        observeBattleOutcome(client, bridgeAvailable)
         if (bridgeAvailable) return
 
         pokemonSnapshotCounter++
@@ -167,13 +165,19 @@ class ClientStandaloneBridge(
 
     }
 
-    private fun observeBattleOutcome(client: MinecraftClient) {
+    private fun observeBattleOutcome(client: MinecraftClient, bridgeAvailable: Boolean) {
+        // When the server bridge is present, the server has the complete hidden rosters
+        // and owns decisive-faint Victory. Never compete with that authoritative path.
+        if (bridgeAvailable) {
+            observedBattleId = null
+            earlyVictoryTriggered = false
+            return
+        }
+
         val battle = CobblemonClient.battle
         if (battle == null) {
             observedBattleId = null
             earlyVictoryTriggered = false
-            observedOpponentFaints.clear()
-            observedPlayerFaints.clear()
             return
         }
 
@@ -181,24 +185,27 @@ class ClientStandaloneBridge(
 
         observedBattleId = battle.battleId
         earlyVictoryTriggered = false
-        observedOpponentFaints.clear()
-        observedPlayerFaints.clear()
 
-        // Use Cobblemon's battle-log queue as the synchronization point. We intentionally
-        // avoid parsing localized text and instead check the synchronized full roster HP
-        // whenever a new battle-log line is pushed to the client.
+        // Cobblemon intentionally does not synchronize an opponent trainer/PvP player's
+        // hidden reserve roster to the client. The battle-log queue is still useful as a
+        // synchronization point for the currently active Pokémon, but only a normal wild
+        // side is safe to resolve early from those visible actives. Trainer/PvP Victory
+        // waits for the actual battle end in client-only mode.
         battle.messages.subscribe {
             client.execute {
-                tryTriggerEarlyVictory(client, battle.battleId)
+                observeVisibleFaintState(client, battle.battleId, allowEarlyWildVictory = true)
             }
         }
 
-        debugLog("[Victory] armed client battle-log faint observer battle=${battle.battleId}")
+        debugLog("[Victory] armed client battle outcome observer battle=${battle.battleId}")
     }
 
-    private fun tryTriggerEarlyVictory(client: MinecraftClient, battleId: UUID) {
-        if (earlyVictoryTriggered || observedBattleId != battleId) return
-        if (!shouldUseEarlyFaintVictory()) return
+    private fun observeVisibleFaintState(
+        client: MinecraftClient,
+        battleId: UUID,
+        allowEarlyWildVictory: Boolean
+    ) {
+        if (observedBattleId != battleId) return
 
         val battle = CobblemonClient.battle ?: return
         if (battle.battleId != battleId) return
@@ -209,16 +216,23 @@ class ClientStandaloneBridge(
         } ?: return
         val opposingSide = battle.sides.firstOrNull { it !== playerSide } ?: return
 
-        updateObservedFaints(opposingSide.actors, observedOpponentFaints)
-        updateObservedFaints(playerSide.actors, observedPlayerFaints)
+        // Keep the latest visible faint state for the client-only battle-end fallback.
+        // This also catches the final faint even when BattleEndPacket clears the battle
+        // before the next regular client tick.
+        opponentFaintedAtLastTick = sideIsFainted(opposingSide.actors)
+        playerFaintedAtLastTick = sideIsFainted(playerSide.actors)
 
-        if (
-            !sideIsDefeated(opposingSide.actors, observedOpponentFaints) ||
-            sideIsDefeated(playerSide.actors, observedPlayerFaints)
-        ) return
+        if (!allowEarlyWildVictory || earlyVictoryTriggered) return
+        if (!shouldUseEarlyFaintVictory()) return
+        if (pendingRaidTier != null || currentPayload?.trainerTier?.startsWith("raid|") == true) return
+
+        val ordinaryWildSide = opposingSide.actors.isNotEmpty() &&
+            opposingSide.actors.all { it.type == ActorType.WILD }
+        if (!ordinaryWildSide) return
+        if (!opponentFaintedAtLastTick || playerFaintedAtLastTick) return
 
         earlyVictoryTriggered = true
-        debugLog("[Victory] decisive opponent faint observed from battle log; starting Victory now")
+        debugLog("[Victory] all visible wild opponents fainted; starting client-only Victory")
         onBattleVictory()
     }
 
@@ -366,32 +380,6 @@ class ClientStandaloneBridge(
         val active = actors.flatMap { actor -> actor.activePokemon.mapNotNull { it.battlePokemon } }
         if (active.isEmpty()) return false
         return active.all { pokemon -> hpRatio(pokemon) <= 0.0001f }
-    }
-
-    private fun updateObservedFaints(
-        actors: List<ClientBattleActor>,
-        faintedPokemon: MutableSet<UUID>
-    ) {
-        actors.flatMap { actor -> actor.activePokemon.mapNotNull { it.battlePokemon } }
-            .filter { hpRatio(it) <= 0.0001f }
-            .forEach { faintedPokemon += it.uuid }
-
-        // Seed Pokémon that entered the battle already fainted. Active battle HP remains
-        // the authoritative source for normal battle damage and adds to this set above.
-        actors.flatMap { it.pokemon }
-            .filter { it.currentHealth <= 0 }
-            .forEach { faintedPokemon += it.uuid }
-    }
-
-    private fun sideIsDefeated(
-        actors: List<ClientBattleActor>,
-        faintedPokemon: Set<UUID>
-    ): Boolean {
-        val rosterUuids = actors.flatMap { it.pokemon }.map { it.uuid }.toSet()
-        if (rosterUuids.isNotEmpty()) {
-            return rosterUuids.all { it in faintedPokemon }
-        }
-        return sideIsFainted(actors)
     }
 
     private fun hpRatio(pokemon: ClientBattlePokemon): Float =
@@ -668,8 +656,6 @@ class ClientStandaloneBridge(
         currentBattleId = null
         observedBattleId = null
         earlyVictoryTriggered = false
-        observedOpponentFaints.clear()
-        observedPlayerFaints.clear()
         battleStartDelay = 0
         currentPayload = null
         pendingRaidTier = null

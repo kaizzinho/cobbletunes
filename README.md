@@ -68,7 +68,7 @@ When a CobbleTunes server bridge is present, the client automatically stops its 
 - [x] **Frontier Brain music** with a dedicated battle context.
 - [x] **WildBosses and Cobblemon Raid Dens integrations** with tier-weighted regional PvP, generic Legendary, and BW World Tournament pools, actor-entity Raid Dens detection, and a dedicated 5-second regional Victory cue plus a 2-second full-volume tail before fade-out when a raid is cleared.
 - [x] **Species-safe Boss pools** that keep unique Legendary encounter themes out of unrelated Boss fights.
-- [x] **Victory + Cobblemon Loot Menu integration** with Victory starting on the decisive opponent faint, a normal short cue when no loot screen opens, extension while the loot screen is open, and current-zone resume afterward.
+- [x] **Victory + Cobblemon Loot Menu integration** with server-enhanced Victory starting only when the complete opposing battle side is defeated, safe client-only fallbacks, extension while the loot screen is open, and current-zone resume afterward.
 - [x] **Capture Victory themes** for successful Pokémon captures, including captures made outside battle, using the captured Pokémon region and the existing wild Victory pool.
 - [x] **Battle Tower floor pools** with low, mid, high, and final marker-driven ambience tiers; generic floor-trainer battles keep normal roster-based regional routing.
 - [x] **Biome ambience memory and rotation** with silence windows, biome-transition debounce, and visit memory that expires after a random 3–6 minutes or 3 meaningful biome transitions.
@@ -228,14 +228,15 @@ When a supported battle is won and Cobblemon Loot Menu is installed:
 
 ```text
 battle victory
-→ final opposing Pokémon faints
-→ Victory starts immediately
+→ complete opposing battle side is defeated
+→ Victory starts immediately with the server bridge
+→ client-only trainer/PvP waits for confirmed battle end
 → no loot screen: Victory uses the normal brief cue
 → loot screen appears: the same Victory keeps playing
 → Victory continues until the loot screen closes
 ```
 
-CobbleTunes no longer delays Battle Victory while waiting to discover whether loot exists. The client watches Cobblemon's battle-log updates and synchronized roster HP, so the regional Victory cue starts as soon as the decisive opponent faint is reported. The normal cue has a three-second base duration, then stays at full volume for another two seconds before fade-out begins. If `LootSelectionScreen` appears during the post-battle transition, the current Victory is promoted into a held cue and continues until that screen closes. After the loot screen closes, Victory also remains at full volume for two seconds before fade-out begins. If the brief cue already ended before the loot screen appears, CobbleTunes restarts the same Victory immediately for the loot screen. If Cobblemon Loot Menu is not installed, the same decisive-faint trigger is used, with Cobblemon's later battle Victory event retained as a fallback.
+CobbleTunes no longer treats a single fainted active Pokémon as proof that a trainer or PvP side has lost. With the optional server bridge, Cobblemon's `BATTLE_FAINTED` event only arms a short authoritative outcome watch. CobbleTunes waits for Showdown's `win` declaration and also verifies that every Pokémon in the complete server-side opposing `BattleSide` roster is at 0 HP before starting early Victory. This naturally covers multi-Pokémon NPC teams, Gym/Elite Four/Champion battles, PvP, doubles and 2v2/team battles, while avoiding false Victory after an intermediate faint or an unresolved simultaneous KO. Cobblemon's later `BATTLE_VICTORY` event remains the final fallback, and is ignored if the decisive-faint cue was already sent. On a public server without CobbleTunes, hidden trainer/PvP reserves are intentionally not guessed; those battles wait for the actual battle end, while ordinary wild battles may still use the fast visible-faint path. The normal cue has a three-second base duration, then stays at full volume for another two seconds before fade-out begins. If `LootSelectionScreen` appears during the post-battle transition, the current Victory is promoted into a held cue and continues until that screen closes. After the loot screen closes, Victory also remains at full volume for two seconds before fade-out begins.
 
 A successful capture uses the same regional wild Victory resolver with a three-second base cue followed by a two-second full-volume tail before fade-out. This applies to captures that end a wild battle and to direct overworld captures. Regional forms still override the base National Dex region. Capture Victory never waits for the Loot Menu. Successful Raid Dens clears also reuse the regional wild Victory resolver with a **five-second** base cue followed by the same **two-second** full-volume tail before fade-out. With the server bridge, Raid Victory uses Raid Dens' `RAID_END` event. In client-only mode, the synchronized raid boss reaching 0 HP is the clear point, so the cue still starts immediately without waiting for Raid Dens to close the battle or return the player to the overworld.
 
@@ -440,7 +441,7 @@ Quando uma ponte de servidor do CobbleTunes está disponível, o cliente desativ
 - [x] **Música de Frontier Brain** com contexto próprio.
 - [x] **Integrações com WildBosses e Cobblemon Raid Dens** usando pools regionais ponderados por tier, detecção pelo Pokémon original do actor e Victory regional dedicado por 5 segundos, seguido por 2 segundos em volume cheio antes do fade-out ao concluir uma raid.
 - [x] **Pools seguros para Bosses** sem usar temas lendários específicos em encontros aleatórios.
-- [x] **Integração de vitória com Cobblemon Loot Menu** iniciando a Victory no desmaio decisivo do oponente, usando o cue curto normal quando não existe tela de loot, mantendo a música durante o menu e retornando para a zona atual depois.
+- [x] **Integração de vitória com Cobblemon Loot Menu** iniciando a Victory antecipada no servidor somente quando todo o lado adversário foi derrotado, usando fallbacks seguros no modo somente cliente, mantendo a música durante o menu e retornando para a zona atual depois.
 - [x] **Temas de vitória ao capturar Pokémon** em capturas dentro ou fora de batalha, usando a região do Pokémon capturado e o pool de vitória selvagem já existente.
 - [x] **Pools de Battle Tower** para ambientação de andares baixos, médios, altos e finais controlados por markers; batalhas contra treinadores genéricos continuam usando roteamento regional pelo time adversário.
 - [x] **Memória e rotação de ambientação por bioma** com intervalos de silêncio, debounce e memória de visita que expira após 3–6 minutos aleatórios ou 3 transições significativas de bioma.
@@ -600,14 +601,15 @@ Quando uma batalha suportada é vencida e o Cobblemon Loot Menu está instalado:
 
 ```text
 vitória da batalha
-→ último Pokémon oponente desmaia
-→ Victory começa imediatamente
+→ todo o lado adversário é derrotado
+→ com a ponte do servidor, Victory começa assim que o resultado é confirmado
+→ treinador/PvP somente cliente espera o fim confirmado da batalha
 → sem tela de loot: Victory usa o cue curto normal
 → tela de loot aparece: a mesma Victory continua tocando
 → Victory continua até a tela de loot fechar
 ```
 
-O CobbleTunes não atrasa mais a Victory esperando descobrir se existe loot. O cliente observa as mensagens de batalha do Cobblemon e o HP sincronizado da equipe, então o cue regional de Victory começa assim que o desmaio decisivo do oponente é reportado. O cue normal tem duração base de cerca de três segundos e depois permanece em volume cheio por mais dois segundos antes do início do fade-out. Se a `LootSelectionScreen` aparecer durante a transição pós-batalha, a Victory atual passa a ser mantida até a tela fechar. Depois que a tela de loot fecha, a Victory também permanece em volume cheio por dois segundos antes do início do fade-out. Se o cue curto já tiver terminado antes de a tela de loot aparecer, o CobbleTunes reinicia imediatamente a mesma Victory para o menu. Sem o Cobblemon Loot Menu, o mesmo gatilho de desmaio decisivo é usado, mantendo o evento posterior de vitória do Cobblemon como fallback.
+O CobbleTunes não trata mais o desmaio de um único Pokémon ativo como prova de que um treinador ou lado PvP perdeu. Com a ponte opcional do servidor, `BATTLE_FAINTED` apenas arma uma verificação curta do resultado. O CobbleTunes espera a declaração `win` autoritativa do Showdown e também confirma que todos os Pokémon do `BattleSide` adversário completo estão com 0 HP antes de iniciar a Victory antecipada. Isso cobre equipes com vários Pokémon, Líderes de Ginásio, Elite Four, Campeões, PvP, doubles e batalhas 2v2/em equipe, sem disparar Victory após um desmaio intermediário ou antes da resolução de um KO simultâneo. Em servidores públicos sem CobbleTunes, as reservas ocultas de treinadores/PvP não são adivinhadas; essas batalhas esperam o fim confirmado, enquanto batalhas selvagens comuns ainda podem usar o último desmaio visível. O cue normal tem duração base de cerca de três segundos e depois permanece em volume cheio por mais dois segundos antes do fade-out. Se a `LootSelectionScreen` aparecer, a mesma Victory é mantida até a tela fechar e então segura por mais dois segundos antes do fade-out. O evento posterior `BATTLE_VICTORY` continua como fallback e não reinicia uma Victory antecipada já enviada.
 
 Uma captura bem-sucedida usa o mesmo roteamento regional de vitória selvagem com um cue base de cerca de três segundos, seguido por dois segundos em volume cheio antes do fade-out. Isso vale tanto para capturas que encerram uma batalha selvagem quanto para capturas diretas no mundo. Formas regionais continuam sobrescrevendo a região baseada na National Dex. A vitória de captura nunca espera pelo Loot Menu. Uma raid concluída com sucesso também usa o tema regional de vitória selvagem com um cue base de **cinco segundos**, seguido pelos mesmos **dois segundos** em volume cheio antes do fade-out. Com a ponte do servidor, a Victory da raid usa o `RAID_END` do Raid Dens. No modo somente cliente, o boss sincronizado chegando a 0 HP marca a conclusão, então o tema começa imediatamente sem esperar o fechamento da batalha ou o retorno ao overworld.
 
