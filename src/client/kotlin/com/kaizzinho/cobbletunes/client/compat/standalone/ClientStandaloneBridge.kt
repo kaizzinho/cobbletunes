@@ -71,6 +71,7 @@ class ClientStandaloneBridge(
         val formName: String,
         val aspects: Set<String>,
         val legendary: Boolean,
+        val alpha: Boolean = false,
         val x: Double = 0.0,
         val y: Double = 0.0,
         val z: Double = 0.0,
@@ -166,8 +167,7 @@ class ClientStandaloneBridge(
     }
 
     private fun observeBattleOutcome(client: MinecraftClient, bridgeAvailable: Boolean) {
-        // When the server bridge is present, the server has the complete hidden rosters
-        // and owns decisive-faint Victory. Never compete with that authoritative path.
+        // server bridge owns hidden rosters and final-faint victory
         if (bridgeAvailable) {
             observedBattleId = null
             earlyVictoryTriggered = false
@@ -186,11 +186,7 @@ class ClientStandaloneBridge(
         observedBattleId = battle.battleId
         earlyVictoryTriggered = false
 
-        // Cobblemon intentionally does not synchronize an opponent trainer/PvP player's
-        // hidden reserve roster to the client. The battle-log queue is still useful as a
-        // synchronization point for the currently active Pokémon, but only a normal wild
-        // side is safe to resolve early from those visible actives. Trainer/PvP Victory
-        // waits for the actual battle end in client-only mode.
+        // client can't see trainer/pvp reserves; only wild can end early
         battle.messages.subscribe {
             client.execute {
                 observeVisibleFaintState(client, battle.battleId, allowEarlyWildVictory = true)
@@ -216,9 +212,7 @@ class ClientStandaloneBridge(
         } ?: return
         val opposingSide = battle.sides.firstOrNull { it !== playerSide } ?: return
 
-        // Keep the latest visible faint state for the client-only battle-end fallback.
-        // This also catches the final faint even when BattleEndPacket clears the battle
-        // before the next regular client tick.
+        // cache faint state before the battle packet clears it
         opponentFaintedAtLastTick = sideIsFainted(opposingSide.actors)
         playerFaintedAtLastTick = sideIsFainted(playerSide.actors)
 
@@ -288,7 +282,7 @@ class ClientStandaloneBridge(
             return
         }
 
-        // late metadata can promote a normal route without restarting battle state
+        // late metadata can upgrade the route without restarting
         if (pendingRaidTier != null && currentPayload?.trainerTier?.startsWith("raid|") != true) {
             promoteRaidRoute()
             return
@@ -300,6 +294,18 @@ class ClientStandaloneBridge(
                 val promoted = currentPayload!!.copy(
                     trainerTier = "boss|${wildBossTier.lowercase(Locale.ROOT)}"
                 )
+                currentPayload = promoted
+                debugLog("[Standalone battle] promoted route='${promoted.trainerTier}'")
+                onBattleStart(promoted)
+                return
+            }
+
+            val lateSnapshots = opposingSide.actors.flatMap(::pokemonSnapshots)
+            val alphaWild = opposingSide.actors.isNotEmpty() &&
+                opposingSide.actors.all { it.type == ActorType.WILD } &&
+                lateSnapshots.any { it.alpha }
+            if (alphaWild) {
+                val promoted = currentPayload!!.copy(trainerTier = "alpha|alpha")
                 currentPayload = promoted
                 debugLog("[Standalone battle] promoted route='${promoted.trainerTier}'")
                 onBattleStart(promoted)
@@ -322,12 +328,14 @@ class ClientStandaloneBridge(
         val isPvp = opposingActors.any { it.type == ActorType.PLAYER }
         val legendary = snapshots.firstOrNull { it.legendary }
         val primary = legendary ?: snapshots.first()
+        val isAlphaWild = isWild && snapshots.any { it.alpha }
 
         val raidTier = pendingRaidTier
         val bossTier = if (raidTier == null) resolveWildBossTier(client, opposingActors) else null
         val trainerRoute = when {
             raidTier != null -> "raid|$raidTier"
             bossTier != null -> "boss|${bossTier.lowercase(Locale.ROOT)}"
+            isAlphaWild -> "alpha|alpha"
             isTrainer -> resolveTrainerRoute(client, opposingActors, snapshots)
             else -> ""
         }
@@ -345,7 +353,7 @@ class ClientStandaloneBridge(
         )
 
         debugLog(
-            "[Standalone battle] wild=$isWild trainer=$isTrainer pvp=$isPvp " +
+            "[Standalone battle] wild=$isWild trainer=$isTrainer pvp=$isPvp alpha=$isAlphaWild " +
                 "route='${trainerRoute}' opposingDex=${payload.opposingDexNumbers}"
         )
         return payload
@@ -404,7 +412,8 @@ class ClientStandaloneBridge(
         dexNumber = pokemon.species.nationalPokedexNumber,
         formName = pokemon.form.name,
         aspects = pokemon.aspects,
-        legendary = "legendary" in pokemon.species.labels || "mythical" in pokemon.species.labels
+        legendary = "legendary" in pokemon.species.labels || "mythical" in pokemon.species.labels,
+        alpha = pokemon.isAlpha
     )
 
     private fun snapshotOf(pokemon: ClientBattlePokemon): PokemonSnapshot {
@@ -414,7 +423,8 @@ class ClientStandaloneBridge(
             dexNumber = pokemon.species.nationalPokedexNumber,
             formName = pokemon.properties.form.orEmpty(),
             aspects = aspects,
-            legendary = "legendary" in pokemon.species.labels || "mythical" in pokemon.species.labels
+            legendary = "legendary" in pokemon.species.labels || "mythical" in pokemon.species.labels,
+            alpha = pokemon.properties.isAlpha == true
         )
     }
 
@@ -508,7 +518,7 @@ class ClientStandaloneBridge(
         }
         if (faction.isNotBlank()) return "faction:$faction"
 
-        // empty route keeps normal trainer music with roster region voting
+        // empty route means normal trainer plus roster vote
         return ""
     }
 
@@ -607,7 +617,8 @@ class ClientStandaloneBridge(
                 dexNumber = dex,
                 formName = payload.legendaryForm,
                 aspects = emptySet(),
-                legendary = payload.isLegendary
+                legendary = payload.isLegendary,
+                alpha = payload.trainerTier.startsWith("alpha|")
             )
         }
 

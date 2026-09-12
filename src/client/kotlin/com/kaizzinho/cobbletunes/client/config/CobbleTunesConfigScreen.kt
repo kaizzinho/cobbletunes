@@ -424,11 +424,11 @@ class CobbleTunesConfigScreen(
         mouseY: Int,
         delta: Float
     ) {
-// no blur so old screens never bleed through
+        // no bg here
     }
 
     override fun applyBlur(delta: Float) {
-// blur stays off for this screen
+        // no blur here
     }
 
     private fun renderAdvancedInfo(context: DrawContext) {

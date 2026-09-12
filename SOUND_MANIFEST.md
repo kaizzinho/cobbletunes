@@ -16,6 +16,8 @@ This manifest matches the current final source and `sounds.json`. Every entry be
 
 The current source audit resolves all 441 `sounds.json` keys from code. A resource pack still needs to provide the matching `.ogg` files.
 
+Compatibility baseline: **Minecraft 1.21.1 + Cobblemon 1.8.0**. Existing battle-side, Victory/capture, client battle synchronization, and evolution hooks were audited against the supplied 1.8 JAR. Alpha-specific battle routing and the complete registered Cobblemon 1.8 worldgen structure set are now supported without adding new sound events.
+
 ## Routing notes
 
 - CobbleTunes is client-first. On a remote server without CobbleTunes, the client infers standard battle routes from Cobblemon's synchronized battle actors and rosters, observes capture success locally, and uses client-visible WildBosses/RCT/Raid Dens metadata when available. When the server bridge is present, its packets are authoritative and the local fallback is disabled.
@@ -27,6 +29,7 @@ The current source audit resolves all 441 `sounds.json` keys from code. A resour
 - Battle routing keeps role and region separate, with RCT metadata preferred and opposing-roster voting as fallback.
 - The supplied RCT Tower datapack uses lore-specific weighted pools for its ten named `pokemon_trainer_*` encounters. Generic `f1_trainer*` through `f10_trainer*` floor trainers are forced to ordinary trainer routing with region chosen by opposing-roster majority. Named pools are: Red 60% `johto_champion` / 40% `unova_pvp_champion_johto`; Green and Oak 60% `kanto_champion` / 40% `unova_pvp_champion_kanto`; Gold and Kris 60% `johto_champion` / 40% `unova_pvp_champion_johto`; May 50% `hoenn_rival_pvp` / 25% `hoenn_champion_wallace` / 25% `unova_pvp_champion_hoenn`; Steven 60% `hoenn_champion_wallace` / 40% `unova_pvp_champion_hoenn`; Barry 80% `sinnoh_rival_pvp` / 20% `unova_pvp_champion_sinnoh`; Silver 100% `johto_rival_pvp`; Morimoto 100% `tower_b2w2_pwt_final`. Pools avoid immediate repeats when alternatives exist. Exact matching also accepts normalized `rctmod:` IDs.
 - Alolan, Galarian, Hisuian, and Paldean forms override the base National Dex region for wild, trainer-roster, Boss, and Victory routing.
+- Cobblemon 1.8 Alpha Pokémon are detected directly from synchronized Alpha metadata (`Pokemon.isAlpha()` server-side and `PokemonProperties.isAlpha` client-side), never from visual heuristics. Only wild Alpha opponents use the route. Priority is Raid Dens → WildBosses → Alpha → ordinary routing. Alpha reuses the Boss selector with a fixed 70% regional PvP / 20% generic Legendary / 10% BW World Tournament profile, equivalent to the existing Rare weighting. Alpha Victory/capture remains normal regional wild Victory.
 - WildBosses and Cobblemon Raid Dens share the same tier-weighted regional battle pools. Raid Dens stays reflection-only, but detection checks the server-side `EntityBackedBattleActor` Pokémon first through `IRaidAccessor`, resolves `crd_getRaidBoss()` directly when available, falls back through `crd_getRaidId()` and `RaidHelper.ACTIVE_RAIDS`, and only then tries the battle-level `IRaidBattle` marker. Native `RaidTier.getStars()` drives the mapping: 1-star raids use Uncommon odds, 2-star Rare, 3–4-star Epic, 5–6-star Legendary, and 7-star Mythic. Raid battles reuse the regional rival/PvP, generic Legendary, and BW World Tournament pools with the same 80/15/5, 70/20/10, 60/30/10, 50/35/15, and 45/40/15 weights. Species-specific Legendary encounter tracks remain excluded from the generic pool. Raid completion is read from Raid Dens' reflected `RAID_END` event; a successful clear plays the regional wild Victory theme for a 5-second base duration, holds it at full volume for another 2 seconds before fade-out, preserves that cue across the Raid Dens-to-overworld dimension transition, and a failed raid only releases the battle-music override.
 - Legendary routing includes species and form overrides for Kyurem, Necrozma, Eternatus, Calyrex, Terapagos, Galarian birds, and other dedicated encounters.
 - Standard Battle Victory is side-aware. With the CobbleTunes server bridge, each Cobblemon `BATTLE_FAINTED` event only arms a short outcome watch. Early Victory is sent after Showdown has declared the winning actor(s) and CobbleTunes has independently verified that the complete server-side opposing `BattleSide` roster is at 0 HP. This covers multi-Pokémon trainers, PvP, doubles and 2v2/team battles and avoids premature Victory after an intermediate faint or an unresolved simultaneous KO. On client-only public servers, hidden trainer/PvP reserves are never guessed; those battles wait for confirmed battle end, while ordinary wild battles can still use the fast visible-faint path. The normal cue has a 3-second base duration and then remains at full volume for another 2 seconds before fade-out starts. When Cobblemon Loot Menu is installed, `LootSelectionScreen` extends that already-started Victory until the screen closes; after the screen closes, Victory stays at full volume for 2 seconds before fade-out begins. Cobblemon's later `BATTLE_VICTORY` event remains the fallback and does not restart a cue already sent by the decisive-faint path. Successful captures and Raid Dens keep their dedicated Victory paths.
@@ -39,15 +42,16 @@ The current source audit resolves all 441 `sounds.json` keys from code. A resour
 - With the server bridge, the `LegendaryMonuments-Cobbleverse` light build is detected as a soft integration for all 13 structures registered by that JAR, without adding sound events: Distortion Portal, Giratina Island, Turnback Cave, and Eternatus Cocoon use `ambience.sinnoh.end_distortion_world`; Lake Acuity, Lake Valor, and Lake Verity use `ambience.sinnoh.cave_lake_caverns`; Stark Mountain uses `ambience.vanilla.fortress.stark_mountain`; Firescourge, Grasswither, Groundblight, and Icerend shrines use `ambience.hoenn.volcanic_mt_chimney`, `ambience.johto.forest_ecruteak`, `ambience.unova.cave_underground_ruins`, and `ambience.johto.cave_ice_path`; Outskirt Stand uses `ambience.hoenn.desert_route_111`. The JAR's only custom biome, `legendarymonuments:distortion_world_biome`, directly reuses the Sinnoh Distortion World ambience. Full LM 8.1-only structures/biomes are intentionally not mapped in this Cobbleverse-targeted build.
 - Server-enhanced structure detection resolves actual registered `StructureStart` objects from nearby chunk references. Compact structures up to 16×16 blocks receive 4 blocks of horizontal padding per side and 4 vertical blocks of padding; larger structures retain 1 horizontal block and 2 vertical blocks. Overlaps are deterministic: special structures beat generic structures, generic structures beat villages, and equal-priority overlaps prefer the smaller structure before registry-ID order. Debug logging prints the authoritative registry ID and selected CobbleTunes zone.
 - All six Cobblemon Gimmighoul tower worldgen structures under `cobblemon:ruins/` map to `cobbletunes:gimmighoul_tower`. The zone randomly reuses `ambience.kanto.pokemon_tower`, `ambience.kanto.deep_dark_lavender_town`, or `ambience.johto.cave_deep_dark_pokegear_unown`; no new sound keys are added.
+- The supplied Cobblemon 1.8 JAR contains 32 registered `cobblemon:habitats/*` Structure IDs, 29 `cobblemon:ruins/*` IDs, three `cobblemon:shipwreck_coves/*` IDs, and three `cobblemon:fishing_boat/*` IDs. All 67 are recognized server-side through real `StructureStart` identity. Six Gimmighoul towers use the dedicated pool above; the other 61 IDs reuse existing vanilla/BCA structure pools. The placeable Habitat Block itself is intentionally not used as automatic structure evidence.
 - `cobbletunes:game_corner` and `cobbletunes:casino` are manual server zones anchored by vanilla `minecraft:marker` entities tagged with `cobbletunes_zone:<zoneId>`. Entering either zone starts a shuffled Game Corner playlist. Tracks do not loop individually; each file plays once, then another track is selected from the remaining shuffled pool. After all 15 tracks play, the pool reshuffles and avoids an immediate repeat across the cycle boundary.
 
 ## Manual zone marker setup tutorial
 
 Manual server zones use vanilla `minecraft:marker` entities instead of a custom CobbleTunes block. This keeps the server bridge optional for clients because CobbleTunes no longer registers gameplay content that a joining client must know about.
 
-The server checks nearby marker entities every 10 ticks. A marker is a CobbleTunes zone anchor when one of its scoreboard tags starts with `cobbletunes_zone:`. Everything after that prefix is the normal CobbleTunes zone ID. Manual marker zones have priority over automatic worldgen structure detection, and when more than one marker is in range the nearest one wins.
+The server checks nearby marker entities every 10 ticks. A marker is a CobbleTunes zone anchor when one of its scoreboard tags starts with `cobbletunes_zone:`. Everything after that prefix is the normal CobbleTunes zone ID. Manual marker zones have priority over automatic worldgen structure detection, and when more than one eligible marker is in range the nearest one wins.
 
-The scan radius is 12 blocks around the player. For a large building, place more than one marker with the same tag so the whole interior stays covered. Markers are invisible and server-side, so they do not need a CobbleTunes block model or client registry entry.
+Each marker uses a **12-block default radius**. Add `cobbletunes_range:<blocks>` to override the radius for that marker only. Supported explicit values are **1–32**; a missing, malformed, zero/negative, or out-of-range value falls back to 12. CobbleTunes keeps the entity scan bounded to the 32-block maximum, then checks the real radius of every candidate marker before it can win. Multiple markers that resolve to the same zone ID are one logical zone, so moving from one anchor to another does not restart or reshuffle the music. For a large building, place more than one marker with the same zone tag so the whole interior stays covered. Markers are invisible and server-side, so they do not need a CobbleTunes block model or client registry entry.
 
 ### Basic placement
 
@@ -56,6 +60,20 @@ Summon a marker with the full CobbleTunes zone tag:
 ```mcfunction
 /summon minecraft:marker <x> <y> <z> {Tags:["cobbletunes_zone:cobbletunes:pokecenter"]}
 ```
+
+Optional per-marker radius:
+
+```mcfunction
+/summon minecraft:marker <x> <y> <z> {Tags:["cobbletunes_zone:cobbletunes:pokecenter","cobbletunes_range:12"]}
+```
+
+Battle Tower floor example with a management tag:
+
+```mcfunction
+/summon minecraft:marker <x> <y> <z> {Tags:["cobbletunes_zone:cobbletunes:battle_tower_floor_1","cobbletunes_range:12","cobbletunes_bt"]}
+```
+
+`cobbletunes_bt` has no routing meaning; it is only an administrator-friendly tag, for example `/kill @e[type=minecraft:marker,tag=cobbletunes_bt]`.
 
 Inspect nearby CobbleTunes markers with:
 
@@ -161,12 +179,12 @@ Leaving the Game Corner clears the current shuffle queue. Re-entering starts a f
 ### Placement tips
 
 - markers are invisible and do not need to be hidden inside a block
-- keep players within 12 blocks of at least one marker
+- keep players within the configured radius of at least one marker; untagged markers default to 12 blocks
 - use several markers with the same zone tag for large rooms or long hallways
 - if different manual zones overlap the nearest marker wins
 - manual markers override nearby automatic structure music while they are in range
 - leaving every manual marker lets the current automatic structure or biome ambience take over again
-- use floor-specific Battle Tower IDs for stacked floors so nearest-first detection can resolve them correctly
+- use floor-specific Battle Tower IDs for stacked floors; they use the same 12-block default radius as other manual zones, with nearest-marker resolution when ranges overlap
 
 ### Migration from older CobbleTunes builds
 
@@ -727,6 +745,36 @@ The detector recognizes all 71 registered structures in the supplied Cobbleverse
 | `ambience.vanilla.ancient_city.dragonspiral_tower` | `ambience/vanilla/ancient_city/dragonspiral_tower.ogg` | ancient city structure pool |
 | `ambience.vanilla.ancient_city.distortion_world` | `ambience/vanilla/ancient_city/distortion_world.ogg` | ancient city structure pool |
 | `ambience.vanilla.ancient_city.cerulean_cave` | `ambience/vanilla/ancient_city/cerulean_cave.ogg` | ancient city structure pool |
+
+### Cobblemon 1.8 structure reuse mappings
+
+Cobblemon 1.8 adds no new CobbleTunes sound keys here. The server detector uses exact registered `StructureStart` IDs from the supplied 1.8.0 JAR and routes them into the existing structure pools. The release notes describe 49 new habitat structures; the actual worldgen registry in the JAR exposes **32 habitat Structure IDs**, with additional habitat content represented by templates/pools rather than distinct registered Structure IDs.
+
+| Cobblemon structure IDs | Reused CobbleTunes pool |
+|---|---|
+| `habitats/berry_patch`, `habitats/flowerbed_clearing`, `habitats/freshwater_pond`, `habitats/pinkflowerbed_clearing`, `habitats/sunflowerbed_clearing`, `habitats/zen_garden` | `jungle_pyramid` |
+| `habitats/sandpit_clearing`, `habitats/sunscorched_clearing` | `desert_pyramid` |
+| `habitats/badlands_shaded_rock`, `habitats/birch_wildfire_scar`, `habitats/fae_mounds`, `habitats/meteorite_impact`, `habitats/natural_lightningrod`, `habitats/oak_wildfire_scar`, `habitats/spruce_wildfire_scar` | `trail_ruins` |
+| `habitats/bug_mound`, `habitats/lush_canopy`, `habitats/lush_cenote`, `habitats/reclaimed_lush_monument` | `jungle_pyramid` |
+| `habitats/carved_ice_spikes`, `habitats/drifting_icebergs`, `habitats/snowy_burrow`, `habitats/snowy_grotto`, `habitats/snowy_thermal_vents` | `igloo` |
+| `habitats/deep_sea_spire` | `ocean_ruin` |
+| `habitats/desert_oasis`, `habitats/desert_shaded_rock`, `habitats/reclaimed_deserted_monument` | `desert_pyramid` |
+| `habitats/fungal_dwelling`, `habitats/lush_peat_bog`, `habitats/parched_peat_bog` | `swamp_hut` |
+| `habitats/thermal_crevices` | `mineshaft_mesa` |
+| `ruins/ancient_dais_ruins`, `ruins/deserted_house_ruins`, `ruins/deserted_tower_ruins`, `ruins/deserted_town_center_ruins`, `ruins/fallen_statue_ruins`, `ruins/luna_henge_ruins`, `ruins/meteor_battleground_ruins`, `ruins/rooted_arch_ruins`, `ruins/sol_henge_ruins`, `ruins/stonjourner_henge_ruins`, `ruins/toppled_pillars_ruins` | `trail_ruins` |
+| `ruins/crumbling_arch_ruins`, `ruins/hidden_bunker_ruins`, `ruins/mossy_oubliette_ruins` | `stronghold` |
+| `ruins/decaying_crypt_ruins` | `nether_fossil` |
+| `ruins/deserted_monument_ruins`, `ruins/sunscorched_shaded_ruins` | `desert_pyramid` |
+| `ruins/frozen_altar_ruins` | `igloo` |
+| `ruins/lush_monument_ruins` | `jungle_pyramid` |
+| `ruins/old_garden_ruins` | `mansion` |
+| `ruins/overgrown_trial_ruins` | `trial_chambers` |
+| `ruins/submerged_forge_ruins` | `ocean_ruin` |
+| `ruins/unstable_cave_ruins` | `mineshaft` |
+| `ruins/deserted_gimmi_tower`, `ruins/frozen_gimmi_tower`, `ruins/lush_gimmi_tower`, `ruins/rooted_gimmi_tower`, `ruins/sunscorched_gimmi_tower`, `ruins/temperate_gimmi_tower` | dedicated `cobbletunes:gimmighoul_tower` pool |
+| `shipwreck_coves/lush_shipwreck_cove`, `shipwreck_coves/magma_shipwreck_cove`, `shipwreck_coves/submerged_shipwreck_cove`, `fishing_boat/beach`, `fishing_boat/deep_ocean`, `fishing_boat/warm_ocean` | `shipwreck` |
+
+This includes 1.8's new Magma Shipwreck Cove. The **Habitat Block** is not part of this mapping because it is a placeable spawner block rather than a registered worldgen `StructureStart`; custom Habitat Block areas can use manual marker zones instead.
 
 ### Terralith structure reuse mappings
 

@@ -32,7 +32,7 @@ class CobbleTunes : ModInitializer {
         PayloadTypeRegistry.playS2C().register(PokemonCapturedPayload.ID, PokemonCapturedPayload.CODEC)
         PayloadTypeRegistry.playC2S().register(ClientBridgeProbePayload.ID, ClientBridgeProbePayload.CODEC)
 
-        // channel presence lets clients detect the optional server bridge
+        // tells clients the server bridge is here
         ServerPlayNetworking.registerGlobalReceiver(ClientBridgeProbePayload.ID) { _, _ -> }
 
         StructureZoneDetector.register()

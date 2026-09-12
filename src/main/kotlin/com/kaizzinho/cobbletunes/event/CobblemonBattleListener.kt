@@ -26,9 +26,7 @@ import java.util.Locale
 
 object CobblemonBattleListener {
 
-    // Cobblemon emits one BATTLE_FAINTED event per faint. Use it only to arm a
-    // short outcome watch: early Victory is sent after Showdown has declared the
-    // winner and the complete server-side opposing roster is actually defeated.
+    // faint only arms the win check
     private data class PendingDecisiveFaintCheck(
         val battle: PokemonBattle,
         var ticksRemaining: Int = 40
@@ -73,8 +71,7 @@ object CobblemonBattleListener {
                     continue
                 }
 
-                // In doubles/2v2/team battles, only actors on the opposite BattleSide
-                // contribute to the opponent roster and regional/theme vote.
+                // only vote with the other battle side
                 val playerSide = sideForActor(battle, playerActor)
                 if (playerSide == null) {
                     LOGGER.warn(
@@ -94,6 +91,7 @@ object CobblemonBattleListener {
                     "legendary" in pokemon.species.labels || "mythical" in pokemon.species.labels
                 }
                 val isLegendary = legendaryPokemon != null
+                val isAlphaWild = battle.isPvW && opposingPokemon.any { it.isAlpha }
                 val primaryPokemon = legendaryPokemon ?: opposingPokemon.firstOrNull()
                 val dexNumber = primaryPokemon?.species?.nationalPokedexNumber ?: -1
                 val legendaryForm = legendaryPokemon?.form?.name.orEmpty()
@@ -118,6 +116,7 @@ object CobblemonBattleListener {
                 val trainerRoute = when {
                     raidTier != null -> "raid|${raidTier.lowercase()}"
                     bossTier != null -> "boss|${bossTier.lowercase()}"
+                    isAlphaWild -> "alpha|alpha"
                     battle.isPvN -> RctBridge.resolveTrainerRoute(battle, opposingActors)
                     else -> ""
                 }
@@ -126,7 +125,7 @@ object CobblemonBattleListener {
                     LOGGER.info(
                         "[$MOD_ID] [Debug] [Battle payload] player=${player.name.string} " +
                             "battle=${battle.battleId} isWild=${battle.isPvW} " +
-                            "isTrainer=${battle.isPvN} raidTier=${raidTier ?: "none"} " +
+                            "isTrainer=${battle.isPvN} isAlpha=$isAlphaWild raidTier=${raidTier ?: "none"} " +
                             "bossTier=${bossTier ?: "none"} route='$trainerRoute' " +
                             "form='${legendaryForm.ifEmpty { "base" }}' " +
                             "regional='${primaryRegionalVariant.ifEmpty { "standard" }}' " +
@@ -220,7 +219,6 @@ object CobblemonBattleListener {
             }
         }
 
-        // defeat uses the real respawn flag
         ServerPlayerEvents.AFTER_RESPAWN.register { _, newPlayer, alive ->
             if (!alive) {
                 CobbleTunesNetworking.sendIfSupported(newPlayer, PlayerDeathPayload)
@@ -237,11 +235,7 @@ object CobblemonBattleListener {
         if (battle.battleId in earlyVictorySentBattles) return true
         if (RaidDensBridge.isRaidBattle(battle)) return true
 
-        // The Showdown interpreter receives the authoritative `win` instruction before
-        // Cobblemon finishes its visual dispatch queue. Requiring that declaration keeps
-        // early Victory safe for spread moves, recoil, Explosion/double-KO resolutions,
-        // PvP, doubles and 2v2 battles. If `win` is not available yet, do nothing and let
-        // Cobblemon's normal BATTLE_VICTORY event remain the final authority.
+        // wait for showdown to confirm the winner
         val declaredWinners = showdownWinnerActorUuids(battle) ?: return false
 
         val declaredWinningPlayers = battle.players.filter { player ->
@@ -252,9 +246,7 @@ object CobblemonBattleListener {
         val winningPlayers = declaredWinningPlayers.filter { player ->
             val actor = battle.getActor(player) ?: return@filter false
 
-            // Also verify the complete server-side opposing roster. A forfeit may produce
-            // a winner while healthy opponents remain; that case is intentionally left to
-            // the official BATTLE_VICTORY event instead of pretending it was a final faint.
+            // forfeits stay on the normal victory path
             val playerSide = sideForActor(battle, actor) ?: return@filter false
             val opposingSide = if (playerSide === battle.side1) battle.side2 else battle.side1
             sideIsCompletelyDefeated(opposingSide)
@@ -419,7 +411,7 @@ object CobblemonBattleListener {
             val rctMod = getInstance.invoke(null) ?: return missing
             val trainerManager = invokeNoArg(rctMod, "getTrainerManager") ?: return missing
 
-            // rct string lookup first entity lookup fallback
+            // try id first, entity fallback after
             val trainerData = invokeOneArg(trainerManager, "getData", trainerId)
                 ?: invokeOneArg(trainerManager, "getData", entity)
                 ?: return missing

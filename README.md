@@ -4,7 +4,7 @@
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-62B47A?logo=minecraft&logoColor=white)
 ![Fabric](https://img.shields.io/badge/Fabric-Loader%200.17.2%2B-DBB69B?logo=minecraft&logoColor=white)
 ![Kotlin](https://img.shields.io/badge/Kotlin-Fabric%20Language%20Kotlin-7F52FF?logo=kotlin&logoColor=white)
-![Cobblemon](https://img.shields.io/badge/Cobblemon-1.7.3-3E8E41)
+![Cobblemon](https://img.shields.io/badge/Cobblemon-1.8.0-3E8E41)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![Audio](https://img.shields.io/badge/audio-not%20included-lightgrey)
 
@@ -21,6 +21,8 @@
 The mod ships the routing and playback system only. It does **not** include, download, or generate Pokémon OST files. Music is supplied by a normal Minecraft resource pack under `assets/cobbletunes/sounds/`.
 
 The current source defines **441 sound events** across battle, Victory, Battle Tower, Game Corner, evolution, ambience, menu, and effects. The complete list is in [`SOUND_MANIFEST.md`](./SOUND_MANIFEST.md).
+
+This source targets **Cobblemon 1.8.0 on Minecraft 1.21.1**. The existing battle-side, Victory, capture, client battle synchronization, and evolution hooks remain compatible. Cobblemon 1.8 Alpha Pokémon are now detected from their synchronized `isAlpha` metadata and use a boss-like regional weighted soundtrack route. The complete Cobblemon 1.8 worldgen structure registry is also mapped: 32 registered Habitat Structure IDs, 29 ruin IDs, three Shipwreck Coves, and three fishing boats. These routes reuse existing CobbleTunes structure pools, except the six Gimmighoul towers which retain their dedicated spooky pool.
 
 ### What it does
 
@@ -51,7 +53,7 @@ Lower-priority world detection keeps running while battle or Victory music owns 
 
 ### Client-only and server-enhanced modes
 
-CobbleTunes can be installed on the **client only** and used on public Cobblemon servers that do not run the mod. In that mode it infers standard wild, trainer, PvP, Legendary/Mythical, regional-form, Victory, capture, WildBosses, Raid Dens, and observable RCT routes from client-visible Cobblemon/mod state. Raid Dens can also be identified from its native tier battle sound, and successful client-only raids trigger the same five-second regional Victory cue when the raid boss faints, followed by a two-second full-volume tail before fade-out begins.
+CobbleTunes can be installed on the **client only** and used on public Cobblemon servers that do not run the mod. In that mode it infers standard wild, trainer, PvP, Legendary/Mythical, Alpha, regional-form, Victory, capture, WildBosses, Raid Dens, and observable RCT routes from client-visible Cobblemon/mod state. Raid Dens can also be identified from its native tier battle sound, and successful client-only raids trigger the same five-second regional Victory cue when the raid boss faints, followed by a two-second full-volume tail before fade-out begins.
 
 World biome ambience, menu music, low-HP handling, spatial evolution music, volume suspension, and other purely client-side systems work normally. Evolution never needs a CobbleTunes server packet: visible world evolutions are observed from Cobblemon's synchronized `PokemonEntity.isEvolving` state, while an evolution completed directly from Cobblemon's Summary UI with no live world entity is detected from Cobblemon's synchronized client party storage and plays only the regional congratulation cue from the player's position. The Summary watch remains armed briefly after the screen closes so the final party sync is not missed. Client-only structure routing deliberately does **not** infer worldgen structures from ordinary player-placeable blocks. Bells do not identify villages, healing machines plus PCs do not identify Poké Centers, Gilded/Gimmighoul chests do not identify Gimmighoul towers, and portal-like obsidian/netherrack builds do not identify Ruined Portals. Exact `StructureStart` identities and manual marker zones remain server-enhanced features because vanilla chunk networking does not provide those authoritative structure identities to a normal remote client. This favors a safe biome fallback on public servers over false structure music inside player bases.
 
@@ -67,13 +69,14 @@ When a CobbleTunes server bridge is present, the client automatically stops its 
 - [x] **Villain faction themes** for Rocket, Aqua, Magma, Galactic, Plasma, Flare, Skull, Aether Foundation, Lusamine, and Ultra Recon Squad routes.
 - [x] **Frontier Brain music** with a dedicated battle context.
 - [x] **WildBosses and Cobblemon Raid Dens integrations** with tier-weighted regional PvP, generic Legendary, and BW World Tournament pools, actor-entity Raid Dens detection, and a dedicated 5-second regional Victory cue plus a 2-second full-volume tail before fade-out when a raid is cleared.
+- [x] **Cobblemon 1.8 Alpha Pokémon routing** using authoritative/synchronized Alpha metadata on both server-enhanced and client-only paths. Wild Alphas reuse the Boss selector with a Rare-like 70/20/10 regional PvP / generic Legendary / BW World Tournament mix; Raid Dens and WildBosses retain higher routing priority.
 - [x] **Species-safe Boss pools** that keep unique Legendary encounter themes out of unrelated Boss fights.
 - [x] **Victory + Cobblemon Loot Menu integration** with server-enhanced Victory starting only when the complete opposing battle side is defeated, safe client-only fallbacks, extension while the loot screen is open, and current-zone resume afterward.
 - [x] **Capture Victory themes** for successful Pokémon captures, including captures made outside battle, using the captured Pokémon region and the existing wild Victory pool.
 - [x] **Battle Tower floor pools** with low, mid, high, and final marker-driven ambience tiers; generic floor-trainer battles keep normal roster-based regional routing.
 - [x] **Biome ambience memory and rotation** with silence windows, biome-transition debounce, and visit memory that expires after a random 3–6 minutes or 3 meaningful biome transitions.
 - [x] **Underground ambience detection** using sky light and player height.
-- [x] **Cobbleverse exact structures**, **vanilla structures**, **Terralith structures**, **CobblemonAdditions/BCA villages**, **Repurposed Structures**, all structures from the **LegendaryMonuments-Cobbleverse light build**, and **Cobblemon Gimmighoul towers** using existing music.
+- [x] **Cobbleverse exact structures**, **vanilla structures**, **Terralith structures**, **CobblemonAdditions/BCA villages**, **Repurposed Structures**, all structures from the **LegendaryMonuments-Cobbleverse light build**, and the complete **Cobblemon 1.8 worldgen structure registry** using existing music pools.
 - [x] **Hand-placed music zones** for Poké Centers, Poké Marts, Gyms, Game Corners/Casinos, special locations, and Battle Tower floors.
 - [x] **Game Corner pool** with 15 FRLG, Emerald, HGSS, and Platinum tracks played as a shuffled no-repeat playlist.
 - [x] **Title-screen music** that stays active across submenus and stops when a world loads.
@@ -90,9 +93,9 @@ When a CobbleTunes server bridge is present, the client automatically stops its 
 
 - Minecraft `1.21.1`
 - Fabric Loader `0.17.2+`
-- Fabric API
-- Fabric Language Kotlin `1.13.3+`
-- Cobblemon `1.7.3`
+- Fabric API `0.116.6+1.21.1`
+- Fabric Language Kotlin `1.13.6+`
+- Cobblemon `1.8.0`
 - Java `21`
 
 For multiplayer, installing CobbleTunes on the **client is enough** for the standalone experience on a public Cobblemon server. Installing the same CobbleTunes JAR on the server is optional and enables exact server-only structure/manual-zone routing and authoritative compatibility metadata for CobbleTunes clients. Players without CobbleTunes can still join because the server bridge registers no custom gameplay content and only sends CobbleTunes payloads to clients that advertise support.
@@ -151,11 +154,19 @@ hisuian growlithe → hisui
 paldean wooper → paldea
 ```
 
-The regional variant affects wild themes, trainer roster voting, WildBosses and Raid Dens regional pools, Legendary fallback routing, and Victory region selection.
+The regional variant affects wild themes, trainer roster voting, Alpha/WildBosses/Raid Dens regional pools, Legendary fallback routing, and Victory region selection. Cobblemon 1.8's new Alolan Sandshrew/Sandslash, Galarian Yamask, and Hisuian Avalugg are covered automatically by the same form/aspect logic.
+
+#### Alpha Pokémon
+
+Cobblemon 1.8 exposes Alpha state directly through `Pokemon.isAlpha()` on the server and synchronized `PokemonProperties.isAlpha` in client battle data. CobbleTunes uses those flags directly; it does not infer Alpha status from scale, red eyes, particles, moves, or herd behaviour.
+
+Only **wild** Alpha opponents receive the Alpha music route. Route priority is `Raid Dens → WildBosses → Alpha → ordinary trainer/wild`, so a WildBoss that also happens to be Alpha keeps its explicit WildBoss tier. Alpha uses the existing Boss weighted selector with an `ALPHA` profile equivalent to the Rare mix: **70% regional rival/PvP, 20% generic Legendary, 10% BW World Tournament**. Species-specific Legendary encounter tracks remain excluded from the generic Legendary pool. No new OGG files or sound events are required.
+
+Alpha victories and Alpha captures continue to use the normal regional **wild Victory** resolver; Alpha changes the encounter soundtrack, not the post-battle/capture identity.
 
 #### RCT trainer roles and factions
 
-RCT integration is reflection-based. CobbleTunes reads the trainer ID and type when available, then classifies the encounter without making RCT a hard dependency.
+RCT integration is reflection-based. CobbleTunes reads the trainer ID and type when available, then classifies the encounter without making RCT a hard dependency. For the Cobblemon 1.8 development/runtime test environment, the validated local pair is **RCT Mod 0.19.0-beta + RCT API 0.16.0-beta**.
 
 Recognized role routes include:
 
@@ -212,6 +223,7 @@ WildBosses and Cobblemon Raid Dens are optional. Actual WildBoss encounters and 
 |---|---:|---:|---:|---|
 | Uncommon | 80% | 15% | 5% | 1 star |
 | Rare | 70% | 20% | 10% | 2 stars |
+| Alpha (fixed profile) | 70% | 20% | 10% | — |
 | Epic | 60% | 30% | 10% | 3–4 stars |
 | Legendary | 50% | 35% | 15% | 5–6 stars |
 | Mythic | 45% | 40% | 15% | 7 stars |
@@ -255,7 +267,7 @@ battle_tower_high
 battle_tower_final
 ```
 
-Floor trigger IDs such as `cobbletunes:battle_tower_floor_1` through `cobbletunes:battle_tower_floor_10` resolve as **1–3 low, 4–6 mid, 7–9 high, and 10 final**. Nearby floor triggers are checked nearest-first so vertically overlapping floors do not steal each other's ambience.
+Floor trigger IDs such as `cobbletunes:battle_tower_floor_1` through `cobbletunes:battle_tower_floor_10` resolve as **1–3 low, 4–6 mid, 7–9 high, and 10 final**. Battle Tower floor markers use the same **12-block default radius** as every other manual CobbleTunes zone. Markers are still checked nearest-first, so overlapping floor zones resolve to the closest eligible marker. Use `cobbletunes_range:<blocks>` only when you intentionally want to override the standard radius for a specific custom setup.
 
 Battle Tower floor zones control **world ambience only**. They no longer force trainer battles to use the Galar Battle Tower battle theme. Generic `f*_trainer*` RCT floor trainers use ordinary roster-majority regional trainer routing, while the ten exact named `pokemon_trainer_*` encounters use their lore-specific weighted pools.
 
@@ -272,7 +284,7 @@ Entering the zone starts a shuffled Game Corner playlist. The first track is ran
 
 The pool has 15 expected files under `assets/cobbletunes/sounds/gamecorner/`, grouped across FRLG, Emerald, HGSS, and Platinum. The resource pack audio is still supplied separately; the source only registers the events and routing. See [`SOUND_MANIFEST.md`](./SOUND_MANIFEST.md) for the exact filenames and source-theme suggestions.
 
-Manual server zones use invisible vanilla marker entities within a 12-block radius. For example, `/summon minecraft:marker 300 64 300 {Tags:["cobbletunes_zone:cobbletunes:game_corner"]}` creates a Game Corner anchor. The nearest tagged marker wins when zones overlap. The old `cobbletunes:music_trigger` custom block was removed so a server-side CobbleTunes install stays optional for clients; worlds that used that old block should convert those anchors to markers before updating. See [`SOUND_MANIFEST.md`](./SOUND_MANIFEST.md) for the full marker setup examples.
+Manual server zones use invisible vanilla marker entities with a default 12-block radius. An optional `cobbletunes_range:<blocks>` tag can override that radius per marker from 1–32 blocks; invalid or missing values fall back to 12. For example, `/summon minecraft:marker 300 64 300 {Tags:["cobbletunes_zone:cobbletunes:game_corner","cobbletunes_range:12"]}` creates a Game Corner anchor. The nearest marker whose own radius actually reaches the player wins when zones overlap. Multiple markers resolving to the same zone ID do not restart or reshuffle the current zone music. The old `cobbletunes:music_trigger` custom block was removed so a server-side CobbleTunes install stays optional for clients; worlds that used that old block should convert those anchors to markers before updating. See [`SOUND_MANIFEST.md`](./SOUND_MANIFEST.md) for the full marker setup examples.
 
 ### Ambience and structures
 
@@ -288,8 +300,12 @@ Structure music has higher priority than biome ambience. With the optional serve
 - CobblemonAdditions `4.3.0` dark, default, fighting, fairy, and ice villages mapped into the existing BCA small/mid/large pools, plus its Witch Hut mapped to the Swamp Hut pool;
 - Repurposed Structures variants mapped back into the closest existing vanilla/BCA pool;
 - all 13 structures registered by the LegendaryMonuments-Cobbleverse light build mapped to existing regional/structure tracks;
-- all six Cobblemon Gimmighoul tower worldgen structures (`deserted`, `frozen`, `lush`, `rooted`, `sunscorched`, and `temperate`) mapped to a creepy three-track pool built from the existing Pokémon Tower, Lavender Town, and Pokégear Unown themes;
+- all **32 registered Cobblemon 1.8 Habitat Structure IDs**, mapped by environment/theme into existing Trail Ruins, Jungle Pyramid, Igloo, Ocean Ruin, Desert Pyramid, Swamp Hut, Mineshaft Mesa, and related pools;
+- all **29 Cobblemon ruin IDs**: the six Gimmighoul towers (`deserted`, `frozen`, `lush`, `rooted`, `sunscorched`, and `temperate`) keep the dedicated creepy Pokémon Tower/Lavender Town/Pokégear Unown pool, while the other 23 ruins reuse the closest existing structure pool;
+- all three Cobblemon **Shipwreck Coves**, including 1.8's `magma_shipwreck_cove`, plus all three fishing-boat Structure IDs, reuse the existing Shipwreck pool;
 - manual zones anchored by vanilla `minecraft:marker` entities tagged with `cobbletunes_zone:<zoneId>`.
+
+Cobblemon's new **Habitat Block** is intentionally not treated as an automatic music detector. It is a placeable/spawner block, while CobbleTunes structure music remains tied to real worldgen `StructureStart` identities; custom Habitat Block areas can still use a manual `cobbletunes_zone:` marker if desired.
 
 In server-enhanced mode, structure detection resolves the real registered `StructureStart` from nearby chunk references, matching the same worldgen identity concept used by commands such as `/locate structure`. Compact structures up to 16×16 blocks receive a 4-block margin on every horizontal side and 4 blocks vertically; larger structures keep a 1-block horizontal and 2-block vertical margin. When mapped structures overlap, special structures beat generic structures, generic structures beat villages, and equal-priority overlaps prefer the smaller structure before falling back to registry-ID order. Debug logging reports the authoritative registry ID and selected CobbleTunes zone. This gives structures stable, deterministic routing without using player-placeable blocks as evidence.
 
@@ -395,6 +411,8 @@ O mod contém apenas a lógica de roteamento e reprodução. Ele **não** inclui
 
 O código atual define **441 eventos de som** entre batalhas, vitória, Battle Tower, Game Corner, evolução, ambientação, menu e efeitos. A lista completa está em [`SOUND_MANIFEST.md`](./SOUND_MANIFEST.md).
 
+Este código tem como alvo **Cobblemon 1.8.0 no Minecraft 1.21.1**. Os hooks existentes de lados da batalha, Victory, captura, sincronização de batalha no cliente e evolução continuam compatíveis. Pokémon Alpha do Cobblemon 1.8 agora são detectados pelos metadados sincronizados `isAlpha` e usam uma rota regional ponderada semelhante à de Boss. O registro worldgen do Cobblemon 1.8 também está completamente mapeado: 32 IDs registrados de estruturas Habitat, 29 IDs de ruínas, três Shipwreck Coves e três barcos de pesca. Essas rotas reutilizam pools de estrutura já existentes, exceto pelas seis torres de Gimmighoul que mantêm seu pool sombrio dedicado.
+
 ### O que ele faz
 
 O CobbleTunes funciona primeiro pelo cliente. Em um servidor público de Cobblemon sem CobbleTunes, o cliente usa o estado da batalha que já recebe, resolve localmente a função e a região do adversário e toca o `SoundEvent` correspondente. Quando o servidor também possui CobbleTunes, os pacotes do servidor passam a ser a fonte autoritativa para dados que só existem no servidor, como a identidade exata de estruturas worldgen e zonas manuais.
@@ -424,7 +442,7 @@ As detecções de prioridade menor continuam atualizando em segundo plano enquan
 
 ### Modos somente cliente e com servidor
 
-O CobbleTunes pode ser instalado **somente no cliente** e usado em servidores públicos de Cobblemon que não possuem o mod. Nesse modo ele infere batalhas selvagens, treinadores, PvP, lendários/míticos, formas regionais, Victory, capturas, WildBosses, Raid Dens e dados observáveis do RCT a partir do estado que o cliente já recebe. Raid Dens também pode ser reconhecido pelo som nativo do tier da raid, e uma raid concluída no modo somente cliente dispara a mesma Victory regional de cinco segundos quando o boss desmaia, seguida por dois segundos em volume cheio antes do início do fade-out.
+O CobbleTunes pode ser instalado **somente no cliente** e usado em servidores públicos de Cobblemon que não possuem o mod. Nesse modo ele infere batalhas selvagens, treinadores, PvP, lendários/míticos, Alpha, formas regionais, Victory, capturas, WildBosses, Raid Dens e dados observáveis do RCT a partir do estado que o cliente já recebe. Raid Dens também pode ser reconhecido pelo som nativo do tier da raid, e uma raid concluída no modo somente cliente dispara a mesma Victory regional de cinco segundos quando o boss desmaia, seguida por dois segundos em volume cheio antes do início do fade-out.
 
 Ambientação de bioma, menu, HP baixo, música espacial de evolução, suspensão por volume e outros sistemas puramente locais continuam funcionando normalmente. A evolução nunca exige pacote do servidor do CobbleTunes: evoluções visíveis no mundo são observadas pelo estado sincronizado `PokemonEntity.isEvolving`, enquanto uma evolução concluída diretamente pela tela Summary do Cobblemon sem uma entidade viva próxima no mundo é detectada pelo armazenamento sincronizado da party no cliente e toca somente o cue regional de congratulação na posição do jogador. O watcher da Summary continua armado por alguns segundos depois que a tela fecha para não perder a sincronização final. No modo somente cliente, o roteamento de estruturas deliberadamente **não** infere estruturas worldgen a partir de blocos comuns colocáveis pelo jogador. Sinos não identificam vilas, healing machines com PCs não identificam Poké Centers, Gilded/Gimmighoul chests não identificam torres de Gimmighoul e construções de obsidian/netherrack não identificam Ruined Portals. Os IDs exatos de `StructureStart` e as zonas manuais com markers continuam como recursos melhorados pelo servidor, pois um cliente remoto normal não recebe essas identidades autoritativas. Em servidores públicos, o CobbleTunes prefere cair para a música do bioma em vez de tocar uma estrutura falsa dentro da base de um jogador.
 
@@ -440,13 +458,14 @@ Quando uma ponte de servidor do CobbleTunes está disponível, o cliente desativ
 - [x] **Temas de facções** para Rocket, Aqua, Magma, Galactic, Plasma, Flare, Skull, Aether Foundation, Lusamine e Ultra Recon Squad.
 - [x] **Música de Frontier Brain** com contexto próprio.
 - [x] **Integrações com WildBosses e Cobblemon Raid Dens** usando pools regionais ponderados por tier, detecção pelo Pokémon original do actor e Victory regional dedicado por 5 segundos, seguido por 2 segundos em volume cheio antes do fade-out ao concluir uma raid.
+- [x] **Roteamento de Pokémon Alpha do Cobblemon 1.8** usando metadados Alpha autoritativos/sincronizados no servidor e no modo somente cliente. Alphas selvagens reutilizam o seletor de Boss com mistura 70/20/10 equivalente a Rare; Raid Dens e WildBosses mantêm prioridade maior.
 - [x] **Pools seguros para Bosses** sem usar temas lendários específicos em encontros aleatórios.
 - [x] **Integração de vitória com Cobblemon Loot Menu** iniciando a Victory antecipada no servidor somente quando todo o lado adversário foi derrotado, usando fallbacks seguros no modo somente cliente, mantendo a música durante o menu e retornando para a zona atual depois.
 - [x] **Temas de vitória ao capturar Pokémon** em capturas dentro ou fora de batalha, usando a região do Pokémon capturado e o pool de vitória selvagem já existente.
 - [x] **Pools de Battle Tower** para ambientação de andares baixos, médios, altos e finais controlados por markers; batalhas contra treinadores genéricos continuam usando roteamento regional pelo time adversário.
 - [x] **Memória e rotação de ambientação por bioma** com intervalos de silêncio, debounce e memória de visita que expira após 3–6 minutos aleatórios ou 3 transições significativas de bioma.
 - [x] **Detecção subterrânea** usando luz do céu e altura do jogador.
-- [x] **Estruturas exatas do Cobbleverse**, **estruturas vanilla**, **estruturas do Terralith**, **vilas do CobblemonAdditions/BCA**, **Repurposed Structures**, todas as estruturas da versão leve **LegendaryMonuments-Cobbleverse** e **torres de Gimmighoul do Cobblemon** usando músicas já existentes.
+- [x] **Estruturas exatas do Cobbleverse**, **estruturas vanilla**, **estruturas do Terralith**, **vilas do CobblemonAdditions/BCA**, **Repurposed Structures**, todas as estruturas da versão leve **LegendaryMonuments-Cobbleverse** e o registro worldgen completo do **Cobblemon 1.8** usando pools musicais já existentes.
 - [x] **Zonas manuais de música** para Centros Pokémon, Poké Marts, Ginásios, Game Corners/Cassinos, locais especiais e andares da Battle Tower.
 - [x] **Pool de Game Corner** com 15 faixas de FRLG, Emerald, HGSS e Platinum tocadas como uma playlist embaralhada sem repetição imediata.
 - [x] **Música de menu** contínua entre os submenus da tela inicial.
@@ -463,9 +482,9 @@ Quando uma ponte de servidor do CobbleTunes está disponível, o cliente desativ
 
 - Minecraft `1.21.1`
 - Fabric Loader `0.17.2+`
-- Fabric API
-- Fabric Language Kotlin `1.13.3+`
-- Cobblemon `1.7.3`
+- Fabric API `0.116.6+1.21.1`
+- Fabric Language Kotlin `1.13.6+`
+- Cobblemon `1.8.0`
 - Java `21`
 
 Em multiplayer, instalar o CobbleTunes **somente no cliente já é suficiente** para a experiência standalone em um servidor público de Cobblemon. Instalar o mesmo JAR do CobbleTunes no servidor é opcional e habilita roteamento exato de estruturas/zonas manuais e metadados autoritativos para clientes que também possuem o mod. Jogadores sem CobbleTunes continuam podendo entrar porque a ponte não registra conteúdo próprio de gameplay e só envia payloads para clientes que anunciam suporte.
@@ -524,11 +543,19 @@ growlithe de hisui → hisui
 wooper de paldea → paldea
 ```
 
-A variante regional afeta temas selvagens, votação da equipe de treinadores, pools do WildBosses e Raid Dens, fallback de lendários e seleção da região da vitória.
+A variante regional afeta temas selvagens, votação da equipe de treinadores, pools de Alpha/WildBosses/Raid Dens, fallback de lendários e seleção da região da vitória. As novas formas Sandshrew/Sandslash de Alola, Yamask de Galar e Avalugg de Hisui do Cobblemon 1.8 são cobertas automaticamente pela mesma lógica de forma/aspects.
+
+#### Pokémon Alpha
+
+O Cobblemon 1.8 expõe o estado Alpha diretamente por `Pokemon.isAlpha()` no servidor e por `PokemonProperties.isAlpha` sincronizado nos dados de batalha do cliente. O CobbleTunes usa esses flags diretamente; não tenta deduzir Alpha por escala, olhos vermelhos, partículas, golpes ou comportamento de manada.
+
+Somente oponentes Alpha **selvagens** recebem essa rota. A prioridade é `Raid Dens → WildBosses → Alpha → treinador/selvagem comum`, então um WildBoss que também seja Alpha mantém seu tier explícito de WildBoss. Alpha reutiliza o seletor ponderado de Boss com perfil `ALPHA` equivalente a Rare: **70% rival/PvP regional, 20% Lendário genérico e 10% BW World Tournament**. Temas exclusivos de espécies Lendárias continuam fora do pool genérico. Nenhum OGG ou evento de som novo é necessário.
+
+Vitórias e capturas de Alpha continuam usando o resolvedor regional normal de **Victory selvagem**; Alpha altera a música do encontro, não a identidade pós-batalha/captura.
 
 #### Funções e facções do RCT
 
-A integração com RCT usa reflexão. O CobbleTunes lê ID e tipo do treinador quando disponíveis sem transformar o RCT em dependência obrigatória.
+A integração com RCT usa reflexão. O CobbleTunes lê ID e tipo do treinador quando disponíveis sem transformar o RCT em dependência obrigatória. Para o ambiente de desenvolvimento/teste em Cobblemon 1.8, o par local validado é **RCT Mod 0.19.0-beta + RCT API 0.16.0-beta**.
 
 Rotas reconhecidas incluem:
 
@@ -585,6 +612,7 @@ WildBosses e Cobblemon Raid Dens são opcionais. Encontros reais do WildBosses e
 |---|---:|---:|---:|---|
 | Uncommon | 80% | 15% | 5% | 1 estrela |
 | Rare | 70% | 20% | 10% | 2 estrelas |
+| Alpha (perfil fixo) | 70% | 20% | 10% | — |
 | Epic | 60% | 30% | 10% | 3–4 estrelas |
 | Legendary | 50% | 35% | 15% | 5–6 estrelas |
 | Mythic | 45% | 40% | 15% | 7 estrelas |
@@ -628,7 +656,7 @@ battle_tower_high
 battle_tower_final
 ```
 
-IDs de trigger como `cobbletunes:battle_tower_floor_1` até `cobbletunes:battle_tower_floor_10` são convertidos em **1–3 low, 4–6 mid, 7–9 high e 10 final**. Triggers próximos são verificados do mais próximo para o mais distante para evitar conflito vertical entre andares.
+IDs de trigger como `cobbletunes:battle_tower_floor_1` até `cobbletunes:battle_tower_floor_10` são convertidos em **1–3 low, 4–6 mid, 7–9 high e 10 final**. Os markers dos andares da Battle Tower usam o mesmo **raio padrão de 12 blocos** de todas as outras zonas manuais do CobbleTunes. Os markers continuam sendo avaliados do mais próximo para o mais distante, então zonas sobrepostas resolvem para o marker elegível mais próximo. Use `cobbletunes_range:<blocos>` apenas quando quiser substituir intencionalmente o raio padrão em uma configuração específica.
 
 As zonas de andar da Battle Tower controlam **somente a ambientação do mundo**. Elas não forçam mais batalhas de treinador para o tema da Battle Tower de Galar. Treinadores genéricos `f*_trainer*` usam a rota regional comum por maioria do time, enquanto os dez encontros exatos `pokemon_trainer_*` usam seus pools especiais baseados no lore.
 
@@ -645,7 +673,7 @@ Ao entrar na zona o mod inicia uma playlist embaralhada do Game Corner. A primei
 
 O pool possui 15 arquivos esperados dentro de `assets/cobbletunes/sounds/gamecorner/`, divididos entre FRLG, Emerald, HGSS e Platinum. O áudio continua sendo fornecido separadamente pelo resource pack. Veja [`SOUND_MANIFEST.md`](./SOUND_MANIFEST.md) para os nomes exatos e as sugestões de temas de origem.
 
-As zonas manuais do servidor usam entidades vanilla `minecraft:marker` invisíveis em um raio de 12 blocos. Por exemplo, `/summon minecraft:marker 300 64 300 {Tags:["cobbletunes_zone:cobbletunes:game_corner"]}` cria uma âncora de Game Corner. Quando zonas se sobrepõem, o marker mais próximo vence. O antigo bloco customizado `cobbletunes:music_trigger` foi removido para que a instalação do CobbleTunes no servidor continue opcional para os clientes; mundos que usavam esse bloco devem converter as âncoras para markers antes de atualizar. Veja [`SOUND_MANIFEST.md`](./SOUND_MANIFEST.md) para os exemplos completos.
+As zonas manuais do servidor usam entidades vanilla `minecraft:marker` invisíveis com raio padrão de 12 blocos. Uma tag opcional `cobbletunes_range:<blocos>` pode substituir esse raio individualmente entre 1–32 blocos; valores ausentes ou inválidos voltam para 12. Por exemplo, `/summon minecraft:marker 300 64 300 {Tags:["cobbletunes_zone:cobbletunes:game_corner","cobbletunes_range:12"]}` cria uma âncora de Game Corner. Quando zonas se sobrepõem, vence o marker mais próximo cujo próprio raio realmente alcança o jogador. Vários markers que resolvem para a mesma zona não reiniciam nem reembaralham a música atual. O antigo bloco customizado `cobbletunes:music_trigger` foi removido para que a instalação do CobbleTunes no servidor continue opcional para os clientes; mundos que usavam esse bloco devem converter as âncoras para markers antes de atualizar. Veja [`SOUND_MANIFEST.md`](./SOUND_MANIFEST.md) para os exemplos completos.
 
 ### Ambientação e estruturas
 
@@ -661,8 +689,12 @@ Música de estrutura tem prioridade sobre ambientação de bioma. Com a ponte op
 - vilas dark, default, fighting, fairy e ice do CobblemonAdditions `4.3.0` redirecionadas para os pools BCA pequenos, médios e grandes, além da Witch Hut reutilizando o pool de Swamp Hut;
 - variantes do Repurposed Structures redirecionadas para o pool vanilla/BCA mais próximo;
 - todas as 13 estruturas registradas pela versão leve LegendaryMonuments-Cobbleverse redirecionadas para músicas regionais/de estruturas já existentes;
-- as seis estruturas worldgen das torres de Gimmighoul do Cobblemon (`deserted`, `frozen`, `lush`, `rooted`, `sunscorched` e `temperate`) redirecionadas para um pool sombrio com Pokémon Tower, Lavender Town e Pokégear Unown já existentes;
+- todos os **32 IDs registrados de estruturas Habitat do Cobblemon 1.8**, mapeados por ambiente/tema para pools existentes de Trail Ruins, Jungle Pyramid, Igloo, Ocean Ruin, Desert Pyramid, Swamp Hut, Mineshaft Mesa e relacionados;
+- todos os **29 IDs de ruínas do Cobblemon**: as seis torres de Gimmighoul (`deserted`, `frozen`, `lush`, `rooted`, `sunscorched` e `temperate`) mantêm o pool dedicado de Pokémon Tower/Lavender Town/Pokégear Unown, enquanto as outras 23 ruínas reutilizam o pool de estrutura existente mais próximo;
+- as três **Shipwreck Coves** do Cobblemon, incluindo `magma_shipwreck_cove` do 1.8, e os três IDs de barcos de pesca reutilizam o pool existente de Shipwreck;
 - zonas manuais ancoradas por entidades vanilla `minecraft:marker` com a tag `cobbletunes_zone:<zoneId>`.
+
+O novo **Habitat Block** do Cobblemon não é usado como detector automático de música. Ele é um bloco colocável/spawner, enquanto a música de estrutura do CobbleTunes continua ligada a identidades reais de worldgen `StructureStart`; áreas personalizadas com Habitat Block ainda podem receber música por um marcador manual `cobbletunes_zone:`.
 
 No modo com servidor, a detecção resolve o `StructureStart` registrado real pelas referências dos chunks próximos, usando o mesmo conceito de identidade worldgen de comandos como `/locate structure`. Estruturas compactas de até 16×16 blocos recebem 4 blocos de margem horizontal por lado e 4 na vertical; estruturas maiores mantêm 1 bloco horizontal e 2 na vertical. Quando estruturas mapeadas se sobrepõem, estruturas especiais vencem estruturas genéricas, estruturas genéricas vencem vilas e empates de prioridade preferem a menor estrutura antes de usar a ordem do ID de registro. O debug informa o ID de registro autoritativo e a zona escolhida. Assim, o roteamento fica estável e determinístico sem usar blocos colocáveis pelo jogador como evidência.
 

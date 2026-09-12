@@ -21,8 +21,11 @@ object StructureZoneDetector {
     private const val SMALL_STRUCTURE_VERTICAL_PADDING = 4
     private const val STRUCTURE_PADDING = 1
     private const val STRUCTURE_VERTICAL_PADDING = 2
-    private const val MANUAL_ZONE_RADIUS = 12
+    private const val DEFAULT_MANUAL_ZONE_RADIUS = 12
+    private const val MIN_MANUAL_ZONE_RADIUS = 1
+    private const val MAX_MANUAL_ZONE_RADIUS = 32
     private const val MANUAL_ZONE_TAG_PREFIX = "cobbletunes_zone:"
+    private const val MANUAL_ZONE_RANGE_TAG_PREFIX = "cobbletunes_range:"
     private const val PRIORITY_VILLAGE = 100
     private const val PRIORITY_GENERIC_STRUCTURE = 200
     private const val PRIORITY_SPECIAL_STRUCTURE = 300
@@ -117,7 +120,7 @@ object StructureZoneDetector {
         Identifier.of("cobbleverse", "manaphy")              to "cobbleverse:manaphy",
     )
 
-    // core cobblemon structures
+    // gimmighoul towers keep the spooky pool
     private val COBBLEMON_STRUCTURES: Map<Identifier, String> = mapOf(
         Identifier.of("cobblemon", "ruins/deserted_gimmi_tower") to "cobbletunes:gimmighoul_tower",
         Identifier.of("cobblemon", "ruins/frozen_gimmi_tower") to "cobbletunes:gimmighoul_tower",
@@ -127,7 +130,77 @@ object StructureZoneDetector {
         Identifier.of("cobblemon", "ruins/temperate_gimmi_tower") to "cobbletunes:gimmighoul_tower"
     )
 
-    // vanilla bca structures share music pools
+    // exact 1.8 ids, no block guessing
+    private val COBBLEMON_POOLED_STRUCTURES: Map<Identifier, String> = mapOf(
+        // habitats
+        Identifier.of("cobblemon", "habitats/badlands_shaded_rock") to "cobbletunes:vanilla_structure:trail_ruins",
+        Identifier.of("cobblemon", "habitats/berry_patch") to "cobbletunes:vanilla_structure:jungle_pyramid",
+        Identifier.of("cobblemon", "habitats/birch_wildfire_scar") to "cobbletunes:vanilla_structure:trail_ruins",
+        Identifier.of("cobblemon", "habitats/bug_mound") to "cobbletunes:vanilla_structure:jungle_pyramid",
+        Identifier.of("cobblemon", "habitats/carved_ice_spikes") to "cobbletunes:vanilla_structure:igloo",
+        Identifier.of("cobblemon", "habitats/deep_sea_spire") to "cobbletunes:vanilla_structure:ocean_ruin",
+        Identifier.of("cobblemon", "habitats/desert_oasis") to "cobbletunes:vanilla_structure:desert_pyramid",
+        Identifier.of("cobblemon", "habitats/desert_shaded_rock") to "cobbletunes:vanilla_structure:desert_pyramid",
+        Identifier.of("cobblemon", "habitats/drifting_icebergs") to "cobbletunes:vanilla_structure:igloo",
+        Identifier.of("cobblemon", "habitats/fae_mounds") to "cobbletunes:vanilla_structure:trail_ruins",
+        Identifier.of("cobblemon", "habitats/flowerbed_clearing") to "cobbletunes:vanilla_structure:jungle_pyramid",
+        Identifier.of("cobblemon", "habitats/freshwater_pond") to "cobbletunes:vanilla_structure:jungle_pyramid",
+        Identifier.of("cobblemon", "habitats/fungal_dwelling") to "cobbletunes:vanilla_structure:swamp_hut",
+        Identifier.of("cobblemon", "habitats/lush_canopy") to "cobbletunes:vanilla_structure:jungle_pyramid",
+        Identifier.of("cobblemon", "habitats/lush_cenote") to "cobbletunes:vanilla_structure:jungle_pyramid",
+        Identifier.of("cobblemon", "habitats/lush_peat_bog") to "cobbletunes:vanilla_structure:swamp_hut",
+        Identifier.of("cobblemon", "habitats/meteorite_impact") to "cobbletunes:vanilla_structure:trail_ruins",
+        Identifier.of("cobblemon", "habitats/natural_lightningrod") to "cobbletunes:vanilla_structure:trail_ruins",
+        Identifier.of("cobblemon", "habitats/oak_wildfire_scar") to "cobbletunes:vanilla_structure:trail_ruins",
+        Identifier.of("cobblemon", "habitats/parched_peat_bog") to "cobbletunes:vanilla_structure:swamp_hut",
+        Identifier.of("cobblemon", "habitats/pinkflowerbed_clearing") to "cobbletunes:vanilla_structure:jungle_pyramid",
+        Identifier.of("cobblemon", "habitats/reclaimed_deserted_monument") to "cobbletunes:vanilla_structure:desert_pyramid",
+        Identifier.of("cobblemon", "habitats/reclaimed_lush_monument") to "cobbletunes:vanilla_structure:jungle_pyramid",
+        Identifier.of("cobblemon", "habitats/sandpit_clearing") to "cobbletunes:vanilla_structure:desert_pyramid",
+        Identifier.of("cobblemon", "habitats/snowy_burrow") to "cobbletunes:vanilla_structure:igloo",
+        Identifier.of("cobblemon", "habitats/snowy_grotto") to "cobbletunes:vanilla_structure:igloo",
+        Identifier.of("cobblemon", "habitats/snowy_thermal_vents") to "cobbletunes:vanilla_structure:igloo",
+        Identifier.of("cobblemon", "habitats/spruce_wildfire_scar") to "cobbletunes:vanilla_structure:trail_ruins",
+        Identifier.of("cobblemon", "habitats/sunflowerbed_clearing") to "cobbletunes:vanilla_structure:jungle_pyramid",
+        Identifier.of("cobblemon", "habitats/sunscorched_clearing") to "cobbletunes:vanilla_structure:desert_pyramid",
+        Identifier.of("cobblemon", "habitats/thermal_crevices") to "cobbletunes:vanilla_structure:mineshaft_mesa",
+        Identifier.of("cobblemon", "habitats/zen_garden") to "cobbletunes:vanilla_structure:jungle_pyramid",
+
+        // ruins, minus gimmighoul towers
+        Identifier.of("cobblemon", "ruins/ancient_dais_ruins") to "cobbletunes:vanilla_structure:trail_ruins",
+        Identifier.of("cobblemon", "ruins/crumbling_arch_ruins") to "cobbletunes:vanilla_structure:stronghold",
+        Identifier.of("cobblemon", "ruins/decaying_crypt_ruins") to "cobbletunes:vanilla_structure:nether_fossil",
+        Identifier.of("cobblemon", "ruins/deserted_house_ruins") to "cobbletunes:vanilla_structure:trail_ruins",
+        Identifier.of("cobblemon", "ruins/deserted_monument_ruins") to "cobbletunes:vanilla_structure:desert_pyramid",
+        Identifier.of("cobblemon", "ruins/deserted_tower_ruins") to "cobbletunes:vanilla_structure:trail_ruins",
+        Identifier.of("cobblemon", "ruins/deserted_town_center_ruins") to "cobbletunes:vanilla_structure:trail_ruins",
+        Identifier.of("cobblemon", "ruins/fallen_statue_ruins") to "cobbletunes:vanilla_structure:trail_ruins",
+        Identifier.of("cobblemon", "ruins/frozen_altar_ruins") to "cobbletunes:vanilla_structure:igloo",
+        Identifier.of("cobblemon", "ruins/hidden_bunker_ruins") to "cobbletunes:vanilla_structure:stronghold",
+        Identifier.of("cobblemon", "ruins/luna_henge_ruins") to "cobbletunes:vanilla_structure:trail_ruins",
+        Identifier.of("cobblemon", "ruins/lush_monument_ruins") to "cobbletunes:vanilla_structure:jungle_pyramid",
+        Identifier.of("cobblemon", "ruins/meteor_battleground_ruins") to "cobbletunes:vanilla_structure:trail_ruins",
+        Identifier.of("cobblemon", "ruins/mossy_oubliette_ruins") to "cobbletunes:vanilla_structure:stronghold",
+        Identifier.of("cobblemon", "ruins/old_garden_ruins") to "cobbletunes:vanilla_structure:mansion",
+        Identifier.of("cobblemon", "ruins/overgrown_trial_ruins") to "cobbletunes:vanilla_structure:trial_chambers",
+        Identifier.of("cobblemon", "ruins/rooted_arch_ruins") to "cobbletunes:vanilla_structure:trail_ruins",
+        Identifier.of("cobblemon", "ruins/sol_henge_ruins") to "cobbletunes:vanilla_structure:trail_ruins",
+        Identifier.of("cobblemon", "ruins/stonjourner_henge_ruins") to "cobbletunes:vanilla_structure:trail_ruins",
+        Identifier.of("cobblemon", "ruins/submerged_forge_ruins") to "cobbletunes:vanilla_structure:ocean_ruin",
+        Identifier.of("cobblemon", "ruins/sunscorched_shaded_ruins") to "cobbletunes:vanilla_structure:desert_pyramid",
+        Identifier.of("cobblemon", "ruins/toppled_pillars_ruins") to "cobbletunes:vanilla_structure:trail_ruins",
+        Identifier.of("cobblemon", "ruins/unstable_cave_ruins") to "cobbletunes:vanilla_structure:mineshaft",
+
+        // coves and fishing boats
+        Identifier.of("cobblemon", "shipwreck_coves/lush_shipwreck_cove") to "cobbletunes:vanilla_structure:shipwreck",
+        Identifier.of("cobblemon", "shipwreck_coves/magma_shipwreck_cove") to "cobbletunes:vanilla_structure:shipwreck",
+        Identifier.of("cobblemon", "shipwreck_coves/submerged_shipwreck_cove") to "cobbletunes:vanilla_structure:shipwreck",
+        Identifier.of("cobblemon", "fishing_boat/beach") to "cobbletunes:vanilla_structure:shipwreck",
+        Identifier.of("cobblemon", "fishing_boat/deep_ocean") to "cobbletunes:vanilla_structure:shipwreck",
+        Identifier.of("cobblemon", "fishing_boat/warm_ocean") to "cobbletunes:vanilla_structure:shipwreck"
+    )
+
+    // vanilla and bca share pools
     private val VANILLA_AND_BCA_STRUCTURES: Map<Identifier, String> = mapOf(
         Identifier.of("minecraft", "village_plains")   to "cobbletunes:vanilla_structure:village_plains",
         Identifier.of("minecraft", "village_desert")   to "cobbletunes:vanilla_structure:village_desert",
@@ -182,7 +255,7 @@ object StructureZoneDetector {
         Identifier.of("bca", "village/witch_hut")      to "cobbletunes:vanilla_structure:swamp_hut",
     )
 
-    // terralith datapack structures reuse existing pools
+    // terralith reuses existing pools
     private val TERRALITH_STRUCTURES: Map<Identifier, String> = mapOf(
         Identifier.of("terralith", "desert_outpost")                 to "cobbletunes:vanilla_structure:pillager_outpost",
         Identifier.of("terralith", "fortified_desert_village")     to "cobbletunes:vanilla_structure:village_desert",
@@ -215,7 +288,7 @@ object StructureZoneDetector {
     private val legendaryMonumentsAvailable by lazy { FabricLoader.getInstance().isModLoaded("legendarymonuments") }
 
     private val LEGENDARY_MONUMENT_STRUCTURES: Map<Identifier, String> = mapOf(
-        // LegendaryMonuments-Cobbleverse (light): all 13 registered structures.
+        // legendary monuments light, all 13 structures
         Identifier.of("legendarymonuments", "distortion_portal")   to "legendarymonuments:distortion_portal",
         Identifier.of("legendarymonuments", "eternatus_cocoon")    to "legendarymonuments:eternatus_cocoon",
         Identifier.of("legendarymonuments", "firescourge_shrine")  to "legendarymonuments:firescourge_shrine",
@@ -288,7 +361,7 @@ object StructureZoneDetector {
         val volume: Long
     )
 
-    // only send real zone changes; debug signatures also track same-zone structure changes
+    // only send real zone changes
     private val playerZoneCache: MutableMap<java.util.UUID, String> = mutableMapOf()
     private val playerDetectionDebugCache: MutableMap<java.util.UUID, String> = mutableMapOf()
     private var tickCounter = 0
@@ -300,7 +373,6 @@ object StructureZoneDetector {
             tickCounter = 0
 
             for (player in server.playerManager.playerList) {
-                // public clients can use client-only battle/biome routing without server packets
                 if (!ServerPlayNetworking.canSend(player, StructureZonePayload.ID)) {
                     playerZoneCache.remove(player.uuid)
                     playerDetectionDebugCache.remove(player.uuid)
@@ -333,31 +405,57 @@ object StructureZoneDetector {
     }
 
     private fun detectZone(player: ServerPlayerEntity, world: ServerWorld): ZoneDetection {
-        // manual zones always win
+        // manual zones win first
         val triggerZone = scanForManualZone(player, world)
         if (triggerZone != null) {
             return ZoneDetection(triggerZone, "manual")
         }
 
-        // authoritative worldgen StructureStart identity comes next
+        // then real structure starts
         return locateNearbyStructure(player, world)
             ?: ZoneDetection("", "none")
     }
 
     private fun scanForManualZone(player: ServerPlayerEntity, world: ServerWorld): String? {
-        val box = player.boundingBox.expand(MANUAL_ZONE_RADIUS.toDouble())
+        // scan max range, then check each marker's own range
+        val box = player.boundingBox.expand(MAX_MANUAL_ZONE_RADIUS.toDouble())
 
-        // vanilla marker entities keep server installs optional for clients
+        // same zone id won't restart across markers
         return world.getOtherEntities(null, box) { entity ->
             entity.commandTags.any { it.startsWith(MANUAL_ZONE_TAG_PREFIX) }
         }
-            .sortedBy { it.squaredDistanceTo(player) }
-            .firstNotNullOfOrNull { entity ->
-                entity.commandTags
+            .mapNotNull { entity ->
+                val zoneId = entity.commandTags
                     .firstOrNull { it.startsWith(MANUAL_ZONE_TAG_PREFIX) }
                     ?.removePrefix(MANUAL_ZONE_TAG_PREFIX)
                     ?.takeIf { it.isNotBlank() }
+                    ?: return@mapNotNull null
+
+                val radius = resolveManualZoneRadius(entity.commandTags)
+                val distanceSquared = entity.squaredDistanceTo(player)
+                if (distanceSquared > radius.toDouble() * radius.toDouble()) {
+                    return@mapNotNull null
+                }
+
+                distanceSquared to zoneId
             }
+            .minByOrNull { it.first }
+            ?.second
+    }
+
+    private fun resolveManualZoneRadius(commandTags: Set<String>): Int {
+        val explicitRadius = commandTags
+            .asSequence()
+            .filter { it.startsWith(MANUAL_ZONE_RANGE_TAG_PREFIX) }
+            .mapNotNull { tag ->
+                tag.removePrefix(MANUAL_ZONE_RANGE_TAG_PREFIX)
+                    .toIntOrNull()
+                    ?.takeIf { it in MIN_MANUAL_ZONE_RADIUS..MAX_MANUAL_ZONE_RADIUS }
+            }
+            // duplicate ranges use the smaller one
+            .minOrNull()
+
+        return explicitRadius ?: DEFAULT_MANUAL_ZONE_RADIUS
     }
 
     private fun locateNearbyStructure(
@@ -366,7 +464,7 @@ object StructureZoneDetector {
     ): ZoneDetection? {
         val structureRegistry = world.registryManager.get(RegistryKeys.STRUCTURE)
 
-        // Reverse map keeps chunk lookups cheap while retaining registry IDs for diagnostics.
+        // reverse map keeps chunk checks cheap
         val structureToRoute =
             mutableMapOf<net.minecraft.world.gen.structure.Structure, StructureRoute>()
 
@@ -396,6 +494,7 @@ object StructureZoneDetector {
 
         addRoutes(GYM_STRUCTURES, PRIORITY_SPECIAL_STRUCTURE)
         addRoutes(COBBLEMON_STRUCTURES, PRIORITY_SPECIAL_STRUCTURE)
+        addRoutes(COBBLEMON_POOLED_STRUCTURES, PRIORITY_GENERIC_STRUCTURE)
         addRoutes(VANILLA_AND_BCA_STRUCTURES, PRIORITY_GENERIC_STRUCTURE)
         addRoutes(TERRALITH_STRUCTURES, PRIORITY_GENERIC_STRUCTURE)
 

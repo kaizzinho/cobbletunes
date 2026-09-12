@@ -137,12 +137,12 @@ object TrackRegistry {
         val pool = tracks[context].orEmpty()
         if (pool.isEmpty()) return null
 
-        // trainer metadata beats roster votes
+        // trainer metadata wins over roster votes
         val targetRegion = preferredRegion ?: resolveRosterRegion(dexNumbers, regionalVariants)
         if (targetRegion != null) {
             pool.filter { targetRegion in it.regions }.randomOrNull()?.let { return it }
 
-            // hisui falls back to regional wild music
+            // hisui falls back to regional wild
             tracks[MusicContext.WILD_BATTLE].orEmpty()
                 .filter { targetRegion in it.regions }
                 .randomOrNull()
@@ -241,6 +241,7 @@ object TrackRegistry {
 
     private fun bossWeights(tierName: String): BossPoolWeights = when (tierName.uppercase()) {
         "UNCOMMON" -> BossPoolWeights(80, 15, 5)
+        "ALPHA" -> BossPoolWeights(70, 20, 10)
         "RARE" -> BossPoolWeights(70, 20, 10)
         "EPIC" -> BossPoolWeights(60, 30, 10)
         "LEGENDARY" -> BossPoolWeights(50, 35, 15)
@@ -975,7 +976,7 @@ object TrackRegistry {
         register(MusicContext.CHAMPION_BATTLE, MusicTrack("unova_champion_iris", soundEvent("battle.unova.champion_iris"), regions = setOf(RegionOfOrigin.UNOVA)))
         register(MusicContext.PVP_BATTLE, MusicTrack("unova_rival_hugh", soundEvent("battle.unova.rival_hugh"), regions = setOf(RegionOfOrigin.UNOVA)))
 
-        // pwt remixes share the unova pvp pool
+        // pwt remixes use the unova pvp pool
         register(MusicContext.PVP_BATTLE, MusicTrack("unova_pvp_champion_kanto", soundEvent("battle.unova.champion_kanto_pwt"), regions = setOf(RegionOfOrigin.KANTO)))
         register(MusicContext.PVP_BATTLE, MusicTrack("unova_pvp_champion_johto", soundEvent("battle.unova.champion_johto_pwt"), regions = setOf(RegionOfOrigin.JOHTO)))
         register(MusicContext.PVP_BATTLE, MusicTrack("unova_pvp_champion_hoenn", soundEvent("battle.unova.champion_hoenn_pwt"), regions = setOf(RegionOfOrigin.HOENN)))
@@ -1014,7 +1015,7 @@ object TrackRegistry {
     private fun registerAlolaBattle() {
         register(MusicContext.WILD_BATTLE, MusicTrack("alola_wild", soundEvent("battle.alola.wild"), regions = setOf(RegionOfOrigin.ALOLA)))
         register(MusicContext.TRAINER_BATTLE, MusicTrack("alola_trainer", soundEvent("battle.alola.trainer"), regions = setOf(RegionOfOrigin.ALOLA)))
-        // alola uses kahunas for gym routes
+        // alola gym route uses kahunas
         register(MusicContext.GYM_LEADER_BATTLE, MusicTrack("alola_island_kahuna", soundEvent("battle.alola.island_kahuna"), regions = setOf(RegionOfOrigin.ALOLA)))
         register(MusicContext.ELITE_FOUR_BATTLE, MusicTrack("alola_elite_four", soundEvent("battle.alola.elite_four"), regions = setOf(RegionOfOrigin.ALOLA)))
 
@@ -1022,11 +1023,11 @@ object TrackRegistry {
         register(MusicContext.CHAMPION_BATTLE, MusicTrack("alola_champion", champion, regions = setOf(RegionOfOrigin.ALOLA)))
         register(MusicContext.PVP_BATTLE, MusicTrack("alola_pvp_champion", champion, regions = setOf(RegionOfOrigin.ALOLA)))
 
-        // ultra beasts use this fallback
+        // ultra beast fallback
         register(MusicContext.LEGENDARY_BATTLE, MusicTrack("alola_legendary_default_ultra_beast", soundEvent("battle.alola.legendary_ultra_beast"), regions = setOf(RegionOfOrigin.ALOLA)))
         register(MusicContext.LEGENDARY_BATTLE, MusicTrack("alola_legendary_tapu", soundEvent("battle.alola.legendary_tapu"), legendaryDexOverrides = setOf(785, 786, 787, 788)))
         register(MusicContext.LEGENDARY_BATTLE, MusicTrack("alola_legendary_solgaleo_lunala_necrozma", soundEvent("battle.alola.legendary_solgaleo_lunala_necrozma"), legendaryDexOverrides = setOf(791, 792, 800)))
-        // necrozma keeps multiple valid themes
+        // necrozma can use more than one theme
         register(MusicContext.LEGENDARY_BATTLE, MusicTrack("alola_legendary_necrozma_fused", soundEvent("battle.alola.legendary_necrozma_fused"), legendaryDexOverrides = setOf(800)))
         register(MusicContext.LEGENDARY_BATTLE, MusicTrack("alola_usum_legendary_ultra_necrozma", soundEvent("battle.alola.usum_legendary_ultra_necrozma"), legendaryDexOverrides = setOf(800)))
 
@@ -1047,7 +1048,7 @@ object TrackRegistry {
         register(MusicContext.CHAMPION_BATTLE, MusicTrack("galar_champion", champion, regions = setOf(RegionOfOrigin.GALAR)))
         register(MusicContext.PVP_BATTLE, MusicTrack("galar_pvp_champion", champion, regions = setOf(RegionOfOrigin.GALAR)))
 
-        // dynamax theme is the galar fallback
+        // dynamax is the galar fallback
         register(MusicContext.LEGENDARY_BATTLE, MusicTrack("galar_legendary_default_mysterious_being", soundEvent("battle.galar.legendary_mysterious_being"), regions = setOf(RegionOfOrigin.GALAR)))
         register(MusicContext.LEGENDARY_BATTLE, MusicTrack("galar_legendary_eternatus", soundEvent("battle.galar.legendary_eternatus"), legendaryDexOverrides = setOf(890)))
         register(MusicContext.LEGENDARY_BATTLE, MusicTrack("galar_swsh_legendary_eternatus_final", soundEvent("battle.galar.swsh_legendary_eternatus_final"), legendaryDexOverrides = setOf(890)))
@@ -1096,7 +1097,7 @@ object TrackRegistry {
         register(MusicContext.CHAMPION_BATTLE, MusicTrack("paldea_champion", champion, regions = setOf(RegionOfOrigin.PALDEA)))
         register(MusicContext.PVP_BATTLE, MusicTrack("paldea_pvp_champion", champion, regions = setOf(RegionOfOrigin.PALDEA)))
 
-        // indigo disk duplicates are intentional
+        // indigo disk duplicates are on purpose
         register(MusicContext.LEGENDARY_BATTLE, MusicTrack("paldea_legendary_solgaleo_lunala_dlc", soundEvent("battle.paldea.legendary_solgaleo_lunala_dlc"), legendaryDexOverrides = setOf(791, 792)))
         register(MusicContext.LEGENDARY_BATTLE, MusicTrack("paldea_sv_legendary_calamity", soundEvent("battle.paldea.sv_legendary_calamity"), legendaryDexOverrides = setOf(1001, 1002, 1003, 1004)))
         register(MusicContext.LEGENDARY_BATTLE, MusicTrack("paldea_sv_legendary_koraidon_miraidon", soundEvent("battle.paldea.sv_legendary_koraidon_miraidon"), legendaryDexOverrides = setOf(1007, 1008)))
@@ -1231,7 +1232,6 @@ object TrackRegistry {
         structureCategoryTracks[category].orEmpty()
 
     private fun registerProximityAmbience() {
-        // zone themes loop until exit
         register(MusicContext.GYM_AMBIENCE, MusicTrack(
             "gym_kanto", soundEvent("ambience.gym.kanto_gym"),
             loop = true, regions = setOf(RegionOfOrigin.KANTO)
@@ -1321,7 +1321,7 @@ object TrackRegistry {
             MusicTrack("legendarymonuments_$structureId", soundEvent(trackName), loop = true)
         )
 
-        // LegendaryMonuments-Cobbleverse (light) exact StructureStart routes.
+        // legendary monuments light routes
         lm("distortion_portal",    "ambience.sinnoh.end_distortion_world")
         lm("eternatus_cocoon",     "ambience.sinnoh.end_distortion_world")
         lm("firescourge_shrine",   "ambience.hoenn.volcanic_mt_chimney")

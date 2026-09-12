@@ -21,7 +21,6 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
     private var currentAmbienceTrack: MusicTrack? = null
     private var currentBiomeId: String? = null
 
-    // zone state stays separate from playback
     private var activeZoneContext: MusicContext? = null
     private var activeZoneTrack: MusicTrack? = null
     private var villageCooldownEndsAtMillis: Long? = null
@@ -29,7 +28,7 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
     private var volumeSuspended = false
     private var evolutionDucking = false
 
-    // latest biome target survives battle and victory
+    // keep the latest biome through battle and victory
     private var overrideBiomeId: String? = null
     private var overrideBiomeTrack: MusicTrack? = null
 
@@ -78,9 +77,7 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
     ) {
         if (!config.replaceBattleMusic) return
 
-        // World-zone ambience and battle classification are intentionally separate.
-        // Battle Tower floor markers control ambience only; trainer battles keep their
-        // normal role/region routing unless an exact named-trainer override applies.
+        // tower zones only change ambience, not trainer routing
         val routedContext = context
 
         val track = when (routedContext) {
@@ -131,7 +128,6 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
                     ?: preferredRegion?.let { " (preferredRegion=$it)" }
                     ?: "")
         )
-        // keep newest biome for resume
         play(routedContext, track)
     }
 
@@ -155,6 +151,13 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
         opposingRegionalVariants: List<String> = emptyList()
     ) {
         playTierWeightedBattle("Raid", tierName, opposingDexNumbers, opposingRegionalVariants)
+    }
+
+    fun playAlphaBattle(
+        opposingDexNumbers: List<Int>,
+        opposingRegionalVariants: List<String> = emptyList()
+    ) {
+        playTierWeightedBattle("Alpha", "ALPHA", opposingDexNumbers, opposingRegionalVariants)
     }
 
     private fun playTierWeightedBattle(
@@ -205,7 +208,7 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
             stopCurrent(); currentContext = MusicContext.AMBIENCE; return
         }
 
-        // zone beats biome on resume
+        // zone wins when resuming
         val zoneContext = activeZoneContext
         val zoneTrack = activeZoneTrack
         if (zoneContext != null && zoneTrack != null) {
@@ -219,7 +222,7 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
             return
         }
 
-        // latest biome beats stale ambience
+        // don't resume stale ambience
         val latestOverrideTrack = overrideBiomeTrack
         if (latestOverrideTrack != null) {
             val latestOverrideBiome = overrideBiomeId
@@ -241,7 +244,7 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
             return
         }
 
-        // queued track beats stale ambience
+        // queued track wins over stale ambience
         val track = if (pendingTrack != null) {
             val t = pendingTrack!!
             debugLog("[Battle end resume] Using pending track: ${t.id}")
@@ -274,7 +277,7 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
         stopCurrent()
         currentContext = MusicContext.AMBIENCE
 
-        // respawn clears old world state
+        // clear old world state on respawn
         currentBiomeId = null
         currentAmbienceTrack = null
         activeZoneContext = null
@@ -357,7 +360,7 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
             return
         }
 
-        // battle victory blocks playback not detection
+        // victory blocks playback, not detection
         if (isWorldOverrideContext(currentContext)) {
             val track = resolveTrackForBiome(biomeId) ?: return
             if (overrideBiomeId != biomeId || overrideBiomeTrack?.id != track.id) {
@@ -368,7 +371,6 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
             return
         }
 
-        // zone state stays authoritative
         if (currentContext != MusicContext.AMBIENCE &&
             currentContext != MusicContext.MENU) return
 
@@ -509,7 +511,7 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
         pendingSilenceEndsAtMillis = null; pendingBiomeId = null; pendingTrack = null
         debounceBiomeId = null; debounceEndsAtMillis = null
 
-        // zone updates survive battle and victory
+        // keep zone updates while battle owns audio
         if (isWorldOverrideContext(currentContext)) {
             debugLog("[Zone update during override] Remembering: ${track.id} ($context)")
             return
@@ -546,7 +548,7 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
         villageCooldownEndsAtMillis = null
         if (!config.replaceAmbience) return
 
-        // zone exits survive battle and victory
+        // keep zone exits while battle owns audio
         if (isWorldOverrideContext(currentContext)) {
             debugLog("[Zone exit during override] Cleared active zone; override music continues")
             return
@@ -568,7 +570,6 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
             return
         }
 
-        // stop current is needed on zone exit
         stopCurrent()
         currentContext = MusicContext.AMBIENCE
         this.currentBiomeId = null
@@ -576,7 +577,7 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
         debounceBiomeId = null; debounceEndsAtMillis = null
         pendingSilenceEndsAtMillis = null; pendingTrack = null; pendingBiomeId = null
         debugLog("[Zone exit] Forcing fresh biome re-detection (was in zone, now at biome $currentBiomeId)")
-        // start debounce right after zone exit
+        // debounce starts right after zone exit
         if (currentBiomeId != null) {
             handleBiomeTransitionDebounce(currentBiomeId)
         }
@@ -655,7 +656,6 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
         commitBiomeMemoryVisit(biomeId)
         currentBiomeId = biomeId; currentAmbienceTrack = track
 
-        // timer starts when track commits
         val budgetMillis = randomRotationBudgetMillis()
         trackBudgetStartMillis[track.id] = System.currentTimeMillis()
         trackBudgetDurationMillis[track.id] = budgetMillis
@@ -774,7 +774,7 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
     private fun resolvePendingSilenceIfElapsed() {
         val endsAt = pendingSilenceEndsAtMillis ?: return
 
-        // retry startup audio until engine is ready
+        // retry until the sound engine is ready
         worldJoinReadyTicks++
         if (worldJoinReadyTicks < WORLD_JOIN_READY_TICKS) return
 
@@ -964,7 +964,7 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
             return
         }
 
-        // missing oggs stay silent
+        // missing ogg just stays silent
         if (mc.soundManager.getKeys().none {
                 it.toString() == track.soundEvent.id.toString()
             }) {

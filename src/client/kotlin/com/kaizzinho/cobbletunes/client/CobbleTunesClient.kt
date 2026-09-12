@@ -199,7 +199,7 @@ class CobbleTunesClient : ClientModInitializer {
     }
 
     private fun handleBattleStart(payload: BattleMusicStartPayload, source: String) {
-        // keep string routes for old packet compat
+        // old packets still use string routes
         val routeParts = payload.trainerTier.split('|', limit = 2)
         val routeHead = routeParts.firstOrNull().orEmpty()
         val routeValue = routeParts.getOrNull(1).orEmpty()
@@ -208,20 +208,27 @@ class CobbleTunesClient : ClientModInitializer {
         lastBattleWasRaid = routeHead == "raid"
         lastBattleVictoryRequest = buildVictoryRequest(payload, routeHead, routeValue)
 
-        if (routeHead == "boss" || routeHead == "raid") {
-            val isRaid = routeHead == "raid"
+        if (routeHead == "boss" || routeHead == "raid" || routeHead == "alpha") {
+            val routeLabel = when (routeHead) {
+                "raid" -> "Raid"
+                "alpha" -> "Alpha"
+                else -> "Boss"
+            }
             debugLog(
-                "[${if (isRaid) "Raid" else "Boss"} route] source=$source raw='${payload.trainerTier}' " +
+                "[$routeLabel route] source=$source raw='${payload.trainerTier}' " +
                     "tier='${routeValue.ifBlank { "unknown" }}' opposingDex=${payload.opposingDexNumbers}"
             )
-            if (isRaid) {
-                musicPlayer.playRaidBattle(
+            when (routeHead) {
+                "raid" -> musicPlayer.playRaidBattle(
                     tierName = routeValue,
                     opposingDexNumbers = payload.opposingDexNumbers,
                     opposingRegionalVariants = payload.opposingRegionalVariants
                 )
-            } else {
-                musicPlayer.playBossBattle(
+                "alpha" -> musicPlayer.playAlphaBattle(
+                    opposingDexNumbers = payload.opposingDexNumbers,
+                    opposingRegionalVariants = payload.opposingRegionalVariants
+                )
+                else -> musicPlayer.playBossBattle(
                     tierName = routeValue,
                     opposingDexNumbers = payload.opposingDexNumbers,
                     opposingRegionalVariants = payload.opposingRegionalVariants
@@ -465,14 +472,13 @@ class CobbleTunesClient : ClientModInitializer {
             }
         }
 
-        // tower floors get their own zone picks
         if (TrackRegistry.isBattleTowerZone(zoneId)) {
             val track = TrackRegistry.battleTowerTrackFor(zoneId)
             if (track != null) musicPlayer.playZoneAmbience(MusicContext.BATTLE_TOWER, track)
             return
         }
 
-        // exact structures beat gym fallbacks
+        // exact structures win over gym guesses
         val specialTrack = TrackRegistry.specialStructureTrackFor(zoneId)
         if (specialTrack != null) {
             musicPlayer.playZoneAmbience(MusicContext.SPECIAL_STRUCTURE, specialTrack)
@@ -486,7 +492,7 @@ class CobbleTunesClient : ClientModInitializer {
             return
         }
 
-        // vanilla bca structures use pools
+        // vanilla and bca share pools
         if (zoneId.startsWith("cobbletunes:vanilla_structure:")) {
             val category = zoneId.removePrefix("cobbletunes:vanilla_structure:")
             val vanillaTrack = if (category in VILLAGE_STRUCTURE_CATEGORIES) {
@@ -532,7 +538,7 @@ class CobbleTunesClient : ClientModInitializer {
                 lastWorld = world
                 ambienceCheckCounter = 0
                 if (world != null) {
-                    // tick order can change
+                    // tick order can flip
                     pendingMenuTrack = null
                     if (keepRaidVictory) {
                         debugLog("[Raid victory] Preserving 5s cue across dimension change")
@@ -540,7 +546,7 @@ class CobbleTunesClient : ClientModInitializer {
                         musicPlayer.beginWorldJoinSilence()
                     }
                 } else {
-                    // menu returns skip startup wait
+                    // menu return skips startup delay
                     menuReadyTicks = 200
                 }
                 return@register
@@ -558,11 +564,11 @@ class CobbleTunesClient : ClientModInitializer {
                 .orElse(null)
                 ?: return@register
 
-            // sky light and height keep surface nights out
+            // keeps surface nights out of caves
             val skyLight = currentWorld.getLightLevel(
                 net.minecraft.world.LightType.SKY, player.blockPos
             )
-            // sealed areas use the cave pool
+            // sealed spaces use cave music
             val isCave = skyLight == 0 && player.blockPos.y <= 50
 
             if (isCave) {
@@ -593,7 +599,7 @@ class CobbleTunesClient : ClientModInitializer {
                 }
                 client.musicTracker.stop()
             } else {
-                // sound engine is warm after world load
+                // wait for the sound engine
                 menuReadyTicks = 200
                 if (pendingMenuTrack != null) {
                     musicPlayer.stopMenuTheme()
@@ -849,7 +855,7 @@ class CobbleTunesClient : ClientModInitializer {
 
     private fun registerDeathScreenWatcher() {
         ClientTickEvents.END_CLIENT_TICK.register { client ->
-            // world swaps can fake death screens
+            // world swaps can fake a death screen
             if (client.world == null || client.player == null) return@register
 
             val isDeathScreen = try {
@@ -895,29 +901,27 @@ class CobbleTunesClient : ClientModInitializer {
                 return@register
             }
 
-            // hp checks stay cheap
             lowHpCheckCounter++
             if (lowHpCheckCounter < LOW_HP_CHECK_INTERVAL_TICKS) return@register
             lowHpCheckCounter = 0
 
-            // leaving battle resets low hp state
             val battle = com.cobblemon.mod.common.client.CobblemonClient.battle
                 ?: run { lastLowHpPokemonUuid = null; return@register }
 
             val playerUuid = client.player?.uuid ?: return@register
 
-            // player actor may be on either side
+            // player can be on either side
             val playerActor = (battle.side1.actors + battle.side2.actors)
                 .firstOrNull { it.uuid == playerUuid } ?: return@register
 
-            // only active living low hp mons count
+            // only living active mons count
             val lowHpMon = playerActor.activePokemon
                 .mapNotNull { it.battlePokemon }
                 .firstOrNull { mon ->
                     val ratio = if (mon.isHpFlat) {
                         if (mon.maxHp > 0f) mon.hpValue / mon.maxHp else 1f
                     } else {
-                        mon.hpValue // hp value is already a ratio
+                        mon.hpValue // hp is already a ratio
                     }
                     ratio in 0.001f..0.25f
                 }
@@ -928,7 +932,7 @@ class CobbleTunesClient : ClientModInitializer {
                 return@register
             }
 
-            // same mon does not restart beeps
+            // same mon won't restart beeps
             if (lowHpMon.uuid == lastLowHpPokemonUuid) return@register
 
             lastLowHpPokemonUuid = lowHpMon.uuid

@@ -113,8 +113,7 @@ object RctTrainerClassifier {
         val trainerId = normalize(raw.trainerId)
         val typeId = normalize(raw.typeId)
 
-        // Repetitive Battle Tower floor trainers intentionally use the ordinary
-        // trainer route so the opposing roster votes for the regional theme.
+        // tower grinders stay normal trainers
         if (isGenericBattleTowerFloorTrainer(trainerId)) {
             return result(
                 raw = raw,
@@ -145,7 +144,7 @@ object RctTrainerClassifier {
         val idRegion = regionFrom(trainerId)
         val region = typeRegion ?: idRegion
 
-        // facility bosses beat broad role rules
+        // facility bosses win over broad roles
         if (isFrontierBrain(trainerId, typeId)) {
             return result(
                 raw,
@@ -155,7 +154,7 @@ object RctTrainerClassifier {
             )
         }
 
-        // factions beat generic role matching
+        // factions win over generic roles
         factionMatch(trainerId, typeId)?.let { match ->
             return result(
                 raw = raw,
@@ -374,7 +373,7 @@ object RctTrainerClassifier {
             containsAny(trainerId, "plumeria", "admin") -> FactionRank.ADMIN
             else -> FactionRank.GRUNT
         }
-        // skull and guzma share one theme
+        // guzma uses the skull pool
         return FactionMatch(TrainerFaction.TEAM_SKULL, rank, "team_skull_guzma", source)
     }
 
