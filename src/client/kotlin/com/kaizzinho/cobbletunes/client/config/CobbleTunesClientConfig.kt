@@ -24,11 +24,18 @@ data class CobbleTunesClientConfig(
 ) {
     companion object {
         private val gson = GsonBuilder().setPrettyPrinting().create()
+        private val configRoot: File
+            get() = FabricLoader.getInstance().configDir.toFile()
+
         private val configFile: File
-            get() = File(FabricLoader.getInstance().configDir.toFile(), "$MOD_ID-client.json")
+            get() = File(File(configRoot, MOD_ID), "client.json")
+
+        private val legacyConfigFile: File
+            get() = File(configRoot, "$MOD_ID-client.json")
 
         fun load(): CobbleTunesClientConfig {
             val file = configFile
+            migrateLegacyConfig(file)
             if (!file.exists()) {
                 val default = CobbleTunesClientConfig()
                 default.save()
@@ -45,6 +52,21 @@ data class CobbleTunesClientConfig(
             } catch (e: Exception) {
                 LOGGER.warn("[$MOD_ID] Failed to read client config, falling back to defaults", e)
                 CobbleTunesClientConfig()
+            }
+        }
+
+        private fun migrateLegacyConfig(file: File) {
+            val legacy = legacyConfigFile
+            if (file.exists() || !legacy.exists()) return
+
+            try {
+                file.parentFile?.mkdirs()
+                legacy.copyTo(file, overwrite = false)
+                if (!legacy.delete()) {
+                    LOGGER.warn("[$MOD_ID] Migrated client config but could not remove old file: ${legacy.path}")
+                }
+            } catch (e: Exception) {
+                LOGGER.warn("[$MOD_ID] Failed to migrate client config from ${legacy.path}", e)
             }
         }
     }

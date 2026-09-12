@@ -11,8 +11,14 @@ data class CobbleTunesServerConfig(
 ) {
     companion object {
         private val gson = GsonBuilder().setPrettyPrinting().create()
+        private val configRoot: File
+            get() = FabricLoader.getInstance().configDir.toFile()
+
         private val configFile: File
-            get() = File(FabricLoader.getInstance().configDir.toFile(), "$MOD_ID-server.json")
+            get() = File(File(configRoot, MOD_ID), "server.json")
+
+        private val legacyConfigFile: File
+            get() = File(configRoot, "$MOD_ID-server.json")
 
         private var instance: CobbleTunesServerConfig = CobbleTunesServerConfig()
 
@@ -20,6 +26,7 @@ data class CobbleTunesServerConfig(
 
         fun load(): CobbleTunesServerConfig {
             val file = configFile
+            migrateLegacyConfig(file)
             if (!file.exists()) {
                 instance = CobbleTunesServerConfig()
                 instance.save()
@@ -33,6 +40,21 @@ data class CobbleTunesServerConfig(
                 CobbleTunesServerConfig()
             }
             return instance
+        }
+
+        private fun migrateLegacyConfig(file: File) {
+            val legacy = legacyConfigFile
+            if (file.exists() || !legacy.exists()) return
+
+            try {
+                file.parentFile?.mkdirs()
+                legacy.copyTo(file, overwrite = false)
+                if (!legacy.delete()) {
+                    LOGGER.warn("[$MOD_ID] Migrated server config but could not remove old file: ${legacy.path}")
+                }
+            } catch (e: Exception) {
+                LOGGER.warn("[$MOD_ID] Failed to migrate server config from ${legacy.path}", e)
+            }
         }
     }
 

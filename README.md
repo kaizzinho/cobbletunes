@@ -329,9 +329,9 @@ Regional routing uses the evolving Pokémon's National Dex region, with Alolan, 
 
 ### Configuration
 
-CobbleTunes creates two JSON files in `config/`. When Mod Menu is installed, the Configure button opens a native CobbleTunes screen for all client-side options below. The server debug option remains in the server JSON.
+CobbleTunes creates its JSON files inside `config/cobbletunes/`. Mod Menu is optional: when installed, its Configure button edits the same client JSON shown below. Without Mod Menu, players can edit every client option directly in `config/cobbletunes/client.json`. The server debug option remains in `config/cobbletunes/server.json`. Existing loose `cobbletunes-client.json` and `cobbletunes-server.json` files are migrated automatically on the next launch.
 
-#### `cobbletunes-client.json`
+#### `config/cobbletunes/client.json`
 
 | Option | Default |
 |---|---:|
@@ -351,7 +351,7 @@ CobbleTunes creates two JSON files in `config/`. When Mod Menu is installed, the
 
 Setting either CobbleTunes `musicVolume` or Minecraft's **Music** volume slider to `0%` suspends CobbleTunes playback. Biome, structure, battle, and Victory targets continue updating, but ambience silence windows, biome debounce, village cooldowns, and track-rotation timers do not advance. Once both volume controls are above zero again, CobbleTunes resumes the latest valid context immediately without applying a leftover cooldown or world-join delay.
 
-#### `cobbletunes-server.json`
+#### `config/cobbletunes/server.json`
 
 | Option | Default |
 |---|---:|
@@ -718,9 +718,9 @@ O roteamento regional usa a região da Pokédex Nacional do Pokémon em evoluç�
 
 ### Configuração
 
-O CobbleTunes cria dois JSONs dentro de `config/`. Quando o Mod Menu está instalado, o botão Configure abre uma tela nativa do CobbleTunes com todas as opções do cliente abaixo. O debug do servidor continua no JSON do servidor.
+O CobbleTunes cria seus JSONs dentro de `config/cobbletunes/`. O Mod Menu é opcional: quando instalado, o botão Configure edita o mesmo JSON do cliente mostrado abaixo. Sem Mod Menu, o jogador pode editar qualquer opção do cliente diretamente em `config/cobbletunes/client.json`. O debug do servidor continua em `config/cobbletunes/server.json`. Arquivos antigos soltos `cobbletunes-client.json` e `cobbletunes-server.json` são migrados automaticamente no próximo início.
 
-#### `cobbletunes-client.json`
+#### `config/cobbletunes/client.json`
 
 | Opção | Padrão |
 |---|---:|
@@ -740,7 +740,7 @@ O CobbleTunes cria dois JSONs dentro de `config/`. Quando o Mod Menu está insta
 
 Definir `musicVolume` do CobbleTunes ou o controle **Música** do Minecraft em `0%` suspende a reprodução do CobbleTunes. Os alvos atuais de bioma, estrutura, batalha e vitória continuam sendo atualizados, mas intervalos de silêncio, debounce de bioma, cooldown de vila e timers de rotação não avançam. Quando os dois controles de volume voltam a ficar acima de zero, o contexto válido mais recente retorna imediatamente sem reaplicar cooldown antigo ou espera de entrada no mundo.
 
-#### `cobbletunes-server.json`
+#### `config/cobbletunes/server.json`
 
 | Opção | Padrão |
 |---|---:|
