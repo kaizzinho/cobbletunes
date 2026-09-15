@@ -11,7 +11,7 @@
     "sources": "https://github.com/kaizzinho/cobbletunes",
     "issues": "https://github.com/kaizzinho/cobbletunes/issues"
   },
-  "license": "MIT",
+  "license": "ARR",
   "icon": "assets/cobbletunes/icon.png",
   "entrypoints": {
     "main": [

@@ -5,7 +5,7 @@
 ![Fabric](https://img.shields.io/badge/Fabric-Loader%200.17.2%2B-DBB69B?logo=minecraft&logoColor=white)
 ![Kotlin](https://img.shields.io/badge/Kotlin-Fabric%20Language%20Kotlin-7F52FF?logo=kotlin&logoColor=white)
 ![Cobblemon](https://img.shields.io/badge/Cobblemon-1.8.0-3E8E41)
-![License](https://img.shields.io/badge/license-MIT-blue)
+![License](https://img.shields.io/badge/license-All%20Rights%20Reserved-red)
 ![Audio](https://img.shields.io/badge/audio-not%20included-lightgrey)
 
 *Read this in [English](#english) | Leia em [Português](#português)*
@@ -397,7 +397,7 @@ No Pokémon OST audio is distributed with CobbleTunes. Soundtrack files belong t
 
 ### License
 
-CobbleTunes source code is available under the MIT license.
+CobbleTunes is **All Rights Reserved (ARR)**. The original, unmodified mod may be used on public or private servers and redistributed as part of public or private modpacks without asking permission. Standalone reuploads or mirrors are not allowed. Copying or reusing the project source/assets, or publicly distributing modified builds, forks, derivative works, or altered binaries, requires prior permission. See [`LICENSE`](./LICENSE) for the full terms.
 
 ---
 
@@ -786,4 +786,4 @@ Nenhuma OST de Pokémon é distribuída com o CobbleTunes. As faixas pertencem a
 
 ### Licença
 
-O código-fonte do CobbleTunes está disponível sob a licença MIT.
+O CobbleTunes é distribuído como **All Rights Reserved (ARR)**. O mod original e não modificado pode ser usado em servidores públicos ou privados e redistribuído como parte de modpacks públicos ou privados sem necessidade de pedir permissão. Reuploads ou mirrors avulsos não são permitidos. Copiar ou reutilizar o código-fonte/assets do projeto, ou distribuir publicamente builds modificadas, forks, trabalhos derivados ou binários alterados, exige permissão prévia. Consulte [`LICENSE`](./LICENSE) para os termos completos.
