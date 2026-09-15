@@ -16,7 +16,7 @@ This manifest matches the current final source and `sounds.json`. Every entry be
 
 The current source audit resolves all 441 `sounds.json` keys from code. A resource pack still needs to provide the matching `.ogg` files.
 
-Compatibility baseline: **Minecraft 1.21.1 + Cobblemon 1.8.0**. Existing battle-side, Victory/capture, client battle synchronization, and evolution hooks were audited against the supplied 1.8 JAR. Alpha-specific battle routing and the complete registered Cobblemon 1.8 worldgen structure set are now supported without adding new sound events.
+Compatibility baseline: **Minecraft 1.21.1 + Cobblemon 1.8.1**. The 1.8.1 patch was audited against the upstream changelog/source diff; it does not change the battle-side, Victory/capture, Alpha metadata, client battle synchronization, evolution, or `StructureStart` APIs used by CobbleTunes. Alpha-specific battle routing and the complete registered Cobblemon 1.8 worldgen structure set are now supported without adding new sound events.
 
 ## Routing notes
 
@@ -748,7 +748,7 @@ The detector recognizes all 71 registered structures in the supplied Cobbleverse
 
 ### Cobblemon 1.8 structure reuse mappings
 
-Cobblemon 1.8 adds no new CobbleTunes sound keys here. The server detector uses exact registered `StructureStart` IDs from the supplied 1.8.0 JAR and routes them into the existing structure pools. The release notes describe 49 new habitat structures; the actual worldgen registry in the JAR exposes **32 habitat Structure IDs**, with additional habitat content represented by templates/pools rather than distinct registered Structure IDs.
+Cobblemon 1.8 adds no new CobbleTunes sound keys here. The server detector uses exact registered `StructureStart` IDs audited from the 1.8.0 worldgen registry and routes them into the existing structure pools. Cobblemon 1.8.1 removes unused placeholder habitat pools but does not introduce or remove registered structure IDs used by this routing. The release notes describe 49 new habitat structures; the actual worldgen registry in the JAR exposes **32 habitat Structure IDs**, with additional habitat content represented by templates/pools rather than distinct registered Structure IDs.
 
 | Cobblemon structure IDs | Reused CobbleTunes pool |
 |---|---|

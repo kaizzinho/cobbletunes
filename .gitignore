@@ -35,3 +35,17 @@ run/
 
 # .gitignore
 src/main/resources/assets/cobbletunes/sounds/**/*.ogg
+
+# local dependencies
+libs/
+
+# gradle build setup
+gradle/
+gradlew
+gradlew.bat
+build.gradle.kts
+settings.gradle.kts
+gradle.properties
+
+# github actions
+.github/workflows/

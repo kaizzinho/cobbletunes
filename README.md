@@ -4,7 +4,7 @@
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-62B47A?logo=minecraft&logoColor=white)
 ![Fabric](https://img.shields.io/badge/Fabric-Loader%200.17.2%2B-DBB69B?logo=minecraft&logoColor=white)
 ![Kotlin](https://img.shields.io/badge/Kotlin-Fabric%20Language%20Kotlin-7F52FF?logo=kotlin&logoColor=white)
-![Cobblemon](https://img.shields.io/badge/Cobblemon-1.8.0-3E8E41)
+![Cobblemon](https://img.shields.io/badge/Cobblemon-1.8.1-3E8E41)
 ![License](https://img.shields.io/badge/license-All%20Rights%20Reserved-red)
 ![Audio](https://img.shields.io/badge/audio-not%20included-lightgrey)
 
@@ -22,7 +22,7 @@ The mod ships the routing and playback system only. It does **not** include, dow
 
 The current source defines **441 sound events** across battle, Victory, Battle Tower, Game Corner, evolution, ambience, menu, and effects. The complete list is in [`SOUND_MANIFEST.md`](./SOUND_MANIFEST.md).
 
-This source targets **Cobblemon 1.8.0 on Minecraft 1.21.1**. The existing battle-side, Victory, capture, client battle synchronization, and evolution hooks remain compatible. Cobblemon 1.8 Alpha Pokémon are now detected from their synchronized `isAlpha` metadata and use a boss-like regional weighted soundtrack route. The complete Cobblemon 1.8 worldgen structure registry is also mapped: 32 registered Habitat Structure IDs, 29 ruin IDs, three Shipwreck Coves, and three fishing boats. These routes reuse existing CobbleTunes structure pools, except the six Gimmighoul towers which retain their dedicated spooky pool.
+This source targets **Cobblemon 1.8.1 on Minecraft 1.21.1**. The 1.8.1 patch does not change the battle-side, Victory, capture, Alpha metadata, client battle synchronization, evolution, or `StructureStart` APIs used by CobbleTunes, so no routing code rewrite is required. Cobblemon 1.8 Alpha Pokémon are now detected from their synchronized `isAlpha` metadata and use a boss-like regional weighted soundtrack route. The complete Cobblemon 1.8 worldgen structure registry is also mapped: 32 registered Habitat Structure IDs, 29 ruin IDs, three Shipwreck Coves, and three fishing boats. These routes reuse existing CobbleTunes structure pools, except the six Gimmighoul towers which retain their dedicated spooky pool.
 
 ### What it does
 
@@ -95,7 +95,7 @@ When a CobbleTunes server bridge is present, the client automatically stops its 
 - Fabric Loader `0.17.2+`
 - Fabric API `0.116.6+1.21.1`
 - Fabric Language Kotlin `1.13.6+`
-- Cobblemon `1.8.0`
+- Cobblemon `1.8.1`
 - Java `21`
 
 For multiplayer, installing CobbleTunes on the **client is enough** for the standalone experience on a public Cobblemon server. Installing the same CobbleTunes JAR on the server is optional and enables exact server-only structure/manual-zone routing and authoritative compatibility metadata for CobbleTunes clients. Players without CobbleTunes can still join because the server bridge registers no custom gameplay content and only sends CobbleTunes payloads to clients that advertise support.
@@ -166,7 +166,7 @@ Alpha victories and Alpha captures continue to use the normal regional **wild Vi
 
 #### RCT trainer roles and factions
 
-RCT integration is reflection-based. CobbleTunes reads the trainer ID and type when available, then classifies the encounter without making RCT a hard dependency. For the Cobblemon 1.8 development/runtime test environment, the validated local pair is **RCT Mod 0.19.0-beta + RCT API 0.16.0-beta**.
+RCT integration is reflection-based. CobbleTunes reads the trainer ID and type when available, then classifies the encounter without making RCT a hard dependency. For the Cobblemon 1.8.1 development/runtime test environment, the validated local pair remains **RCT Mod 0.19.0-beta + RCT API 0.16.0-beta**.
 
 Recognized role routes include:
 
@@ -411,7 +411,7 @@ O mod contém apenas a lógica de roteamento e reprodução. Ele **não** inclui
 
 O código atual define **441 eventos de som** entre batalhas, vitória, Battle Tower, Game Corner, evolução, ambientação, menu e efeitos. A lista completa está em [`SOUND_MANIFEST.md`](./SOUND_MANIFEST.md).
 
-Este código tem como alvo **Cobblemon 1.8.0 no Minecraft 1.21.1**. Os hooks existentes de lados da batalha, Victory, captura, sincronização de batalha no cliente e evolução continuam compatíveis. Pokémon Alpha do Cobblemon 1.8 agora são detectados pelos metadados sincronizados `isAlpha` e usam uma rota regional ponderada semelhante à de Boss. O registro worldgen do Cobblemon 1.8 também está completamente mapeado: 32 IDs registrados de estruturas Habitat, 29 IDs de ruínas, três Shipwreck Coves e três barcos de pesca. Essas rotas reutilizam pools de estrutura já existentes, exceto pelas seis torres de Gimmighoul que mantêm seu pool sombrio dedicado.
+Este código tem como alvo **Cobblemon 1.8.1 no Minecraft 1.21.1**. O patch 1.8.1 não altera as APIs de lados da batalha, Victory, captura, metadados Alpha, sincronização de batalha no cliente, evolução ou `StructureStart` usadas pelo CobbleTunes, então não é necessário reescrever o roteamento. Pokémon Alpha do Cobblemon 1.8 agora são detectados pelos metadados sincronizados `isAlpha` e usam uma rota regional ponderada semelhante à de Boss. O registro worldgen do Cobblemon 1.8 também está completamente mapeado: 32 IDs registrados de estruturas Habitat, 29 IDs de ruínas, três Shipwreck Coves e três barcos de pesca. Essas rotas reutilizam pools de estrutura já existentes, exceto pelas seis torres de Gimmighoul que mantêm seu pool sombrio dedicado.
 
 ### O que ele faz
 
@@ -484,7 +484,7 @@ Quando uma ponte de servidor do CobbleTunes está disponível, o cliente desativ
 - Fabric Loader `0.17.2+`
 - Fabric API `0.116.6+1.21.1`
 - Fabric Language Kotlin `1.13.6+`
-- Cobblemon `1.8.0`
+- Cobblemon `1.8.1`
 - Java `21`
 
 Em multiplayer, instalar o CobbleTunes **somente no cliente já é suficiente** para a experiência standalone em um servidor público de Cobblemon. Instalar o mesmo JAR do CobbleTunes no servidor é opcional e habilita roteamento exato de estruturas/zonas manuais e metadados autoritativos para clientes que também possuem o mod. Jogadores sem CobbleTunes continuam podendo entrar porque a ponte não registra conteúdo próprio de gameplay e só envia payloads para clientes que anunciam suporte.
@@ -555,7 +555,7 @@ Vitórias e capturas de Alpha continuam usando o resolvedor regional normal de *
 
 #### Funções e facções do RCT
 
-A integração com RCT usa reflexão. O CobbleTunes lê ID e tipo do treinador quando disponíveis sem transformar o RCT em dependência obrigatória. Para o ambiente de desenvolvimento/teste em Cobblemon 1.8, o par local validado é **RCT Mod 0.19.0-beta + RCT API 0.16.0-beta**.
+A integração com RCT usa reflexão. O CobbleTunes lê ID e tipo do treinador quando disponíveis sem transformar o RCT em dependência obrigatória. Para o ambiente de desenvolvimento/teste em Cobblemon 1.8.1, o par local validado continua sendo **RCT Mod 0.19.0-beta + RCT API 0.16.0-beta**.
 
 Rotas reconhecidas incluem:
 
