@@ -116,6 +116,16 @@ Poké Center and Poké Mart music is **manual-zone-only**. Generated Center/Mart
 
 Mod Menu, RCT, WildBosses, Cobblemon Raid Dens, Cobblemon Loot Menu, CobblemonAdditions, Repurposed Structures, and Legendary Monuments are soft mod integrations. Terralith support is registry-driven and only activates when its datapack structures exist.
 
+### Installation
+
+1. Download the latest `cobbletunes-*.jar` from this repository's **Releases** page.
+2. Install the required versions of Fabric Loader, Fabric API, Fabric Language Kotlin, and Cobblemon listed above.
+3. Place the CobbleTunes JAR in your Minecraft `mods` folder.
+4. Add a compatible CobbleTunes music resource pack separately; soundtrack files are not bundled with the mod.
+5. For server-enhanced structure and manual-zone detection, place the same CobbleTunes JAR in the server `mods` folder. Server installation is optional for the client-only experience.
+
+Mod Menu is optional. Without it, all client settings remain editable through `config/cobbletunes/client.json`.
+
 ### Battle routing
 
 #### Standard regional contexts
@@ -375,22 +385,6 @@ Missing audio is handled as silence instead of crashing the music system. Evolut
 - **`src/client/kotlin`** — packet routing plus the client-only battle classifier, region selection, Victory/Loot Menu bridge, local Raid Dens/WildBosses/RCT inference, the client-observed spatial evolution watcher, biome ambience watching, music state, fades, menu music, low-HP handling, and the optional Mod Menu config screen. Worldgen structure identity is intentionally server-authoritative.
 - **`src/main/resources/assets/cobbletunes/sounds.json`** — all sound keys and resource-pack paths.
 
-### Building
-
-Java 21 is required. From the complete project root:
-
-```powershell
-.\gradlew clean build
-```
-
-If your project uses the audio-exclusion build property:
-
-```powershell
-.\gradlew clean build -PexcludeAudio
-```
-
-The built JAR is placed in `build/libs/`.
-
 ### Audio and licensing
 
 No Pokémon OST audio is distributed with CobbleTunes. Soundtrack files belong to their respective rights holders and must be supplied separately by the resource-pack user or pack maintainer.
@@ -504,6 +498,16 @@ Música de Poké Center e Poké Mart é **exclusiva de zonas manuais**. Centros/
 - **Legendary Monuments (versão Cobbleverse/light)** — suporta exatamente o `LegendaryMonuments-Cobbleverse` anexado: todas as 13 estruturas registradas e o bioma `distortion_world_biome` usam músicas já existentes. Locais exclusivos do Legendary Monuments 8.1 completo, como Plains of Death, estruturas Thalic, Dyna Plains e o conjunto expandido de monumentos, ficam intencionalmente fora desta versão até a migração do Cobbleverse para 1.8.
 
 Mod Menu, RCT, WildBosses, Cobblemon Raid Dens, Cobblemon Loot Menu, CobblemonAdditions, Repurposed Structures e Legendary Monuments são integrações opcionais de mods. O suporte ao Terralith é baseado no registro e só é ativado quando as estruturas do datapack existem.
+
+### Instalação
+
+1. Baixe o `cobbletunes-*.jar` mais recente na página **Releases** deste repositório.
+2. Instale as versões obrigatórias do Fabric Loader, Fabric API, Fabric Language Kotlin e Cobblemon listadas acima.
+3. Coloque o JAR do CobbleTunes na pasta `mods` do Minecraft.
+4. Adicione separadamente um resource pack de música compatível com o CobbleTunes; as faixas não são incluídas no mod.
+5. Para detecção aprimorada de estruturas e zonas manuais pelo servidor, coloque o mesmo JAR do CobbleTunes na pasta `mods` do servidor. A instalação no servidor é opcional para o modo somente cliente.
+
+O Mod Menu é opcional. Sem ele, todas as configurações do cliente continuam disponíveis em `config/cobbletunes/client.json`.
 
 ### Roteamento de batalha
 
@@ -763,22 +767,6 @@ O `sounds.json` incluído define todos os 441 eventos esperados. [`SOUND_MANIFES
 - **`src/main/kotlin`** — inicialização comum/servidor, eventos de batalha, classificação do RCT, pontes com WildBosses e Raid Dens, detecção de estruturas incluindo aliases de compatibilidade do Cobbleverse e mapeamentos do Terralith, CobblemonAdditions, Repurposed Structures e Legendary Monuments, markers de zonas manuais, configs e rede.
 - **`src/client/kotlin`** — roteamento dos pacotes e classificador de batalha somente cliente, região, ponte de Victory/Loot Menu, inferência local de Raid Dens/WildBosses/RCT, watcher espacial de evolução observado pelo cliente, observação de biomas, estado musical, fades, menu, HP baixo e a tela opcional de configuração do Mod Menu. A identidade de estruturas worldgen é intencionalmente autoritativa no servidor.
 - **`src/main/resources/assets/cobbletunes/sounds.json`** — todas as chaves e caminhos do resource pack.
-
-### Compilação
-
-Java 21 é obrigatório. Na raiz do projeto completo:
-
-```powershell
-.\gradlew clean build
-```
-
-Se o projeto estiver usando a opção de exclusão de áudio:
-
-```powershell
-.\gradlew clean build -PexcludeAudio
-```
-
-O JAR compilado fica em `build/libs/`.
 
 ### Áudio e licença
 
