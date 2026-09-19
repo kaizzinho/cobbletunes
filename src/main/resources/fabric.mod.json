@@ -42,6 +42,7 @@
   },
   "suggests": {
     "modmenu": ">=11.0.0",
+    "fancymenu": "*",
     "wildbosses": "*",
     "rctmod": "*",
     "cobblemon_loot_menu": "*",

@@ -80,6 +80,7 @@ When a CobbleTunes server bridge is present, the client automatically stops its 
 - [x] **Hand-placed music zones** for Poké Centers, Poké Marts, Gyms, Game Corners/Casinos, special locations, and Battle Tower floors.
 - [x] **Game Corner pool** with 15 FRLG, Emerald, HGSS, and Platinum tracks played as a shuffled no-repeat playlist.
 - [x] **Title-screen music** that stays active across submenus and stops when a world loads.
+- [x] **FancyMenu music override** that silences FancyMenu Music-channel themes while CobbleTunes owns title-screen music, without touching FancyMenu visuals or UI sounds.
 - [x] **Low-HP cue** for the active battle Pokémon with a single 80%-volume alert.
 - [x] **Spatial evolution music** emitted from visible evolving Pokémon, plus a Summary-screen fallback that plays only the local regional completion cue when no world entity exists.
 - [x] **Player-death handling** and safe world/zone reset.
@@ -105,6 +106,7 @@ Poké Center and Poké Mart music is **manual-zone-only**. Generated Center/Mart
 #### Optional integrations
 
 - **Mod Menu** — opens a native CobbleTunes configuration screen for client music settings.
+- **FancyMenu** — when CobbleTunes menu replacement is enabled, FancyMenu global menu tracks and Music-channel Audio elements are silenced so the two menu themes do not overlap. Visual layouts and UI sounds remain untouched.
 - **Radical Cobblemon Trainers** — trainer role, region, faction, progression-aware routing, roster-majority regional themes for generic Battle Tower floor trainers, and lore-specific weighted pools for supported named custom trainers.
 - **WildBosses** — Boss-specific weighted regional battle pools.
 - **Cobblemon Raid Dens** — raid battles reuse the same regional weighted pools. Client-only mode can recognize the native tier battle sound; server-enhanced mode keeps the actor-backed Raid Dens metadata, raid ID/active raid map, and battle-marker fallbacks.
@@ -114,7 +116,7 @@ Poké Center and Poké Mart music is **manual-zone-only**. Generated Center/Mart
 - **Repurposed Structures** — reuses the existing vanilla/BCA music pools for all 107 worldgen structure IDs present in `7.5.21+1.21.1`.
 - **Legendary Monuments (Cobbleverse/light build)** — targets the attached `LegendaryMonuments-Cobbleverse` build exactly: all 13 registered structures and its `distortion_world_biome` are mapped to existing CobbleTunes music. Full Legendary Monuments 8.1-only locations such as Plains of Death, Thalic structures, Dyna Plains, and the expanded monument set are intentionally not targeted until the Cobbleverse 1.8 migration.
 
-Mod Menu, RCT, WildBosses, Cobblemon Raid Dens, Cobblemon Loot Menu, CobblemonAdditions, Repurposed Structures, and Legendary Monuments are soft mod integrations. Terralith support is registry-driven and only activates when its datapack structures exist.
+Mod Menu, FancyMenu, RCT, WildBosses, Cobblemon Raid Dens, Cobblemon Loot Menu, CobblemonAdditions, Repurposed Structures, and Legendary Monuments are soft mod integrations. Terralith support is registry-driven and only activates when its datapack structures exist.
 
 ### Installation
 
@@ -463,6 +465,7 @@ Quando uma ponte de servidor do CobbleTunes está disponível, o cliente desativ
 - [x] **Zonas manuais de música** para Centros Pokémon, Poké Marts, Ginásios, Game Corners/Cassinos, locais especiais e andares da Battle Tower.
 - [x] **Pool de Game Corner** com 15 faixas de FRLG, Emerald, HGSS e Platinum tocadas como uma playlist embaralhada sem repetição imediata.
 - [x] **Música de menu** contínua entre os submenus da tela inicial.
+- [x] **Override de música do FancyMenu** que silencia temas do FancyMenu no canal Music enquanto o CobbleTunes controla a música da tela inicial, sem alterar visuais ou sons de interface do FancyMenu.
 - [x] **Alerta de HP baixo** tocado uma vez a 80% do volume configurado.
 - [x] **Música espacial de evolução** emitida por Pokémon visíveis, com fallback da tela Summary que toca apenas a conclusão regional local quando não existe entidade no mundo.
 - [x] **Tratamento de morte do jogador** e limpeza segura de estado do mundo.
@@ -488,6 +491,7 @@ Música de Poké Center e Poké Mart é **exclusiva de zonas manuais**. Centros/
 #### Integrações opcionais
 
 - **Mod Menu** — abre uma tela nativa do CobbleTunes para as configurações de música do cliente.
+- **FancyMenu** — quando a substituição de música de menu do CobbleTunes está ativa, faixas globais e elementos Audio do FancyMenu no canal Music são silenciados para evitar duas músicas ao mesmo tempo. Layouts visuais e sons de interface não são alterados.
 - **Radical Cobblemon Trainers** — melhora a detecção de função, região, facção e progressão, usa a maioria regional do time para treinadores genéricos da Battle Tower e pools ponderados baseados no lore para treinadores personalizados suportados.
 - **WildBosses** — ativa pools musicais próprios para Bosses.
 - **Cobblemon Raid Dens** — batalhas de raid reutilizam os mesmos pools regionais ponderados. O modo somente cliente pode reconhecer o som nativo do tier da raid; o modo com servidor mantém os fallbacks pelos metadados do Pokémon ligado ao actor, ID/mapa de raids ativas e marcador da batalha.
@@ -497,7 +501,7 @@ Música de Poké Center e Poké Mart é **exclusiva de zonas manuais**. Centros/
 - **Repurposed Structures** — reaproveita os pools vanilla/BCA existentes para todos os 107 IDs de estruturas de worldgen presentes na versão `7.5.21+1.21.1`.
 - **Legendary Monuments (versão Cobbleverse/light)** — suporta exatamente o `LegendaryMonuments-Cobbleverse` anexado: todas as 13 estruturas registradas e o bioma `distortion_world_biome` usam músicas já existentes. Locais exclusivos do Legendary Monuments 8.1 completo, como Plains of Death, estruturas Thalic, Dyna Plains e o conjunto expandido de monumentos, ficam intencionalmente fora desta versão até a migração do Cobbleverse para 1.8.
 
-Mod Menu, RCT, WildBosses, Cobblemon Raid Dens, Cobblemon Loot Menu, CobblemonAdditions, Repurposed Structures e Legendary Monuments são integrações opcionais de mods. O suporte ao Terralith é baseado no registro e só é ativado quando as estruturas do datapack existem.
+Mod Menu, FancyMenu, RCT, WildBosses, Cobblemon Raid Dens, Cobblemon Loot Menu, CobblemonAdditions, Repurposed Structures e Legendary Monuments são integrações opcionais de mods. O suporte ao Terralith é baseado no registro e só é ativado quando as estruturas do datapack existem.
 
 ### Instalação
 

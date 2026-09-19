@@ -3,6 +3,7 @@ package com.kaizzinho.cobbletunes.client
 import com.kaizzinho.cobbletunes.LOGGER
 import com.kaizzinho.cobbletunes.MOD_ID
 import com.kaizzinho.cobbletunes.client.config.CobbleTunesClientConfig
+import com.kaizzinho.cobbletunes.client.compat.fancymenu.FancyMenuMusicSuppressor
 import com.kaizzinho.cobbletunes.client.compat.lootmenu.LootMenuVictoryBridge
 import com.kaizzinho.cobbletunes.client.compat.standalone.ClientStandaloneBridge
 import com.kaizzinho.cobbletunes.client.evolution.ClientEvolutionWatcher
@@ -159,6 +160,7 @@ class CobbleTunesClient : ClientModInitializer {
             debugLog = ::debugLog
         )
         evolutionWatcher.register()
+        FancyMenuMusicSuppressor.register(config, ::debugLog)
         registerVanillaMusicSuppression()
         registerBiomeAmbienceWatcher()
         registerDeathScreenWatcher()
@@ -595,6 +597,7 @@ class CobbleTunesClient : ClientModInitializer {
                 val track = pendingMenuTrack ?: return@register
 
                 if (!musicPlayer.isMenuThemeAudible()) {
+                    FancyMenuMusicSuppressor.silenceExistingMenuMusic(client, config, ::debugLog)
                     musicPlayer.playMenuTheme(track)
                 }
                 client.musicTracker.stop()
