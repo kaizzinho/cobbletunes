@@ -1,16 +1,18 @@
 package com.kaizzinho.cobbletunes.client.compat.fancymenu
 
-import com.kaizzinho.cobbletunes.MOD_ID
 import com.kaizzinho.cobbletunes.client.config.CobbleTunesClientConfig
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents
 import net.fabricmc.loader.api.FabricLoader
 import net.minecraft.client.MinecraftClient
-import net.minecraft.client.sound.SoundInstanceListener
 import net.minecraft.sound.SoundCategory
+import java.util.Collections
+import java.util.WeakHashMap
 
 object FancyMenuMusicSuppressor {
     private var registered = false
-    private val loggedSoundIds = mutableSetOf<String>()
+    private var config: CobbleTunesClientConfig? = null
+    private var debugLog: ((String) -> Unit)? = null
+    private val suppressedElements = Collections.newSetFromMap(WeakHashMap<Any, Boolean>())
+    private val loggedElementTypes = mutableSetOf<String>()
 
     val available: Boolean
         get() = FabricLoader.getInstance().isModLoaded("fancymenu")
@@ -21,25 +23,46 @@ object FancyMenuMusicSuppressor {
     ) {
         if (registered || !available) return
         registered = true
+        this.config = config
+        this.debugLog = debugLog
+        debugLog("[FancyMenu] direct menu audio suppression active")
+    }
 
-        ClientLifecycleEvents.CLIENT_STARTED.register { client ->
-            client.soundManager.registerListener(SoundInstanceListener { sound, _, _ ->
-                val shouldSuppress = config.replaceMenuMusic &&
-                    client.world == null &&
-                    sound.category == SoundCategory.MUSIC &&
-                    sound.id.namespace != MOD_ID
-
-                if (shouldSuppress) {
-                    client.soundManager.stop(sound)
-                    if (loggedSoundIds.add(sound.id.toString())) {
-                        debugLog("[FancyMenu] suppressed menu music: ${sound.id}")
-                    }
-                }
-            })
-
-            silenceExistingMenuMusic(client, config, debugLog)
-            debugLog("[FancyMenu] menu music suppression active")
+    @JvmStatic
+    fun shouldSuppressAudioElement(element: Any): Boolean {
+        val currentConfig = config ?: return false
+        if (!registered || !available || !currentConfig.replaceMenuMusic) {
+            suppressedElements.remove(element)
+            return false
         }
+
+        val client = MinecraftClient.getInstance()
+        if (client.world != null) {
+            suppressedElements.remove(element)
+            return false
+        }
+
+        val source = runCatching {
+            element.javaClass.getMethod("getSoundSource").invoke(element)
+        }.getOrNull() ?: return false
+
+        if (!source.toString().equals("music", ignoreCase = true)) {
+            suppressedElements.remove(element)
+            return false
+        }
+
+        if (suppressedElements.add(element)) {
+            runCatching {
+                element.javaClass.getMethod("resetAudioElementKeepAudios").invoke(element)
+            }.onFailure {
+                debugLog?.invoke("[FancyMenu] failed to stop menu audio: ${it.javaClass.simpleName}")
+            }
+        }
+
+        if (loggedElementTypes.add(element.javaClass.name)) {
+            debugLog?.invoke("[FancyMenu] suppressed music audio element")
+        }
+        return true
     }
 
     fun silenceExistingMenuMusic(
@@ -49,6 +72,6 @@ object FancyMenuMusicSuppressor {
     ) {
         if (!available || !config.replaceMenuMusic || client.world != null) return
         client.soundManager.stopSounds(null, SoundCategory.MUSIC)
-        debugLog("[FancyMenu] cleared existing menu music")
+        debugLog("[FancyMenu] cleared minecraft menu music")
     }
 }

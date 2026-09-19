@@ -50,5 +50,8 @@
     "repurposed_structures": "*",
     "legendarymonuments": "*",
     "cobblemonraiddens": "*"
-  }
+  },
+  "mixins": [
+    "cobbletunes.client.mixins.json"
+  ]
 }
