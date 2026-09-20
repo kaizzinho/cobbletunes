@@ -10,6 +10,8 @@
 
 *Read this in [English](#english) | Leia em [Português](#português)*
 
+*If you're here for the resource pack, click [here](#resource-pack)*|
+*Se você está aqui pelo resource pack, clique [aqui](#resource-pack-1)*
 ---
 
 ## English
@@ -123,7 +125,7 @@ Mod Menu, FancyMenu, RCT, WildBosses, Cobblemon Raid Dens, Cobblemon Loot Menu, 
 1. Download the latest `cobbletunes-*.jar` from this repository's **Releases** page.
 2. Install the required versions of Fabric Loader, Fabric API, Fabric Language Kotlin, and Cobblemon listed above.
 3. Place the CobbleTunes JAR in your Minecraft `mods` folder.
-4. Add a compatible CobbleTunes music resource pack separately; soundtrack files are not bundled with the mod.
+4. Add a compatible CobbleTunes music resource pack.
 5. For server-enhanced structure and manual-zone detection, place the same CobbleTunes JAR in the server `mods` folder. Server installation is optional for the client-only experience.
 
 Mod Menu is optional. Without it, all client settings remain editable through `config/cobbletunes/client.json`.
@@ -371,25 +373,13 @@ Setting either CobbleTunes `musicVolume` or Minecraft's **Music** volume slider 
 
 ### Resource pack
 
-CobbleTunes does not include soundtrack files. Put your `.ogg` files under:
-
-```text
-assets/cobbletunes/sounds/
-```
-
-The included `sounds.json` defines all 441 expected sound events. [`SOUND_MANIFEST.md`](./SOUND_MANIFEST.md) mirrors those entries and explains their routing.
-
-Missing audio is handled as silence instead of crashing the music system. Evolution files are expected directly under `assets/cobbletunes/sounds/evolution/` using the flat filenames listed in the sound manifest, while `gamecorner/` entries remain empty slots until the matching OGG files are added to the resource pack.
+[Click here to download the Cobbletunes resourcepack](https://mega.nz/file/zeIwST5L#_D9raffsmXnsZ1KKtpSYw0_-Nhak7XhcO89OG8Pf468)
 
 ### Project layout
 
 - **`src/main/kotlin`** — common/server entrypoint, battle events, RCT classification, WildBosses and Raid Dens bridges, structure detection including Cobbleverse compatibility aliases, Terralith, CobblemonAdditions, Repurposed Structures, and Legendary Monuments mappings, manual zone markers, configs, and networking.
 - **`src/client/kotlin`** — packet routing plus the client-only battle classifier, region selection, Victory/Loot Menu bridge, local Raid Dens/WildBosses/RCT inference, the client-observed spatial evolution watcher, biome ambience watching, music state, fades, menu music, low-HP handling, and the optional Mod Menu config screen. Worldgen structure identity is intentionally server-authoritative.
 - **`src/main/resources/assets/cobbletunes/sounds.json`** — all sound keys and resource-pack paths.
-
-### Audio and licensing
-
-No Pokémon OST audio is distributed with CobbleTunes. Soundtrack files belong to their respective rights holders and must be supplied separately by the resource-pack user or pack maintainer.
 
 ### License
 
@@ -756,25 +746,13 @@ Definir `musicVolume` do CobbleTunes ou o controle **Música** do Minecraft em `
 
 ### Resource pack
 
-O CobbleTunes não inclui arquivos de soundtrack. Coloque os `.ogg` dentro de:
-
-```text
-assets/cobbletunes/sounds/
-```
-
-O `sounds.json` incluído define todos os 441 eventos esperados. [`SOUND_MANIFEST.md`](./SOUND_MANIFEST.md) espelha essas entradas e explica o roteamento.
-
-Áudio ausente vira silêncio sem derrubar o sistema de música. Os arquivos de evolução são esperados diretamente em `assets/cobbletunes/sounds/evolution/` com os nomes planos listados no sound manifest, enquanto as entradas de `gamecorner/` continuam como espaços vazios até os OGGs correspondentes serem adicionados ao resource pack.
+[Clique aqui para baixar o resource pack a ser usado com o Cobbletunes](https://mega.nz/file/zeIwST5L#_D9raffsmXnsZ1KKtpSYw0_-Nhak7XhcO89OG8Pf468)
 
 ### Organização do projeto
 
 - **`src/main/kotlin`** — inicialização comum/servidor, eventos de batalha, classificação do RCT, pontes com WildBosses e Raid Dens, detecção de estruturas incluindo aliases de compatibilidade do Cobbleverse e mapeamentos do Terralith, CobblemonAdditions, Repurposed Structures e Legendary Monuments, markers de zonas manuais, configs e rede.
 - **`src/client/kotlin`** — roteamento dos pacotes e classificador de batalha somente cliente, região, ponte de Victory/Loot Menu, inferência local de Raid Dens/WildBosses/RCT, watcher espacial de evolução observado pelo cliente, observação de biomas, estado musical, fades, menu, HP baixo e a tela opcional de configuração do Mod Menu. A identidade de estruturas worldgen é intencionalmente autoritativa no servidor.
 - **`src/main/resources/assets/cobbletunes/sounds.json`** — todas as chaves e caminhos do resource pack.
-
-### Áudio e licença
-
-Nenhuma OST de Pokémon é distribuída com o CobbleTunes. As faixas pertencem aos respectivos detentores de direitos e devem ser fornecidas separadamente pelo usuário ou mantenedor do resource pack.
 
 ### Licença
 
