@@ -10,7 +10,7 @@
 
 *Read this in [English](#english) | Leia em [Português](#português)*
 
-*If you're here for the resource pack, click [here](#resource-pack)*|
+*If you're here for the resource pack, click [here](#resource-pack)* |
 *Se você está aqui pelo resource pack, clique [aqui](#resource-pack-1)*
 ---
 
