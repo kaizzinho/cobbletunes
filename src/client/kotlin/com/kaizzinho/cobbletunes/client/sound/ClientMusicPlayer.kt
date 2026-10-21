@@ -46,8 +46,6 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
     private val warnedMissingBiomes = mutableSetOf<String>()
     private var activeBiomeMemoryId: String? = null
     private var ambienceMemoryTick: Long = 0L
-    private val trackBudgetStartMillis: MutableMap<String, Long> = mutableMapOf()
-    private val trackBudgetDurationMillis: MutableMap<String, Long> = mutableMapOf()
     private var ambienceSegmentStartedAtMillis: Long? = null
 
     private var pendingBiomeId: String? = null
@@ -236,9 +234,6 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
             latestOverrideBiome?.let(::commitBiomeMemoryVisit)
             currentBiomeId = latestOverrideBiome
             currentAmbienceTrack = latestOverrideTrack
-            val budgetMillis = randomRotationBudgetMillis()
-            trackBudgetStartMillis[latestOverrideTrack.id] = System.currentTimeMillis()
-            trackBudgetDurationMillis[latestOverrideTrack.id] = budgetMillis
             debugLog("[Battle end resume] Using latest observed biome: ${latestOverrideTrack.id} ($latestOverrideBiome)")
             play(MusicContext.AMBIENCE, latestOverrideTrack, force = true)
             return
@@ -255,9 +250,6 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
             currentBiomeId = resumedBiome
             pendingBiomeId = null
             currentAmbienceTrack = t
-            val budgetMillis = randomRotationBudgetMillis()
-            trackBudgetStartMillis[t.id] = System.currentTimeMillis()
-            trackBudgetDurationMillis[t.id] = budgetMillis
             t
         } else {
             currentAmbienceTrack
@@ -290,8 +282,6 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
         biomeTrackMemory.clear()
         warnedMissingBiomes.clear()
         activeBiomeMemoryId = null
-        trackBudgetStartMillis.clear()
-        trackBudgetDurationMillis.clear()
         debounceBiomeId = null
         debounceEndsAtMillis = null
 
@@ -608,24 +598,16 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
             return
         }
 
-        val budgetStart = trackBudgetStartMillis[track.id]
-        val budgetDuration = trackBudgetDurationMillis[track.id]
-        val budgetElapsed = if (budgetStart != null) System.currentTimeMillis() - budgetStart else 0L
-        val budgetExpired = budgetDuration != null && budgetElapsed >= budgetDuration
-
         val soundAge = System.currentTimeMillis() - currentSoundStartedAtMillis
         val soundFinished = currentContext == MusicContext.AMBIENCE &&
                 currentTrackId == track.id &&
                 soundAge > 2000L &&
                 (currentSound == null || !MinecraftClient.getInstance().soundManager.isPlaying(currentSound!!))
 
-        if (budgetExpired || soundFinished) {
-            val reason = if (budgetExpired) "budget elapsed (${budgetElapsed / 1000}s)" else "track finished"
-            debugLog("[Rotation] $reason — queuing next for biome $biomeId")
+        if (soundFinished) {
+            debugLog("[Rotation] track finished — queuing next for biome $biomeId")
             stopAmbienceAudio()
             biomeTrackMemory.remove(biomeId)
-            trackBudgetStartMillis.remove(track.id)
-            trackBudgetDurationMillis.remove(track.id)
 
             val fresh = resolveTrackForBiome(biomeId) ?: return
             val silenceSeconds = randomSecondsInRange(
@@ -656,11 +638,7 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
         commitBiomeMemoryVisit(biomeId)
         currentBiomeId = biomeId; currentAmbienceTrack = track
 
-        val budgetMillis = randomRotationBudgetMillis()
-        trackBudgetStartMillis[track.id] = System.currentTimeMillis()
-        trackBudgetDurationMillis[track.id] = budgetMillis
-
-        debugLog("[Debounce commit] Playing ${track.id} for biome $biomeId (budget: ${budgetMillis / 1000}s)")
+        debugLog("[Debounce commit] Playing ${track.id} for biome $biomeId")
         if (currentContext == MusicContext.AMBIENCE) play(MusicContext.AMBIENCE, track)
     }
 
@@ -796,11 +774,7 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
         biomeId?.let(::commitBiomeMemoryVisit)
         currentBiomeId = biomeId; currentAmbienceTrack = track
 
-        val budgetMillis = randomRotationBudgetMillis()
-        trackBudgetStartMillis[track.id] = System.currentTimeMillis()
-        trackBudgetDurationMillis[track.id] = budgetMillis
-
-        debugLog("[Silence elapsed] Playing ${track.id} (budget: ${budgetMillis / 1000}s)")
+        debugLog("[Silence elapsed] Playing ${track.id}")
         if (currentContext == MusicContext.AMBIENCE) play(MusicContext.AMBIENCE, track)
     }
 
@@ -809,11 +783,6 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
         return if (hi > min) min + (hi - min) * Math.random().toFloat() else min
     }
 
-    private fun randomRotationBudgetMillis(): Long {
-        val minMs = (config.trackEndSilenceMinSeconds * 1000).toLong()
-        val maxMs = (config.trackEndSilenceMaxSeconds * 1000).toLong()
-        return if (maxMs > minMs) minMs + ((Math.random() * (maxMs - minMs)).toLong()) else minMs
-    }
 
     private fun stopAmbienceAudio() {
         if (currentContext != MusicContext.AMBIENCE) return
@@ -878,8 +847,6 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
             debounceBiomeId = null
             debounceEndsAtMillis = null
             villageCooldownEndsAtMillis = null
-            trackBudgetStartMillis.clear()
-            trackBudgetDurationMillis.clear()
             debugLog("[Volume] Music suspended at zero volume")
             return
         }
@@ -924,9 +891,6 @@ class ClientMusicPlayer(private val config: CobbleTunesClientConfig) {
                 pendingTrack = null
                 debounceBiomeId = null
                 debounceEndsAtMillis = null
-                val budgetMillis = randomRotationBudgetMillis()
-                trackBudgetStartMillis[track.id] = System.currentTimeMillis()
-                trackBudgetDurationMillis[track.id] = budgetMillis
                 play(MusicContext.AMBIENCE, track, force = true, fadeInSeconds = 0.15f, fadeOutSeconds = 0f)
                 return
             }
