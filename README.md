@@ -1,6 +1,6 @@
 # CobbleTunes — Music Framework 🎵🎮
 
-![Version](https://img.shields.io/badge/version-1.0-blue)
+![Version](https://img.shields.io/badge/version-1.1-blue)
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-62B47A?logo=minecraft&logoColor=white)
 ![Fabric](https://img.shields.io/badge/Fabric-Loader%200.17.2%2B-DBB69B?logo=minecraft&logoColor=white)
 ![Kotlin](https://img.shields.io/badge/Kotlin-Fabric%20Language%20Kotlin-7F52FF?logo=kotlin&logoColor=white)
@@ -10,7 +10,7 @@
 
 *Read this in [English](#english) | Leia em [Português](#português)*
 
-*If you're here for the resource pack, click [here](#resource-pack)* |
+*If you're here for the resource pack, click [here](#resource-pack)*|
 *Se você está aqui pelo resource pack, clique [aqui](#resource-pack-1)*
 ---
 
